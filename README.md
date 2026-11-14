@@ -21,7 +21,7 @@ The location picker supports coordinates, city search, radius selection, and sav
 
 ## Map API
 
-From `backend/`, install `server/requirements.txt` and start `uvicorn server.main:app --reload --port 8000`. Set `NEXT_PUBLIC_MAP_API_URL` in the frontend if the service is not at `http://localhost:8000`. The map upload accepts GeoJSON Point FeatureCollections and full-world equirectangular PNGs up to 10 MB, filters them to the chosen circular region, and validates the received selection. The trial controls preview and download the crop. After a successful raster submission, the frontend also calls `POST /sonfy`; that sound route is not implemented here, so its HTTP error is shown until a sound service is connected. The rotating region preview has 10, 20, and 30 second duration controls.
+From `backend/`, install `server/requirements.txt` and start `uvicorn server.main:app --reload --port 8000` with Python 3.10 or newer. Set `NEXT_PUBLIC_MAP_API_URL` in the frontend if the service is not at `http://localhost:8000`. The map upload accepts GeoJSON Point FeatureCollections and full-world equirectangular PNGs up to 10 MB, filters them to the chosen circular region, and validates the received selection. The trial controls preview and download the crop. Start the separate STRAUSS sound service from `TeamLychee_NasaSpaceApps_Backend` on port 8001 (see its README); set `NEXT_PUBLIC_SONIFY_API_URL` if hosted elsewhere. After raster selection, the frontend sends the cropped PNG to that service's `POST /sonify` and offers a Play generated sound button. The rotating region preview has 10, 20, and 30 second duration controls.
 
 ## Checks and deployment
 

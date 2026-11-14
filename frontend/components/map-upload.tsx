@@ -1,13 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { cropGlobalPng, parsePointCollection, type PointCollection } from "@/lib/geo";
 import type { LocationSelection } from "@/types/track";
 
 const apiBase = process.env.NEXT_PUBLIC_MAP_API_URL ?? "http://localhost:8000";
+const soundApiBase = process.env.NEXT_PUBLIC_SONIFY_API_URL ?? "http://localhost:8001";
 export type VisualizationCrop = { blob: Blob; url: string; latitude: number; longitude: number; radiusKm: number; bounds: { west: number; east: number; south: number; north: number } };
 
-export function MapUpload({ selection, points, onPointsChange, onCropChange }: { selection: LocationSelection; points: PointCollection; onPointsChange: (value: PointCollection | null) => void; onCropChange: (crop: VisualizationCrop | null) => void }) {
+export function MapUpload({ selection, points, onPointsChange, onCropChange, soundTemplate }: { selection: LocationSelection; points: PointCollection; onPointsChange: (value: PointCollection | null) => void; onCropChange: (crop: VisualizationCrop | null) => void; soundTemplate: string }) {
   const [fileName, setFileName] = useState("");
   const [sourceCount, setSourceCount] = useState(0);
   const [rasterFile, setRasterFile] = useState<File | null>(null);
@@ -17,8 +18,9 @@ export function MapUpload({ selection, points, onPointsChange, onCropChange }: {
   const [preview, setPreview] = useState<{ key: string; pngUrl: string } | null>(null);
   const [sound, setSound] = useState<{ key: string; url: string } | null>(null);
   const [soundError, setSoundError] = useState("");
+  const audioRef = useRef<HTMLAudioElement>(null);
   const [error, setError] = useState("");
-  const selectionKey = `${selection.latitude}:${selection.longitude}:${selection.radiusKm ?? 500}:${fileName}:${JSON.stringify(points.features)}`;
+  const selectionKey = `${selection.latitude}:${selection.longitude}:${selection.radiusKm ?? 500}:${fileName}:${soundTemplate}:${JSON.stringify(points.features)}`;
 
   useEffect(() => () => {
     if (preview) {
@@ -80,7 +82,8 @@ export function MapUpload({ selection, points, onPointsChange, onCropChange }: {
           body.append("longitude", String(selection.longitude));
           body.append("radius_km", String(selection.radiusKm ?? 500));
           for (const [name, value] of Object.entries(cropped.bounds)) body.append(name, String(value));
-          soundBody = body;
+          soundBody = new FormData();
+          soundBody.append("file", cropped.blob, "selected-area.png");
           response = await fetch(`${apiBase}/api/raster-selection`, { method: "POST", body, signal: controller.signal });
         } else {
           response = await fetch(`${apiBase}/api/selection`, {
@@ -101,8 +104,11 @@ export function MapUpload({ selection, points, onPointsChange, onCropChange }: {
         setConfirmedKey(selectionKey);
         if (soundBody) {
           try {
-            const soundResponse = await fetch(`${apiBase}/sonfy`, { method: "POST", body: soundBody, signal: controller.signal });
-            if (!soundResponse.ok) throw new Error(`Sound service returned ${soundResponse.status}.`);
+            const soundResponse = await fetch(`${soundApiBase}/sonify?duration_seconds=12&scan_mode=clockwise&sound_template=${encodeURIComponent(soundTemplate)}`, { method: "POST", body: soundBody, signal: controller.signal });
+            if (!soundResponse.ok) {
+              const detail = await soundResponse.json().catch(() => null) as { detail?: string } | null;
+              throw new Error(detail?.detail ?? `Sound service returned ${soundResponse.status}.`);
+            }
             const audio = await soundResponse.blob();
             if (!audio.type.startsWith("audio/")) throw new Error("Sound service did not return an audio file.");
             if (!controller.signal.aborted) setSound({ key: selectionKey, url: URL.createObjectURL(audio) });
@@ -118,7 +124,7 @@ export function MapUpload({ selection, points, onPointsChange, onCropChange }: {
       }
     }, 200);
     return () => { controller.abort(); window.clearTimeout(timer); };
-  }, [active, points, rasterFile, selection, selectionKey, onCropChange]);
+  }, [active, points, rasterFile, selection, selectionKey, soundTemplate, onCropChange]);
 
   return <section className="map-upload-section" id="maps" aria-labelledby="maps-title">
     <p className="eyebrow">Your maps</p>
@@ -135,7 +141,7 @@ export function MapUpload({ selection, points, onPointsChange, onCropChange }: {
     {rasterFile && <p>The PNG is interpreted as a global equirectangular map spanning 180° W to 180° E and 90° S to 90° N.</p>}
     {active && <p role="status">{confirmedKey === selectionKey ? status : "Updating selected area…"}</p>}
     {preview?.key === selectionKey && <div className="crop-preview"><p>Trial crop: this PNG is exactly what FastAPI received.</p><img src={preview.pngUrl} alt={`Cropped map within ${selection.radiusKm ?? 500} km of ${selection.name}`} /><a href={preview.pngUrl} download="selected-area.png">Download cropped PNG</a></div>}
-    {sound?.key === selectionKey && <div className="crop-sound"><p>Sound from /sonfy</p><audio controls src={sound.url} /></div>}
+    {sound?.key === selectionKey && <div className="crop-sound"><p>Sound from /sonify is ready.</p><button type="button" onClick={() => void audioRef.current?.play().catch(() => setSoundError("Playback was blocked. Use the audio controls to start it."))}>Play generated sound</button><audio ref={audioRef} controls src={sound.url} onError={() => setSoundError("The generated audio could not be decoded by this browser.")} /></div>}
     {soundError && active && <p className="field-error" role="alert">{soundError}</p>}
     {error && <p className="field-error" role="alert">{error}</p>}
   </section>;

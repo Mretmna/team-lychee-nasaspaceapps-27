@@ -15,10 +15,10 @@
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
 body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(--sans); }
-button, input { font: inherit; }
+button, input, select { font: inherit; }
 button, a { -webkit-tap-highlight-color: transparent; }
 a { color: inherit; }
-button:focus-visible, a:focus-visible, input:focus-visible { outline: 3px solid var(--sun); outline-offset: 3px; }
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible { outline: 3px solid var(--sun); outline-offset: 3px; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 
 .site-header { min-height: 84px; display: flex; align-items: center; justify-content: space-between; gap: 32px; padding: 17px clamp(24px, 5vw, 76px); border-bottom: 1px solid var(--line); }
@@ -174,6 +174,13 @@ input[type="range"] { accent-color: var(--sun); cursor: pointer; }
 .dataset-options button { padding: 9px 12px; border: 1px solid var(--ink); background: transparent; color: var(--ink); cursor: pointer; font-size: 11px; font-weight: 700; }
 .dataset-options button.active { background: var(--ink); color: white; }
 .rotation-image > p { padding: 32px; text-align: center; color: var(--ink); }
+.sound-template-choice { display: grid; gap: 7px; max-width: 380px; margin: 0 0 20px; }
+.sound-template-choice label { font-size: 13px; font-weight: 700; }
+.sound-template-choice select { width: 100%; min-height: 44px; padding: 9px 12px; border: 1px solid var(--ink); background: #fff; color: var(--ink); }
+.sound-template-choice select:disabled { opacity: .65; }
+.sound-template-choice p { margin: 0; color: var(--ink-soft); font-size: 12px; line-height: 1.5; }
+.sound-template-choice p[role="alert"] { color: var(--ink); }
+.sound-template-choice p button { border: 0; padding: 2px 4px; background: transparent; color: var(--ink); font-weight: 700; text-decoration: underline; cursor: pointer; }
 .duration-label { font-weight: 700; }
 .rotation-overlay { position: absolute; inset: 0; pointer-events: none; overflow: visible; }
 .rotation-overlay line { stroke: var(--sun); stroke-width: 3; stroke-linecap: round; filter: drop-shadow(0 1px 2px #102d35); }

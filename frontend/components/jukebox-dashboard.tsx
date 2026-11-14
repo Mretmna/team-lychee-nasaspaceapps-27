@@ -6,10 +6,12 @@ import { JukeboxPlayer } from "@/components/jukebox-player";
 import { LocationPicker } from "@/components/location-picker";
 import { RadiusMap } from "@/components/radius-map";
 import { MapUpload, type VisualizationCrop } from "@/components/map-upload";
-import { RotationVisualization, datasetLabels, type Dataset } from "@/components/rotation-visualization";
+import { RotationVisualization, datasetLabels, type Dataset, type SoundTemplateOption } from "@/components/rotation-visualization";
 import { loadTrack } from "@/lib/track";
 import { cropGlobalPng, filterPoints, type PointCollection } from "@/lib/geo";
 import type { LoadedTrack, LocationSelection } from "@/types/track";
+
+const soundApiBase = process.env.NEXT_PUBLIC_SONIFY_API_URL ?? "http://localhost:8001";
 
 export function JukeboxDashboard() {
   const [loadedTrack, setLoadedTrack] = useState<LoadedTrack | null>(null);
@@ -24,10 +26,41 @@ export function JukeboxDashboard() {
   const [cropSource, setCropSource] = useState<Dataset>("actual");
   const [cropError, setCropError] = useState("");
   const [duration, setDuration] = useState<10 | 20 | 30>(10);
+  const [templates, setTemplates] = useState<SoundTemplateOption[]>([]);
+  const [soundTemplate, setSoundTemplate] = useState("original");
+  const [templateError, setTemplateError] = useState("");
+  const [templateReload, setTemplateReload] = useState(0);
   const matchesSelection = (value: VisualizationCrop | null) => value && value.latitude === selection.latitude && value.longitude === selection.longitude && value.radiusKm === (selection.radiusKm ?? 500);
   const activeCrop = dataset === "actual" && matchesSelection(crop) ? crop : cropSource === dataset && matchesSelection(earthCrop) ? earthCrop : null;
   const visiblePoints = useMemo(() => pointData ? filterPoints(pointData, selection) : { type: "FeatureCollection" as const, features: [] }, [pointData, selection]);
   const requestId = useRef(0);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    async function loadTemplates() {
+      try {
+        const response = await fetch(`${soundApiBase}/templates`, { signal: controller.signal });
+        if (!response.ok) throw new Error("The sound templates could not be loaded.");
+        const catalog: unknown = await response.json();
+        if (!catalog || typeof catalog !== "object" || !("templates" in catalog) || !Array.isArray(catalog.templates) || !("defaultTemplate" in catalog) || typeof catalog.defaultTemplate !== "string") {
+          throw new Error("The sound service returned an invalid template catalog.");
+        }
+        const options = catalog.templates as unknown[];
+        if (!options.length || !options.every((option): option is SoundTemplateOption => typeof option === "object" && option !== null && "id" in option && typeof option.id === "string" && "label" in option && typeof option.label === "string" && "description" in option && typeof option.description === "string")) {
+          throw new Error("The sound service returned an invalid template catalog.");
+        }
+        if (!options.some((option) => option.id === catalog.defaultTemplate)) throw new Error("The sound service returned an invalid default template.");
+        if (controller.signal.aborted) return;
+        setTemplates(options);
+        setSoundTemplate((current) => options.some((option) => option.id === current) ? current : catalog.defaultTemplate as string);
+        setTemplateError("");
+      } catch (cause) {
+        if (!controller.signal.aborted) setTemplateError(cause instanceof Error ? cause.message : "The sound templates could not be loaded.");
+      }
+    }
+    void loadTemplates();
+    return () => controller.abort();
+  }, [templateReload]);
 
   useEffect(() => () => { if (crop) URL.revokeObjectURL(crop.url); }, [crop]);
   useEffect(() => () => { if (earthCrop) URL.revokeObjectURL(earthCrop.url); }, [earthCrop]);
@@ -99,8 +132,8 @@ export function JukeboxDashboard() {
         </div>
 
         <div id="listen" className="player-column">
-          <MapUpload selection={selection} points={visiblePoints} onPointsChange={setPointData} onCropChange={setCrop} />
-          <RotationVisualization key={`${dataset}:${activeCrop?.url ?? "no-crop"}`} crop={activeCrop} duration={duration} onDurationChange={setDuration} dataset={dataset} onDatasetChange={setDataset} track={!loading && !loadError && loadedTrack?.track.videoUrl.includes(trackId) ? loadedTrack : null} />
+          <MapUpload selection={selection} points={visiblePoints} onPointsChange={setPointData} onCropChange={setCrop} soundTemplate={soundTemplate} />
+          <RotationVisualization key={`${dataset}:${soundTemplate}:${activeCrop?.url ?? "no-crop"}`} crop={activeCrop} duration={duration} onDurationChange={setDuration} dataset={dataset} onDatasetChange={setDataset} templates={templates} soundTemplate={soundTemplate} onSoundTemplateChange={setSoundTemplate} templateError={templateError} onRetryTemplates={() => setTemplateReload((value) => value + 1)} track={!loading && !loadError && loadedTrack?.track.videoUrl.includes(trackId) ? loadedTrack : null} />
           {cropError && !activeCrop && <p className="field-error" role="alert">{cropError}</p>}
           {(dataset === "precipitation" || dataset === "ocean") && loading && <div className="load-state" role="status"><span className="loader" />Loading the visualization timeline…</div>}
           {(dataset === "precipitation" || dataset === "ocean") && !loading && loadError && (

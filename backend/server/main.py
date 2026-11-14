@@ -4,7 +4,9 @@ import json
 import io
 import math
 import os
+import struct
 import unicodedata
+import wave
 from pathlib import Path
 from urllib.parse import urlencode
 from urllib.request import urlopen
@@ -14,6 +16,7 @@ from asyncio import to_thread
 from fastapi import FastAPI, File, Form, HTTPException, Query, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import Response
 from pydantic import BaseModel, Field
 from PIL import Image, UnidentifiedImageError
 
@@ -23,7 +26,7 @@ MAX_BYTES = 10 * 1024 * 1024
 EXTENSIONS = {"image/png": ".png", "image/jpeg": ".jpg", "image/webp": ".webp", "application/geo+json": ".geojson", "application/json": ".geojson"}
 
 app = FastAPI(title="Earth Jukebox map API")
-app.add_middleware(CORSMiddleware, allow_origins=[origin.strip() for origin in os.getenv("MAP_ALLOWED_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000").split(",")], allow_methods=["GET", "POST"], allow_headers=["*"])
+app.add_middleware(CORSMiddleware, allow_origins=[origin.strip() for origin in os.getenv("MAP_ALLOWED_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000,http://192.168.1.82:3000").split(",")], allow_methods=["GET", "POST"], allow_headers=["*"])
 app.mount("/maps", StaticFiles(directory=UPLOADS), name="maps")
 
 
@@ -120,6 +123,61 @@ async def process_raster_selection(
             raise HTTPException(422, "The PNG contains pixels outside the selected radius.")
         covered += 1
     return {"latitude": latitude, "longitude": longitude, "radiusKm": radius_km, "width": width, "height": height, "coveredPixels": covered, "durationSeconds": duration_seconds, "visualizationId": visualization_id}
+
+
+@app.post("/sonify")
+async def sonify_raster(
+    file: UploadFile = File(...),
+    latitude: float = Form(...),
+    longitude: float = Form(...),
+    radius_km: float = Form(...),
+    west: float = Form(...),
+    east: float = Form(...),
+    south: float = Form(...),
+    north: float = Form(...),
+):
+    """Turn the submitted visual crop into a bounded, deterministic WAV preview."""
+    await process_raster_selection(file, latitude, longitude, radius_km, west, east, south, north, None, None)
+    await file.seek(0)
+    data = await file.read(MAX_BYTES + 1)
+    with Image.open(io.BytesIO(data)) as source:
+        image = source.convert("RGBA")
+    image.thumbnail((96, 96))
+
+    # Each vertical slice supplies a note; transparent pixels never contribute.
+    segments = 32
+    notes: list[tuple[float, float]] = []
+    for segment in range(segments):
+        left = segment * image.width // segments
+        right = max(left + 1, (segment + 1) * image.width // segments)
+        pixels = [image.getpixel((x, y)) for x in range(left, min(right, image.width)) for y in range(image.height)]
+        visible = [(red, green, blue) for red, green, blue, alpha in pixels if alpha > 0]
+        if not visible:
+            notes.append((0.0, 0.0))
+            continue
+        warmth = sum((red - blue + 255) / 510 for red, _, blue in visible) / len(visible)
+        brightness = sum((red + green + blue) / 765 for red, green, blue in visible) / len(visible)
+        scale = (0, 2, 4, 7, 9, 12, 14, 16)
+        semitone = scale[min(len(scale) - 1, int(warmth * len(scale)))]
+        notes.append((220 * 2 ** (semitone / 12), min(0.18, 0.06 + brightness * 0.12)))
+
+    sample_rate = 22050
+    seconds = 8
+    samples_per_note = sample_rate * seconds // segments
+    pcm = bytearray()
+    for index, (frequency, amplitude) in enumerate(notes):
+        for sample in range(samples_per_note):
+            envelope = min(1.0, sample / 180) * min(1.0, (samples_per_note - sample) / 900)
+            phase = 2 * math.pi * frequency * sample / sample_rate
+            tone = math.sin(phase) + 0.18 * math.sin(2 * phase)
+            pcm.extend(struct.pack("<h", int(32767 * amplitude * envelope * tone / 1.18)))
+    output = io.BytesIO()
+    with wave.open(output, "wb") as wav:
+        wav.setnchannels(1)
+        wav.setsampwidth(2)
+        wav.setframerate(sample_rate)
+        wav.writeframes(pcm)
+    return Response(output.getvalue(), media_type="audio/wav", headers={"Content-Disposition": 'inline; filename="selected-area.wav"'})
 
 
 @app.get("/api/locations")
