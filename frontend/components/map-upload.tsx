@@ -2,13 +2,15 @@
 
 import { useEffect, useRef, useState } from "react";
 import { cropGlobalPng, parsePointCollection, type PointCollection } from "@/lib/geo";
+import { InstrumentPlayback } from "@/components/instrument-playback";
 import type { LocationSelection } from "@/types/track";
+import type { ScanMode } from "@/components/rotation-visualization";
 
 const apiBase = process.env.NEXT_PUBLIC_MAP_API_URL ?? "http://localhost:8000";
 const soundApiBase = process.env.NEXT_PUBLIC_SONIFY_API_URL ?? "http://localhost:8001";
 export type VisualizationCrop = { blob: Blob; url: string; latitude: number; longitude: number; radiusKm: number; bounds: { west: number; east: number; south: number; north: number } };
 
-export function MapUpload({ selection, points, onPointsChange, onCropChange, soundTemplate }: { selection: LocationSelection; points: PointCollection; onPointsChange: (value: PointCollection | null) => void; onCropChange: (crop: VisualizationCrop | null) => void; soundTemplate: string }) {
+export function MapUpload({ selection, points, onPointsChange, onCropChange, soundTemplate, scanMode }: { selection: LocationSelection; points: PointCollection; onPointsChange: (value: PointCollection | null) => void; onCropChange: (crop: VisualizationCrop | null) => void; soundTemplate: string; scanMode: ScanMode }) {
   const [fileName, setFileName] = useState("");
   const [sourceCount, setSourceCount] = useState(0);
   const [rasterFile, setRasterFile] = useState<File | null>(null);
@@ -16,11 +18,12 @@ export function MapUpload({ selection, points, onPointsChange, onCropChange, sou
   const [status, setStatus] = useState("");
   const [confirmedKey, setConfirmedKey] = useState("");
   const [preview, setPreview] = useState<{ key: string; pngUrl: string } | null>(null);
-  const [sound, setSound] = useState<{ key: string; url: string } | null>(null);
+  const [sound, setSound] = useState<{ key: string; url: string; blob: Blob } | null>(null);
+  const [instrumentPlaying, setInstrumentPlaying] = useState(false);
   const [soundError, setSoundError] = useState("");
   const audioRef = useRef<HTMLAudioElement>(null);
   const [error, setError] = useState("");
-  const selectionKey = `${selection.latitude}:${selection.longitude}:${selection.radiusKm ?? 500}:${fileName}:${soundTemplate}:${JSON.stringify(points.features)}`;
+  const selectionKey = `${selection.latitude}:${selection.longitude}:${selection.radiusKm ?? 500}:${fileName}:${soundTemplate}:${scanMode}:${JSON.stringify(points.features)}`;
 
   useEffect(() => () => {
     if (preview) {
@@ -35,6 +38,7 @@ export function MapUpload({ selection, points, onPointsChange, onCropChange, sou
     setPreview(null);
     onCropChange(null);
     setSound(null);
+    setInstrumentPlaying(false);
     setSoundError("");
     setError("");
     onPointsChange(null);
@@ -104,14 +108,14 @@ export function MapUpload({ selection, points, onPointsChange, onCropChange, sou
         setConfirmedKey(selectionKey);
         if (soundBody) {
           try {
-            const soundResponse = await fetch(`${soundApiBase}/sonify?duration_seconds=12&scan_mode=clockwise&sound_template=${encodeURIComponent(soundTemplate)}`, { method: "POST", body: soundBody, signal: controller.signal });
+            const soundResponse = await fetch(`${soundApiBase}/sonify?duration_seconds=12&scan_mode=${scanMode}&sound_template=${encodeURIComponent(soundTemplate)}`, { method: "POST", body: soundBody, signal: controller.signal });
             if (!soundResponse.ok) {
               const detail = await soundResponse.json().catch(() => null) as { detail?: string } | null;
               throw new Error(detail?.detail ?? `Sound service returned ${soundResponse.status}.`);
             }
             const audio = await soundResponse.blob();
             if (!audio.type.startsWith("audio/")) throw new Error("Sound service did not return an audio file.");
-            if (!controller.signal.aborted) setSound({ key: selectionKey, url: URL.createObjectURL(audio) });
+            if (!controller.signal.aborted) setSound({ key: selectionKey, url: URL.createObjectURL(audio), blob: audio });
           } catch (cause) {
             if (!controller.signal.aborted) setSoundError(cause instanceof Error ? cause.message : "Sound could not be loaded.");
           }
@@ -124,7 +128,7 @@ export function MapUpload({ selection, points, onPointsChange, onCropChange, sou
       }
     }, 200);
     return () => { controller.abort(); window.clearTimeout(timer); };
-  }, [active, points, rasterFile, selection, selectionKey, soundTemplate, onCropChange]);
+  }, [active, points, rasterFile, selection, selectionKey, soundTemplate, scanMode, onCropChange]);
 
   return <section className="map-upload-section" id="maps" aria-labelledby="maps-title">
     <p className="eyebrow">Your maps</p>
@@ -141,7 +145,12 @@ export function MapUpload({ selection, points, onPointsChange, onCropChange, sou
     {rasterFile && <p>The PNG is interpreted as a global equirectangular map spanning 180° W to 180° E and 90° S to 90° N.</p>}
     {active && <p role="status">{confirmedKey === selectionKey ? status : "Updating selected area…"}</p>}
     {preview?.key === selectionKey && <div className="crop-preview"><p>Trial crop: this PNG is exactly what FastAPI received.</p><img src={preview.pngUrl} alt={`Cropped map within ${selection.radiusKm ?? 500} km of ${selection.name}`} /><a href={preview.pngUrl} download="selected-area.png">Download cropped PNG</a></div>}
-    {sound?.key === selectionKey && <div className="crop-sound"><p>Sound from /sonify is ready.</p><button type="button" onClick={() => void audioRef.current?.play().catch(() => setSoundError("Playback was blocked. Use the audio controls to start it."))}>Play generated sound</button><audio ref={audioRef} controls src={sound.url} onError={() => setSoundError("The generated audio could not be decoded by this browser.")} /></div>}
+    {sound?.key === selectionKey && <div className="crop-sound">
+      <p>Sound from /sonify is ready.</p>
+      {!instrumentPlaying && <button type="button" onClick={() => void audioRef.current?.play().catch(() => setSoundError("Playback was blocked. Use the audio controls to start it."))}>Play generated sound</button>}
+      <audio ref={audioRef} controls={!instrumentPlaying} style={{ display: instrumentPlaying ? "none" : "block" }} src={sound.url} onError={() => setSoundError("The generated audio could not be decoded by this browser.")} />
+      <InstrumentPlayback key={sound.url} audioBlob={sound.blob} onStart={() => { audioRef.current?.pause(); setInstrumentPlaying(true); }} onFinish={() => setInstrumentPlaying(false)} />
+    </div>}
     {soundError && active && <p className="field-error" role="alert">{soundError}</p>}
     {error && <p className="field-error" role="alert">{error}</p>}
   </section>;

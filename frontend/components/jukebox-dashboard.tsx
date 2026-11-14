@@ -6,7 +6,7 @@ import { JukeboxPlayer } from "@/components/jukebox-player";
 import { LocationPicker } from "@/components/location-picker";
 import { RadiusMap } from "@/components/radius-map";
 import { MapUpload, type VisualizationCrop } from "@/components/map-upload";
-import { RotationVisualization, datasetLabels, type Dataset, type SoundTemplateOption } from "@/components/rotation-visualization";
+import { RotationVisualization, datasetLabels, type Dataset, type ScanMode, type SoundTemplateOption } from "@/components/rotation-visualization";
 import { loadTrack } from "@/lib/track";
 import { cropGlobalPng, filterPoints, type PointCollection } from "@/lib/geo";
 import type { LoadedTrack, LocationSelection } from "@/types/track";
@@ -28,6 +28,7 @@ export function JukeboxDashboard() {
   const [duration, setDuration] = useState<10 | 20 | 30>(10);
   const [templates, setTemplates] = useState<SoundTemplateOption[]>([]);
   const [soundTemplate, setSoundTemplate] = useState("original");
+  const [scanMode, setScanMode] = useState<ScanMode>("clockwise");
   const [templateError, setTemplateError] = useState("");
   const [templateReload, setTemplateReload] = useState(0);
   const matchesSelection = (value: VisualizationCrop | null) => value && value.latitude === selection.latitude && value.longitude === selection.longitude && value.radiusKm === (selection.radiusKm ?? 500);
@@ -132,8 +133,8 @@ export function JukeboxDashboard() {
         </div>
 
         <div id="listen" className="player-column">
-          <MapUpload selection={selection} points={visiblePoints} onPointsChange={setPointData} onCropChange={setCrop} soundTemplate={soundTemplate} />
-          <RotationVisualization key={`${dataset}:${soundTemplate}:${activeCrop?.url ?? "no-crop"}`} crop={activeCrop} selection={selection} duration={duration} onDurationChange={setDuration} dataset={dataset} onDatasetChange={setDataset} templates={templates} soundTemplate={soundTemplate} onSoundTemplateChange={setSoundTemplate} templateError={templateError} onRetryTemplates={() => setTemplateReload((value) => value + 1)} track={!loading && !loadError && loadedTrack?.track.videoUrl.includes(trackId) ? loadedTrack : null} />
+          <MapUpload selection={selection} points={visiblePoints} onPointsChange={setPointData} onCropChange={setCrop} soundTemplate={soundTemplate} scanMode={scanMode} />
+          <RotationVisualization key={`${dataset}:${soundTemplate}:${scanMode}:${activeCrop?.url ?? "no-crop"}`} crop={activeCrop} selection={selection} duration={duration} onDurationChange={setDuration} dataset={dataset} onDatasetChange={setDataset} templates={templates} soundTemplate={soundTemplate} onSoundTemplateChange={setSoundTemplate} scanMode={scanMode} onScanModeChange={setScanMode} templateError={templateError} onRetryTemplates={() => setTemplateReload((value) => value + 1)} track={!loading && !loadError && loadedTrack?.track.videoUrl.includes(trackId) ? loadedTrack : null} />
           {cropError && !activeCrop && <p className="field-error" role="alert">{cropError}</p>}
           {(dataset === "precipitation" || dataset === "ocean") && loading && <div className="load-state" role="status"><span className="loader" />Loading the visualization timeline…</div>}
           {(dataset === "precipitation" || dataset === "ocean") && !loading && loadError && (
