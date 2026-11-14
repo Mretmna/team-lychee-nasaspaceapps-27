@@ -8,7 +8,7 @@ import { RadiusMap } from "@/components/radius-map";
 import { MapUpload, type VisualizationCrop } from "@/components/map-upload";
 import { RotationVisualization } from "@/components/rotation-visualization";
 import { loadTrack } from "@/lib/track";
-import { filterPoints, type PointCollection } from "@/lib/geo";
+import { cropGlobalPng, filterPoints, type PointCollection } from "@/lib/geo";
 import type { LoadedTrack, LocationSelection } from "@/types/track";
 
 export function JukeboxDashboard() {
@@ -19,11 +19,36 @@ export function JukeboxDashboard() {
   const [trackId, setTrackId] = useState<"precipitation" | "ocean">("precipitation");
   const [pointData, setPointData] = useState<PointCollection | null>(null);
   const [crop, setCrop] = useState<VisualizationCrop | null>(null);
-  const activeCrop = crop && crop.latitude === selection.latitude && crop.longitude === selection.longitude && crop.radiusKm === (selection.radiusKm ?? 500) ? crop : null;
+  const [earthCrop, setEarthCrop] = useState<VisualizationCrop | null>(null);
+  const [cropError, setCropError] = useState("");
+  const [duration, setDuration] = useState<10 | 20 | 30>(10);
+  const matchesSelection = (value: VisualizationCrop | null) => value && value.latitude === selection.latitude && value.longitude === selection.longitude && value.radiusKm === (selection.radiusKm ?? 500);
+  const activeCrop = matchesSelection(crop) ? crop : matchesSelection(earthCrop) ? earthCrop : null;
   const visiblePoints = useMemo(() => pointData ? filterPoints(pointData, selection) : { type: "FeatureCollection" as const, features: [] }, [pointData, selection]);
   const requestId = useRef(0);
 
   useEffect(() => () => { if (crop) URL.revokeObjectURL(crop.url); }, [crop]);
+  useEffect(() => () => { if (earthCrop) URL.revokeObjectURL(earthCrop.url); }, [earthCrop]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    const selected = { latitude: selection.latitude, longitude: selection.longitude, radiusKm: selection.radiusKm ?? 500, name: "Selected region" };
+    async function prepareRegion() {
+      try {
+        const response = await fetch("/earth-atmos-2048.jpg", { signal: controller.signal });
+        if (!response.ok) throw new Error("The Earth imagery could not be loaded.");
+        const source = new File([await response.blob()], "earth.jpg", { type: "image/jpeg" });
+        const result = await cropGlobalPng(source, selected);
+        if (controller.signal.aborted) return;
+        setEarthCrop({ ...selected, blob: result.blob, bounds: result.bounds, url: URL.createObjectURL(result.blob) });
+        setCropError("");
+      } catch (cause) {
+        if (!controller.signal.aborted) setCropError(cause instanceof Error ? cause.message : "The region could not be prepared.");
+      }
+    }
+    void prepareRegion();
+    return () => controller.abort();
+  }, [selection.latitude, selection.longitude, selection.radiusKm]);
 
   const fetchTrack = useCallback(async (fixture = false) => {
     const currentRequest = ++requestId.current;
@@ -71,8 +96,9 @@ export function JukeboxDashboard() {
 
         <div id="listen" className="player-column">
           <MapUpload selection={selection} points={visiblePoints} onPointsChange={setPointData} onCropChange={setCrop} />
-          <RotationVisualization key={activeCrop?.url ?? "no-crop"} crop={activeCrop} />
-          <div className="track-choice" aria-label="Earth visualization"><span>Explore a visualization</span><button type="button" className={trackId === "precipitation" ? "active" : ""} onClick={() => setTrackId("precipitation")}>Global precipitation</button><button type="button" className={trackId === "ocean" ? "active" : ""} onClick={() => setTrackId("ocean")}>North Pacific color</button></div>
+          <RotationVisualization key={activeCrop?.url ?? "no-crop"} crop={activeCrop} duration={duration} onDurationChange={setDuration} />
+          {cropError && !activeCrop && <p className="field-error" role="alert">{cropError}</p>}
+          <div className="track-choice" aria-label="Earth visualization"><span>NASA visualization timelines</span><button type="button" className={trackId === "precipitation" ? "active" : ""} onClick={() => setTrackId("precipitation")}>Global precipitation</button><button type="button" className={trackId === "ocean" ? "active" : ""} onClick={() => setTrackId("ocean")}>North Pacific color</button></div>
           {loading && <div className="load-state" role="status"><span className="loader" />Loading the visualization timeline…</div>}
           {!loading && loadError && (
             <div className="load-state error" role="alert">

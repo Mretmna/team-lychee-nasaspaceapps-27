@@ -31,7 +31,7 @@ Start the map service separately with `pip install -r server/requirements.txt` a
 
 The temporary trial controls preview and download the exact cropped PNG sent to FastAPI. After a successful raster submission, the frontend also posts the same multipart fields to `POST /sonfy` on the map API origin. When that route returns an `audio/*` response, an audio player appears below the crop. This repository does not implement `/sonfy`; the page reports its HTTP error until a sound service provides the route.
 
-The **Explore a visualization** panel displays the current cropped PNG with a rotating line. Choose 10, 20, or 30 seconds and press Start. The frontend posts the same cropped PNG and geographic fields plus numeric `duration_seconds` to the existing `/api/raster-selection` route. FastAPI confirms the duration before a linear, one-revolution browser animation begins. Changing the crop resets the visualization.
+The **Explore a visualization** panel displays the selected region in a circular view with a rotating line. Its 10, 20, and 30-second controls are always visible. By default the region is cropped from the globe texture; an uploaded and submitted PNG overrides this imagery. Press Start to post the cropped PNG and geographic fields plus numeric `duration_seconds` to the existing `/api/raster-selection` route. FastAPI confirms the duration before a linear, one-revolution browser animation begins. Changing the crop resets the animation while retaining the selected duration.
 
 ## Commands
 

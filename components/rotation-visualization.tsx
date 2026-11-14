@@ -6,14 +6,13 @@ import type { VisualizationCrop } from "@/components/map-upload";
 const apiBase = process.env.NEXT_PUBLIC_MAP_API_URL ?? "http://localhost:8000";
 const durations = [10, 20, 30] as const;
 
-export function RotationVisualization({ crop }: { crop: VisualizationCrop | null }) {
-  const [duration, setDuration] = useState<10 | 20 | 30>(10);
+export function RotationVisualization({ crop, duration, onDurationChange }: { crop: VisualizationCrop | null; duration: 10 | 20 | 30; onDurationChange: (duration: 10 | 20 | 30) => void }) {
   const [angle, setAngle] = useState(0);
   const [running, setRunning] = useState(false);
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState("");
   const [size, setSize] = useState({ width: 0, height: 0 });
-  const imageRef = useRef<HTMLImageElement>(null);
+  const imageRef = useRef<HTMLDivElement>(null);
   const frameRef = useRef<number | null>(null);
   const requestRef = useRef<AbortController | null>(null);
   const busyRef = useRef(false);
@@ -78,17 +77,16 @@ export function RotationVisualization({ crop }: { crop: VisualizationCrop | null
   const radians = angle * Math.PI / 180;
   const halfWidth = size.width / 2;
   const halfHeight = size.height / 2;
-  const reach = size.width && size.height ? Math.min(Math.abs(Math.sin(radians)) < 1e-9 ? Infinity : halfWidth / Math.abs(Math.sin(radians)), Math.abs(Math.cos(radians)) < 1e-9 ? Infinity : halfHeight / Math.abs(Math.cos(radians))) : 0;
+  const reach = Math.min(halfWidth, halfHeight);
   const endX = halfWidth + Math.sin(radians) * reach;
   const endY = halfHeight - Math.cos(radians) * reach;
 
   return <section className="rotation-visualization" aria-labelledby="rotation-title">
     <h2 id="rotation-title">Explore a visualization</h2>
-    {crop ? <>
-      <div className="rotation-image"><img ref={imageRef} src={crop.url} alt="Cropped selected map" /><svg className="rotation-overlay" width={size.width} height={size.height} viewBox={`0 0 ${size.width || 1} ${size.height || 1}`} aria-hidden="true"><line x1={halfWidth} y1={halfHeight} x2={endX} y2={endY} /></svg></div>
-      <div className="rotation-controls"><div className="duration-options" role="group" aria-label="Rotation duration">{durations.map((seconds) => <button key={seconds} type="button" aria-pressed={duration === seconds} className={duration === seconds ? "active" : ""} disabled={running || starting} onClick={() => setDuration(seconds)}>{seconds} seconds</button>)}</div><button type="button" className="rotation-start" disabled={running || starting} onClick={() => void start()}>{starting ? "Starting…" : running ? "Rotating…" : "Start"}</button></div>
+      <div className="rotation-image" ref={imageRef}>{crop ? <img src={crop.url} alt="Cropped selected map" /> : <p>Preparing selected region…</p>}<svg className="rotation-overlay" width={size.width} height={size.height} viewBox={`0 0 ${size.width || 1} ${size.height || 1}`} aria-hidden="true"><line x1={halfWidth} y1={halfHeight} x2={endX} y2={endY} /></svg></div>
+      <p className="duration-label">Choose animation duration</p>
+      <div className="rotation-controls"><div className="duration-options" role="group" aria-label="Rotation duration">{durations.map((seconds) => <button key={seconds} type="button" aria-pressed={duration === seconds} className={duration === seconds ? "active" : ""} disabled={running || starting} onClick={() => onDurationChange(seconds)}>{seconds} seconds</button>)}</div><button type="button" className="rotation-start" disabled={!crop || running || starting} onClick={() => void start()}>{starting ? "Starting…" : running ? "Rotating…" : "Start"}</button></div>
       <p role="status">{running ? `Rotating at ${360 / duration}° per second.` : angle === 360 ? "One revolution complete." : "Choose a duration and press Start."}</p>
       {error && <p className="field-error" role="alert">{error}</p>}
-    </> : <p>Send a PNG map selection above to visualize its cropped image.</p>}
   </section>;
 }
