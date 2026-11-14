@@ -1,0 +1,916 @@
+{
+  "schemaVersion": 1,
+  "id": "ocean",
+  "title": "Ocean Jukebox \u2014 North Pacific Color Seasons",
+  "videoUrl": "/media/ocean.mp4",
+  "durationSeconds": 30.0,
+  "sourceUrl": "https://svs.gsfc.nasa.gov/5101/",
+  "credits": "NASA's Scientific Visualization Studio. Visualizers: Kel Elkins (USRA), Greg Shirah (NASA/GSFC). Data: JPL MUR SST analysis.",
+  "featureDefinitions": {
+    "colorWarmth": "Mean (R-B+1)/2 of decoded RGB in the fixed North Pacific mask; RGB scaled to [0,1]; not measured temperature.",
+    "motion": "Mean absolute RGB difference from the preceding sampled frame, divided by 0.05 and clipped to [0,1]; not measured current speed. First sample is zero (no preceding frame).",
+    "variation": "Twice the root mean of the three spatial RGB channel variances within the fixed mask; not a scientific variability measurement."
+  },
+  "samples": [
+    {
+      "timeSeconds": 0.0,
+      "colorWarmth": 0.720330794,
+      "motion": 0.0,
+      "variation": 0.34154551
+    },
+    {
+      "timeSeconds": 0.2,
+      "colorWarmth": 0.728385386,
+      "motion": 0.662718766,
+      "variation": 0.302739445
+    },
+    {
+      "timeSeconds": 0.4,
+      "colorWarmth": 0.730204401,
+      "motion": 0.465963229,
+      "variation": 0.296045697
+    },
+    {
+      "timeSeconds": 0.6,
+      "colorWarmth": 0.729654958,
+      "motion": 0.343491795,
+      "variation": 0.299721597
+    },
+    {
+      "timeSeconds": 0.8,
+      "colorWarmth": 0.730192552,
+      "motion": 0.396960549,
+      "variation": 0.293841877
+    },
+    {
+      "timeSeconds": 1.0,
+      "colorWarmth": 0.73252913,
+      "motion": 0.476994404,
+      "variation": 0.258737338
+    },
+    {
+      "timeSeconds": 1.2,
+      "colorWarmth": 0.733411342,
+      "motion": 0.44443504,
+      "variation": 0.245402052
+    },
+    {
+      "timeSeconds": 1.4,
+      "colorWarmth": 0.733557483,
+      "motion": 0.375671228,
+      "variation": 0.233593276
+    },
+    {
+      "timeSeconds": 1.6,
+      "colorWarmth": 0.733264776,
+      "motion": 0.305951944,
+      "variation": 0.234495597
+    },
+    {
+      "timeSeconds": 1.8,
+      "colorWarmth": 0.733767386,
+      "motion": 0.286325293,
+      "variation": 0.229425291
+    },
+    {
+      "timeSeconds": 2.0,
+      "colorWarmth": 0.733377486,
+      "motion": 0.312192599,
+      "variation": 0.233634192
+    },
+    {
+      "timeSeconds": 2.2,
+      "colorWarmth": 0.733369305,
+      "motion": 0.313682231,
+      "variation": 0.218486103
+    },
+    {
+      "timeSeconds": 2.4,
+      "colorWarmth": 0.733277895,
+      "motion": 0.572772841,
+      "variation": 0.205276697
+    },
+    {
+      "timeSeconds": 2.6,
+      "colorWarmth": 0.733218649,
+      "motion": 0.348524945,
+      "variation": 0.201817414
+    },
+    {
+      "timeSeconds": 2.8,
+      "colorWarmth": 0.732766963,
+      "motion": 0.306948794,
+      "variation": 0.189470327
+    },
+    {
+      "timeSeconds": 3.0,
+      "colorWarmth": 0.732656087,
+      "motion": 0.23523205,
+      "variation": 0.192209457
+    },
+    {
+      "timeSeconds": 3.2,
+      "colorWarmth": 0.731771336,
+      "motion": 0.322114073,
+      "variation": 0.188471498
+    },
+    {
+      "timeSeconds": 3.4,
+      "colorWarmth": 0.732201439,
+      "motion": 0.230257206,
+      "variation": 0.188960824
+    },
+    {
+      "timeSeconds": 3.6,
+      "colorWarmth": 0.732004796,
+      "motion": 0.375943951,
+      "variation": 0.19939101
+    },
+    {
+      "timeSeconds": 3.8,
+      "colorWarmth": 0.731432219,
+      "motion": 0.256216674,
+      "variation": 0.19927556
+    },
+    {
+      "timeSeconds": 4.0,
+      "colorWarmth": 0.732006066,
+      "motion": 0.211117694,
+      "variation": 0.195966113
+    },
+    {
+      "timeSeconds": 4.2,
+      "colorWarmth": 0.731865002,
+      "motion": 0.23099826,
+      "variation": 0.201215786
+    },
+    {
+      "timeSeconds": 4.4,
+      "colorWarmth": 0.732106644,
+      "motion": 0.228118682,
+      "variation": 0.20878234
+    },
+    {
+      "timeSeconds": 4.6,
+      "colorWarmth": 0.732223868,
+      "motion": 0.225427188,
+      "variation": 0.216730851
+    },
+    {
+      "timeSeconds": 4.8,
+      "colorWarmth": 0.732919735,
+      "motion": 0.246893309,
+      "variation": 0.222145108
+    },
+    {
+      "timeSeconds": 5.0,
+      "colorWarmth": 0.73326788,
+      "motion": 0.333690695,
+      "variation": 0.228759552
+    },
+    {
+      "timeSeconds": 5.2,
+      "colorWarmth": 0.732370574,
+      "motion": 0.445670758,
+      "variation": 0.2637715
+    },
+    {
+      "timeSeconds": 5.4,
+      "colorWarmth": 0.732462407,
+      "motion": 0.336068087,
+      "variation": 0.266826658
+    },
+    {
+      "timeSeconds": 5.6,
+      "colorWarmth": 0.732853717,
+      "motion": 0.239217567,
+      "variation": 0.266327682
+    },
+    {
+      "timeSeconds": 5.8,
+      "colorWarmth": 0.732874453,
+      "motion": 0.436102882,
+      "variation": 0.267534934
+    },
+    {
+      "timeSeconds": 6.0,
+      "colorWarmth": 0.731424601,
+      "motion": 0.312207646,
+      "variation": 0.283234195
+    },
+    {
+      "timeSeconds": 6.2,
+      "colorWarmth": 0.729774439,
+      "motion": 0.320077115,
+      "variation": 0.302799646
+    },
+    {
+      "timeSeconds": 6.4,
+      "colorWarmth": 0.729241783,
+      "motion": 0.223967649,
+      "variation": 0.308500175
+    },
+    {
+      "timeSeconds": 6.6,
+      "colorWarmth": 0.726144872,
+      "motion": 0.36838106,
+      "variation": 0.318213246
+    },
+    {
+      "timeSeconds": 6.8,
+      "colorWarmth": 0.722633517,
+      "motion": 0.289095782,
+      "variation": 0.321420959
+    },
+    {
+      "timeSeconds": 7.0,
+      "colorWarmth": 0.707811962,
+      "motion": 0.540049842,
+      "variation": 0.357503756
+    },
+    {
+      "timeSeconds": 7.2,
+      "colorWarmth": 0.700087742,
+      "motion": 0.325569192,
+      "variation": 0.369562216
+    },
+    {
+      "timeSeconds": 7.4,
+      "colorWarmth": 0.697391875,
+      "motion": 0.315525462,
+      "variation": 0.370666873
+    },
+    {
+      "timeSeconds": 7.6,
+      "colorWarmth": 0.695441529,
+      "motion": 0.271487281,
+      "variation": 0.368702262
+    },
+    {
+      "timeSeconds": 7.8,
+      "colorWarmth": 0.695326562,
+      "motion": 0.232166267,
+      "variation": 0.367647988
+    },
+    {
+      "timeSeconds": 8.0,
+      "colorWarmth": 0.693358866,
+      "motion": 0.212996661,
+      "variation": 0.368140275
+    },
+    {
+      "timeSeconds": 8.2,
+      "colorWarmth": 0.691487516,
+      "motion": 0.299171486,
+      "variation": 0.37111692
+    },
+    {
+      "timeSeconds": 8.4,
+      "colorWarmth": 0.688761744,
+      "motion": 0.350475384,
+      "variation": 0.373919878
+    },
+    {
+      "timeSeconds": 8.6,
+      "colorWarmth": 0.68588729,
+      "motion": 0.235666526,
+      "variation": 0.378106904
+    },
+    {
+      "timeSeconds": 8.8,
+      "colorWarmth": 0.681138807,
+      "motion": 0.284135985,
+      "variation": 0.384409897
+    },
+    {
+      "timeSeconds": 9.0,
+      "colorWarmth": 0.680860911,
+      "motion": 0.193554333,
+      "variation": 0.387330173
+    },
+    {
+      "timeSeconds": 9.2,
+      "colorWarmth": 0.677834109,
+      "motion": 0.231603893,
+      "variation": 0.392212131
+    },
+    {
+      "timeSeconds": 9.4,
+      "colorWarmth": 0.676670475,
+      "motion": 0.208787323,
+      "variation": 0.393086504
+    },
+    {
+      "timeSeconds": 9.6,
+      "colorWarmth": 0.677235294,
+      "motion": 0.277018856,
+      "variation": 0.384129025
+    },
+    {
+      "timeSeconds": 9.8,
+      "colorWarmth": 0.675358866,
+      "motion": 0.26527672,
+      "variation": 0.384249087
+    },
+    {
+      "timeSeconds": 10.0,
+      "colorWarmth": 0.676240655,
+      "motion": 0.258129496,
+      "variation": 0.384783862
+    },
+    {
+      "timeSeconds": 10.2,
+      "colorWarmth": 0.670723374,
+      "motion": 0.3125951,
+      "variation": 0.397346248
+    },
+    {
+      "timeSeconds": 10.4,
+      "colorWarmth": 0.671424601,
+      "motion": 0.335556496,
+      "variation": 0.398139446
+    },
+    {
+      "timeSeconds": 10.6,
+      "colorWarmth": 0.672310904,
+      "motion": 0.252718296,
+      "variation": 0.392039055
+    },
+    {
+      "timeSeconds": 10.8,
+      "colorWarmth": 0.679914233,
+      "motion": 0.314553063,
+      "variation": 0.38506704
+    },
+    {
+      "timeSeconds": 11.0,
+      "colorWarmth": 0.681113838,
+      "motion": 0.253626746,
+      "variation": 0.391382596
+    },
+    {
+      "timeSeconds": 11.2,
+      "colorWarmth": 0.689556637,
+      "motion": 0.397233272,
+      "variation": 0.382058355
+    },
+    {
+      "timeSeconds": 11.4,
+      "colorWarmth": 0.693054168,
+      "motion": 0.301236658,
+      "variation": 0.380932049
+    },
+    {
+      "timeSeconds": 11.6,
+      "colorWarmth": 0.695943998,
+      "motion": 0.272493535,
+      "variation": 0.376251224
+    },
+    {
+      "timeSeconds": 11.8,
+      "colorWarmth": 0.703639159,
+      "motion": 0.381430385,
+      "variation": 0.360441247
+    },
+    {
+      "timeSeconds": 12.0,
+      "colorWarmth": 0.712930738,
+      "motion": 0.42441153,
+      "variation": 0.340294393
+    },
+    {
+      "timeSeconds": 12.2,
+      "colorWarmth": 0.718958104,
+      "motion": 0.314857761,
+      "variation": 0.327459428
+    },
+    {
+      "timeSeconds": 12.4,
+      "colorWarmth": 0.722049372,
+      "motion": 0.453598533,
+      "variation": 0.32383715
+    },
+    {
+      "timeSeconds": 12.6,
+      "colorWarmth": 0.724150797,
+      "motion": 0.403688343,
+      "variation": 0.322296694
+    },
+    {
+      "timeSeconds": 12.8,
+      "colorWarmth": 0.727404994,
+      "motion": 0.490527108,
+      "variation": 0.314673109
+    },
+    {
+      "timeSeconds": 13.0,
+      "colorWarmth": 0.729552828,
+      "motion": 0.366586731,
+      "variation": 0.289228413
+    },
+    {
+      "timeSeconds": 13.2,
+      "colorWarmth": 0.731246015,
+      "motion": 0.390268491,
+      "variation": 0.270107158
+    },
+    {
+      "timeSeconds": 13.4,
+      "colorWarmth": 0.732132459,
+      "motion": 0.362352941,
+      "variation": 0.262077607
+    },
+    {
+      "timeSeconds": 13.6,
+      "colorWarmth": 0.733911412,
+      "motion": 0.458317581,
+      "variation": 0.231152499
+    },
+    {
+      "timeSeconds": 13.8,
+      "colorWarmth": 0.733589787,
+      "motion": 0.293581605,
+      "variation": 0.231527489
+    },
+    {
+      "timeSeconds": 14.0,
+      "colorWarmth": 0.733765693,
+      "motion": 0.328548455,
+      "variation": 0.230264151
+    },
+    {
+      "timeSeconds": 14.2,
+      "colorWarmth": 0.733670475,
+      "motion": 0.461556402,
+      "variation": 0.209967479
+    },
+    {
+      "timeSeconds": 14.4,
+      "colorWarmth": 0.733686133,
+      "motion": 0.498622279,
+      "variation": 0.18434696
+    },
+    {
+      "timeSeconds": 14.6,
+      "colorWarmth": 0.733362392,
+      "motion": 0.423815301,
+      "variation": 0.176029348
+    },
+    {
+      "timeSeconds": 14.8,
+      "colorWarmth": 0.732511638,
+      "motion": 0.413500729,
+      "variation": 0.184598663
+    },
+    {
+      "timeSeconds": 15.0,
+      "colorWarmth": 0.732851178,
+      "motion": 0.301503738,
+      "variation": 0.171068905
+    },
+    {
+      "timeSeconds": 15.2,
+      "colorWarmth": 0.733782339,
+      "motion": 0.310142474,
+      "variation": 0.165084444
+    },
+    {
+      "timeSeconds": 15.4,
+      "colorWarmth": 0.732502751,
+      "motion": 0.436714158,
+      "variation": 0.166350656
+    },
+    {
+      "timeSeconds": 15.6,
+      "colorWarmth": 0.731127945,
+      "motion": 0.385816523,
+      "variation": 0.174021662
+    },
+    {
+      "timeSeconds": 15.8,
+      "colorWarmth": 0.731569051,
+      "motion": 0.281348568,
+      "variation": 0.167811417
+    },
+    {
+      "timeSeconds": 16.0,
+      "colorWarmth": 0.731459303,
+      "motion": 0.28483378,
+      "variation": 0.172322739
+    },
+    {
+      "timeSeconds": 16.2,
+      "colorWarmth": 0.732593173,
+      "motion": 0.356953026,
+      "variation": 0.17910441
+    },
+    {
+      "timeSeconds": 16.4,
+      "colorWarmth": 0.732597828,
+      "motion": 0.357244557,
+      "variation": 0.195854282
+    },
+    {
+      "timeSeconds": 16.6,
+      "colorWarmth": 0.732346452,
+      "motion": 0.241833827,
+      "variation": 0.207926136
+    },
+    {
+      "timeSeconds": 16.8,
+      "colorWarmth": 0.732167866,
+      "motion": 0.317417595,
+      "variation": 0.226024681
+    },
+    {
+      "timeSeconds": 17.0,
+      "colorWarmth": 0.732502751,
+      "motion": 0.375911976,
+      "variation": 0.227105851
+    },
+    {
+      "timeSeconds": 17.2,
+      "colorWarmth": 0.73307166,
+      "motion": 0.209665679,
+      "variation": 0.228580812
+    },
+    {
+      "timeSeconds": 17.4,
+      "colorWarmth": 0.7325809,
+      "motion": 0.342137584,
+      "variation": 0.243868247
+    },
+    {
+      "timeSeconds": 17.6,
+      "colorWarmth": 0.732378615,
+      "motion": 0.371962195,
+      "variation": 0.264219636
+    },
+    {
+      "timeSeconds": 17.8,
+      "colorWarmth": 0.731315983,
+      "motion": 0.383096817,
+      "variation": 0.284593423
+    },
+    {
+      "timeSeconds": 18.0,
+      "colorWarmth": 0.730522641,
+      "motion": 0.423862322,
+      "variation": 0.296442663
+    },
+    {
+      "timeSeconds": 18.2,
+      "colorWarmth": 0.729253068,
+      "motion": 0.319785583,
+      "variation": 0.30420348
+    },
+    {
+      "timeSeconds": 18.4,
+      "colorWarmth": 0.72849598,
+      "motion": 0.234521089,
+      "variation": 0.310076511
+    },
+    {
+      "timeSeconds": 18.6,
+      "colorWarmth": 0.727306108,
+      "motion": 0.263425965,
+      "variation": 0.313031593
+    },
+    {
+      "timeSeconds": 18.8,
+      "colorWarmth": 0.726939484,
+      "motion": 0.220491842,
+      "variation": 0.316219268
+    },
+    {
+      "timeSeconds": 19.0,
+      "colorWarmth": 0.721460573,
+      "motion": 0.384904312,
+      "variation": 0.334196361
+    },
+    {
+      "timeSeconds": 19.2,
+      "colorWarmth": 0.720846805,
+      "motion": 0.215082522,
+      "variation": 0.337429765
+    },
+    {
+      "timeSeconds": 19.4,
+      "colorWarmth": 0.713077162,
+      "motion": 0.471333051,
+      "variation": 0.349430905
+    },
+    {
+      "timeSeconds": 19.6,
+      "colorWarmth": 0.704572295,
+      "motion": 0.582201533,
+      "variation": 0.359684418
+    },
+    {
+      "timeSeconds": 19.8,
+      "colorWarmth": 0.699955424,
+      "motion": 0.248031222,
+      "variation": 0.368912899
+    },
+    {
+      "timeSeconds": 20.0,
+      "colorWarmth": 0.691402737,
+      "motion": 0.375204777,
+      "variation": 0.383558397
+    },
+    {
+      "timeSeconds": 20.2,
+      "colorWarmth": 0.690963888,
+      "motion": 0.255643015,
+      "variation": 0.380720464
+    },
+    {
+      "timeSeconds": 20.4,
+      "colorWarmth": 0.682830724,
+      "motion": 0.325490196,
+      "variation": 0.392978768
+    },
+    {
+      "timeSeconds": 20.6,
+      "colorWarmth": 0.678355198,
+      "motion": 0.247077632,
+      "variation": 0.40292232
+    },
+    {
+      "timeSeconds": 20.8,
+      "colorWarmth": 0.675449429,
+      "motion": 0.225532515,
+      "variation": 0.405375084
+    },
+    {
+      "timeSeconds": 21.0,
+      "colorWarmth": 0.678284243,
+      "motion": 0.295330794,
+      "variation": 0.398155053
+    },
+    {
+      "timeSeconds": 21.2,
+      "colorWarmth": 0.666430667,
+      "motion": 0.532266892,
+      "variation": 0.403745584
+    },
+    {
+      "timeSeconds": 21.4,
+      "colorWarmth": 0.665344054,
+      "motion": 0.272845253,
+      "variation": 0.41125524
+    },
+    {
+      "timeSeconds": 21.6,
+      "colorWarmth": 0.671077162,
+      "motion": 0.276001317,
+      "variation": 0.405765547
+    },
+    {
+      "timeSeconds": 21.8,
+      "colorWarmth": 0.671113274,
+      "motion": 0.277434523,
+      "variation": 0.408657298
+    },
+    {
+      "timeSeconds": 22.0,
+      "colorWarmth": 0.676219777,
+      "motion": 0.33354775,
+      "variation": 0.406951325
+    },
+    {
+      "timeSeconds": 22.2,
+      "colorWarmth": 0.678711384,
+      "motion": 0.372411718,
+      "variation": 0.417626313
+    },
+    {
+      "timeSeconds": 22.4,
+      "colorWarmth": 0.673316547,
+      "motion": 0.3415075,
+      "variation": 0.421613488
+    },
+    {
+      "timeSeconds": 22.6,
+      "colorWarmth": 0.679279024,
+      "motion": 0.283620633,
+      "variation": 0.413103683
+    },
+    {
+      "timeSeconds": 22.8,
+      "colorWarmth": 0.680149245,
+      "motion": 0.310428363,
+      "variation": 0.415424656
+    },
+    {
+      "timeSeconds": 23.0,
+      "colorWarmth": 0.686472704,
+      "motion": 0.398500964,
+      "variation": 0.412043073
+    },
+    {
+      "timeSeconds": 23.2,
+      "colorWarmth": 0.686952885,
+      "motion": 0.397615084,
+      "variation": 0.426324875
+    },
+    {
+      "timeSeconds": 23.4,
+      "colorWarmth": 0.69516448,
+      "motion": 0.414224855,
+      "variation": 0.414998217
+    },
+    {
+      "timeSeconds": 23.6,
+      "colorWarmth": 0.694946819,
+      "motion": 0.276862745,
+      "variation": 0.413816036
+    },
+    {
+      "timeSeconds": 23.8,
+      "colorWarmth": 0.696655099,
+      "motion": 0.352013918,
+      "variation": 0.413733197
+    },
+    {
+      "timeSeconds": 24.0,
+      "colorWarmth": 0.707850473,
+      "motion": 0.383157004,
+      "variation": 0.389089213
+    },
+    {
+      "timeSeconds": 24.2,
+      "colorWarmth": 0.717242912,
+      "motion": 0.575105092,
+      "variation": 0.369537878
+    },
+    {
+      "timeSeconds": 24.4,
+      "colorWarmth": 0.721754831,
+      "motion": 0.359672732,
+      "variation": 0.350214056
+    },
+    {
+      "timeSeconds": 24.6,
+      "colorWarmth": 0.719934405,
+      "motion": 0.523451357,
+      "variation": 0.367041249
+    },
+    {
+      "timeSeconds": 24.8,
+      "colorWarmth": 0.726747496,
+      "motion": 0.551447783,
+      "variation": 0.329462599
+    },
+    {
+      "timeSeconds": 25.0,
+      "colorWarmth": 0.729956835,
+      "motion": 0.545199605,
+      "variation": 0.317183037
+    },
+    {
+      "timeSeconds": 25.2,
+      "colorWarmth": 0.729239808,
+      "motion": 0.458498143,
+      "variation": 0.327422364
+    },
+    {
+      "timeSeconds": 25.4,
+      "colorWarmth": 0.731333192,
+      "motion": 0.475064654,
+      "variation": 0.300462329
+    },
+    {
+      "timeSeconds": 25.6,
+      "colorWarmth": 0.730770913,
+      "motion": 0.321615649,
+      "variation": 0.303419112
+    },
+    {
+      "timeSeconds": 25.8,
+      "colorWarmth": 0.731056849,
+      "motion": 0.350733061,
+      "variation": 0.28712326
+    },
+    {
+      "timeSeconds": 26.0,
+      "colorWarmth": 0.73193102,
+      "motion": 0.272025203,
+      "variation": 0.274719357
+    },
+    {
+      "timeSeconds": 26.2,
+      "colorWarmth": 0.731103259,
+      "motion": 0.301362675,
+      "variation": 0.271069968
+    },
+    {
+      "timeSeconds": 26.4,
+      "colorWarmth": 0.731110735,
+      "motion": 0.300892463,
+      "variation": 0.260938038
+    },
+    {
+      "timeSeconds": 26.6,
+      "colorWarmth": 0.731013824,
+      "motion": 0.40031034,
+      "variation": 0.241839375
+    },
+    {
+      "timeSeconds": 26.8,
+      "colorWarmth": 0.72974933,
+      "motion": 0.370528989,
+      "variation": 0.251458883
+    },
+    {
+      "timeSeconds": 27.0,
+      "colorWarmth": 0.729921004,
+      "motion": 0.26119716,
+      "variation": 0.251477783
+    },
+    {
+      "timeSeconds": 27.2,
+      "colorWarmth": 0.727857103,
+      "motion": 0.396749894,
+      "variation": 0.247074941
+    },
+    {
+      "timeSeconds": 27.4,
+      "colorWarmth": 0.728151784,
+      "motion": 0.336780928,
+      "variation": 0.234833124
+    },
+    {
+      "timeSeconds": 27.6,
+      "colorWarmth": 0.728320779,
+      "motion": 0.217234213,
+      "variation": 0.236081881
+    },
+    {
+      "timeSeconds": 27.8,
+      "colorWarmth": 0.728549584,
+      "motion": 0.262141346,
+      "variation": 0.234847921
+    },
+    {
+      "timeSeconds": 28.0,
+      "colorWarmth": 0.727652278,
+      "motion": 0.341204683,
+      "variation": 0.242731772
+    },
+    {
+      "timeSeconds": 28.2,
+      "colorWarmth": 0.727727606,
+      "motion": 0.263313114,
+      "variation": 0.240853486
+    },
+    {
+      "timeSeconds": 28.4,
+      "colorWarmth": 0.728275356,
+      "motion": 0.275446466,
+      "variation": 0.238334041
+    },
+    {
+      "timeSeconds": 28.6,
+      "colorWarmth": 0.728357314,
+      "motion": 0.306410871,
+      "variation": 0.241127756
+    },
+    {
+      "timeSeconds": 28.8,
+      "colorWarmth": 0.729299337,
+      "motion": 0.242685851,
+      "variation": 0.246057322
+    },
+    {
+      "timeSeconds": 29.0,
+      "colorWarmth": 0.728868388,
+      "motion": 0.27900315,
+      "variation": 0.259612786
+    },
+    {
+      "timeSeconds": 29.2,
+      "colorWarmth": 0.729569051,
+      "motion": 0.264221564,
+      "variation": 0.265441449
+    },
+    {
+      "timeSeconds": 29.4,
+      "colorWarmth": 0.729494146,
+      "motion": 0.317921663,
+      "variation": 0.281391669
+    },
+    {
+      "timeSeconds": 29.6,
+      "colorWarmth": 0.727939907,
+      "motion": 0.331467532,
+      "variation": 0.296984822
+    },
+    {
+      "timeSeconds": 29.8,
+      "colorWarmth": 0.728411342,
+      "motion": 0.423360135,
+      "variation": 0.308796116
+    }
+  ]
+}

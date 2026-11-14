@@ -1,5 +1,13 @@
-# Generated files from the previous root-level app layout.
+.venv-data/
+.cache-data/
+__pycache__/
+*.pyc
 node_modules/
 .next/
+out/
+coverage/
+*.log
 *.tsbuildinfo
 .DS_Store
+.vercel/
+backend/server/uploads/

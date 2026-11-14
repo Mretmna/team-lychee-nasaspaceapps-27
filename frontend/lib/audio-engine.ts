@@ -6,9 +6,9 @@ interface Voice {
   gain: GainNode;
 }
 
-const PENTATONIC_MIDI = [48, 50, 52, 55, 57, 60, 62, 64, 67, 69, 72, 74, 76, 79, 81];
-const GRID_SECONDS = 0.125;
-const LOOKAHEAD_SECONDS = 0.32;
+const PENTATONIC_MIDI = [48, 50, 53, 55, 57, 60, 62, 65, 67, 69, 72, 74, 77, 79, 81];
+const GRID_SECONDS = 0.25;
+const LOOKAHEAD_SECONDS = 0.4;
 
 function midiToFrequency(midi: number) {
   return 440 * 2 ** ((midi - 69) / 12);
@@ -89,33 +89,34 @@ export class SonificationEngine {
     while (eventTime < end) {
       const gridIndex = Math.round(eventTime / GRID_SECONDS);
       const feature = sampleFeatures(samples, eventTime);
-      const density = 0.08 + feature.motion * 0.62;
+      const density = 0.24 + feature.motion * 0.65;
       if (deterministicUnit(gridIndex) < density) {
-        const delay = Math.max(0.025, eventTime - videoTime + 0.025);
-        this.scheduleVoice(feature, gridIndex, this.context.currentTime + delay);
+        const pitchIndex = Math.min(PENTATONIC_MIDI.length - 1, Math.floor(feature.colorWarmth * PENTATONIC_MIDI.length));
+        const startTime = this.context.currentTime + Math.max(0.025, eventTime - videoTime + 0.025);
+        const bright = feature.variation > 0.55;
+        this.scheduleVoice(PENTATONIC_MIDI[pitchIndex] + (bright ? 12 : 0), feature, startTime, bright);
       }
       eventTime += GRID_SECONDS;
     }
     this.scheduledThrough = end;
   }
 
-  private scheduleVoice(feature: FeatureSample, gridIndex: number, startTime: number) {
+  private scheduleVoice(midi: number, feature: FeatureSample, startTime: number, bright: boolean) {
     if (!this.context || !this.master) return;
     const oscillator = this.context.createOscillator();
     const filter = this.context.createBiquadFilter();
     const gain = this.context.createGain();
-    const pitchIndex = Math.min(PENTATONIC_MIDI.length - 1, Math.floor(feature.colorWarmth * PENTATONIC_MIDI.length));
-    const octaveNudge = deterministicUnit(gridIndex + 99) > 0.82 ? 12 : 0;
-    oscillator.frequency.value = midiToFrequency(PENTATONIC_MIDI[pitchIndex] + octaveNudge);
-    oscillator.type = feature.variation > 0.68 ? "sawtooth" : feature.variation > 0.34 ? "triangle" : "sine";
+    oscillator.frequency.value = midiToFrequency(midi);
+    oscillator.type = bright ? "sine" : "triangle";
     filter.type = "lowpass";
-    filter.frequency.value = 650 + feature.variation * 3000;
-    filter.Q.value = 0.4 + feature.variation * 3;
+    filter.frequency.value = 700 + feature.variation * 3600;
+    filter.Q.value = 0.6;
 
-    const duration = 0.11 + (1 - feature.motion) * 0.28;
-    const peak = 0.055 + feature.variation * 0.025;
+    const duration = bright ? 0.8 : 0.48;
+    const peak = bright ? 0.05 : 0.075;
     gain.gain.setValueAtTime(0.0001, startTime);
-    gain.gain.exponentialRampToValueAtTime(peak, startTime + 0.018);
+    gain.gain.exponentialRampToValueAtTime(peak, startTime + (bright ? 0.012 : 0.025));
+    gain.gain.setTargetAtTime(peak * 0.25, startTime + 0.08, bright ? 0.25 : 0.12);
     gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
     oscillator.connect(filter).connect(gain).connect(this.master);
 

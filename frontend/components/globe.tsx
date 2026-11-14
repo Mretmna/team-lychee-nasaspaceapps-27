@@ -37,9 +37,26 @@ function makeGridLine(points: THREE.Vector3[], material: THREE.LineBasicMaterial
   return new THREE.Line(geometry, material);
 }
 
+function areaPoints(selection: LocationSelection) {
+  const center = toVector(selection.latitude, selection.longitude, 1).normalize();
+  const east = new THREE.Vector3(0, 1, 0).cross(center).normalize();
+  if (east.lengthSq() < 0.01) east.set(1, 0, 0);
+  const north = center.clone().cross(east).normalize();
+  const angle = Math.max(0.018, Math.min(Math.PI, (selection.radiusKm ?? 500) / 6371));
+  return Array.from({ length: 96 }, (_, index) => {
+    const bearing = (index / 96) * Math.PI * 2;
+    return center.clone().multiplyScalar(Math.cos(angle))
+      .addScaledVector(east, Math.sin(angle) * Math.cos(bearing))
+      .addScaledVector(north, Math.sin(angle) * Math.sin(bearing))
+      .normalize().multiplyScalar(RADIUS + 0.025);
+  });
+}
+
 export function Globe({ selection, onSelect }: GlobeProps) {
   const mountRef = useRef<HTMLDivElement>(null);
-  const markerRef = useRef<THREE.Mesh | null>(null);
+  const areaRef = useRef<THREE.LineLoop | null>(null);
+  const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
+  const controlsRef = useRef<OrbitControls | null>(null);
   const onSelectRef = useRef(onSelect);
   const initialSelectionRef = useRef(selection);
   const [available, setAvailable] = useState(true);
@@ -49,7 +66,18 @@ export function Globe({ selection, onSelect }: GlobeProps) {
   }, [onSelect]);
 
   useEffect(() => {
-    markerRef.current?.position.copy(toVector(selection.latitude, selection.longitude, RADIUS + 0.08));
+    initialSelectionRef.current = selection;
+    if (cameraRef.current && controlsRef.current) {
+      const distance = cameraRef.current.position.length();
+      cameraRef.current.position.copy(toVector(selection.latitude, selection.longitude).normalize().multiplyScalar(distance));
+      controlsRef.current.update();
+    }
+    const area = areaRef.current;
+    if (!area) return;
+    area.visible = Boolean(selection.radiusKm);
+    if (!selection.radiusKm) return;
+    area.geometry.dispose();
+    area.geometry = new THREE.BufferGeometry().setFromPoints(areaPoints(selection));
   }, [selection]);
 
   useEffect(() => {
@@ -74,7 +102,7 @@ export function Globe({ selection, onSelect }: GlobeProps) {
     mount.appendChild(renderer.domElement);
 
     const globeMaterial = new THREE.MeshPhongMaterial({
-      color: 0x173f54,
+      color: 0xffffff,
       emissive: 0x071922,
       emissiveIntensity: 0.22,
       shininess: 16,
@@ -84,7 +112,18 @@ export function Globe({ selection, onSelect }: GlobeProps) {
     const sphere = new THREE.Mesh(new THREE.SphereGeometry(RADIUS, 64, 48), globeMaterial);
     scene.add(sphere);
 
-    const gridMaterial = new THREE.LineBasicMaterial({ color: 0x79b9b0, transparent: true, opacity: 0.32 });
+    let disposed = false;
+    new THREE.TextureLoader().load("/earth-atmos-2048.jpg", (texture) => {
+      if (disposed) {
+        texture.dispose();
+        return;
+      }
+      texture.colorSpace = THREE.SRGBColorSpace;
+      globeMaterial.map = texture;
+      globeMaterial.needsUpdate = true;
+    });
+
+    const gridMaterial = new THREE.LineBasicMaterial({ color: 0xc9e7db, transparent: true, opacity: 0.22 });
     for (let latitude = -60; latitude <= 60; latitude += 30) {
       const points: THREE.Vector3[] = [];
       for (let longitude = -180; longitude <= 180; longitude += 4) points.push(toVector(latitude, longitude, RADIUS + 0.006));
@@ -96,13 +135,13 @@ export function Globe({ selection, onSelect }: GlobeProps) {
       scene.add(makeGridLine(points, gridMaterial));
     }
 
-    const marker = new THREE.Mesh(
-      new THREE.SphereGeometry(0.065, 24, 16),
-      new THREE.MeshBasicMaterial({ color: 0xf5b544 }),
+    const area = new THREE.LineLoop(
+      new THREE.BufferGeometry().setFromPoints(areaPoints(initialSelectionRef.current)),
+      new THREE.LineBasicMaterial({ color: 0xf5b544, transparent: true, opacity: 0.9 }),
     );
-    marker.position.copy(toVector(initialSelectionRef.current.latitude, initialSelectionRef.current.longitude, RADIUS + 0.08));
-    markerRef.current = marker;
-    scene.add(marker);
+    area.visible = Boolean(initialSelectionRef.current.radiusKm);
+    areaRef.current = area;
+    scene.add(area);
 
     scene.add(new THREE.HemisphereLight(0xd8fbf3, 0x102733, 2.4));
     const keyLight = new THREE.DirectionalLight(0xffffff, 2.3);
@@ -110,12 +149,16 @@ export function Globe({ selection, onSelect }: GlobeProps) {
     scene.add(keyLight);
 
     const controls = new OrbitControls(camera, renderer.domElement);
+    cameraRef.current = camera;
+    controlsRef.current = controls;
     controls.enableDamping = true;
     controls.enablePan = false;
     controls.minDistance = 3.5;
     controls.maxDistance = 7;
     controls.rotateSpeed = 0.55;
     controls.zoomSpeed = 0.7;
+    camera.position.copy(toVector(initialSelectionRef.current.latitude, initialSelectionRef.current.longitude).normalize().multiplyScalar(5.4));
+    controls.update();
 
     const raycaster = new THREE.Raycaster();
     const pointer = new THREE.Vector2();
@@ -131,7 +174,7 @@ export function Globe({ selection, onSelect }: GlobeProps) {
       const hit = raycaster.intersectObject(sphere)[0];
       if (!hit) return;
       const coordinates = fromVector(hit.point);
-      onSelectRef.current({ name: "Selected point", ...coordinates });
+      onSelectRef.current({ name: "Selected area", ...coordinates, radiusKm: initialSelectionRef.current.radiusKm ?? 500 });
     };
     renderer.domElement.addEventListener("pointerdown", handlePointerDown);
     renderer.domElement.addEventListener("pointerup", handlePointerUp);
@@ -155,6 +198,7 @@ export function Globe({ selection, onSelect }: GlobeProps) {
     animate();
 
     return () => {
+      disposed = true;
       cancelAnimationFrame(frame);
       observer.disconnect();
       renderer.domElement.removeEventListener("pointerdown", handlePointerDown);
@@ -167,11 +211,14 @@ export function Globe({ selection, onSelect }: GlobeProps) {
           materials.forEach((material) => material.dispose());
         }
       });
+      globeMaterial.map?.dispose();
       renderer.dispose();
       renderer.domElement.remove();
-      markerRef.current = null;
+      areaRef.current = null;
+      cameraRef.current = null;
+      controlsRef.current = null;
     };
-  }, []); // Selection updates use the marker ref; rebuilding WebGL would be wasteful.
+  }, []); // Selection updates use the area ref; rebuilding WebGL would be wasteful.
 
   if (!available) {
     return (

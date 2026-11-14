@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { PinIcon } from "@/components/icons";
 import type { LocationSelection } from "@/types/track";
 
@@ -9,6 +9,7 @@ const PRESETS: LocationSelection[] = [
   { name: "Mediterranean", latitude: 36, longitude: 18 },
   { name: "Western Pacific", latitude: 12, longitude: 145 },
 ];
+const mapApi = process.env.NEXT_PUBLIC_MAP_API_URL ?? "http://localhost:8000";
 
 interface LocationPickerProps {
   selection: LocationSelection;
@@ -19,6 +20,104 @@ export function LocationPicker({ selection, onSelect }: LocationPickerProps) {
   const [latitude, setLatitude] = useState(String(selection.latitude));
   const [longitude, setLongitude] = useState(String(selection.longitude));
   const [error, setError] = useState("");
+  const [areas, setAreas] = useState<LocationSelection[]>([]);
+  const [areaName, setAreaName] = useState("");
+  const [city, setCity] = useState("");
+  const [country, setCountry] = useState("");
+  const [radiusKm, setRadiusKm] = useState("500");
+  const [locating, setLocating] = useState(false);
+  const radiusRef = useRef(radiusKm);
+
+  useEffect(() => { radiusRef.current = radiusKm; }, [radiusKm]);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setLatitude(String(selection.latitude));
+      setLongitude(String(selection.longitude));
+      setRadiusKm(String(selection.radiusKm ?? 500));
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [selection.latitude, selection.longitude, selection.radiusKm]);
+
+  useEffect(() => {
+    if (city.trim().length < 2) return;
+    const controller = new AbortController();
+    const timer = window.setTimeout(async () => {
+      setLocating(true);
+      try {
+        const query = new URLSearchParams({ city: city.trim(), country: country.trim() });
+        const response = await fetch(`${mapApi}/api/locations?${query}`, { signal: controller.signal });
+        const place = await response.json();
+        if (!response.ok) throw new Error(place.detail ?? "City lookup failed.");
+        onSelect({ name: `${place.city}, ${place.country}`, city: place.city, country: place.country, latitude: place.latitude, longitude: place.longitude, radiusKm: Number(radiusRef.current) || 500 });
+        setError("");
+      } catch (cause) {
+        if (!controller.signal.aborted) setError(cause instanceof Error ? cause.message : "City lookup failed.");
+      } finally {
+        if (!controller.signal.aborted) setLocating(false);
+      }
+    }, 400);
+    return () => { controller.abort(); window.clearTimeout(timer); };
+  }, [city, country, onSelect]);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      try {
+        const saved = JSON.parse(localStorage.getItem("earth-jukebox-areas") ?? "[]");
+        if (Array.isArray(saved)) {
+          setAreas(saved.filter((area) => typeof area.name === "string" &&
+            Number.isFinite(area.latitude) && Number.isFinite(area.longitude) &&
+            Number.isFinite(area.radiusKm) && area.radiusKm > 0));
+        }
+      } catch { /* Ignore damaged local preferences. */ }
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, []);
+
+  const saveAreas = (next: LocationSelection[]) => {
+    setAreas(next);
+    localStorage.setItem("earth-jukebox-areas", JSON.stringify(next));
+  };
+
+  const addArea = async () => {
+    const radius = Number(radiusKm);
+    const name = areaName.trim();
+    if (!name) {
+      setError("Please enter an area name.");
+      return;
+    }
+    if (!Number.isFinite(radius) || radius < 10 || radius > 10000) {
+      setError("Radius must be between 10 and 10,000 km.");
+      return;
+    }
+    let coordinates = { latitude: selection.latitude, longitude: selection.longitude };
+    let resolvedCity = city.trim();
+    let resolvedCountry = country.trim();
+    if (resolvedCity) {
+      setLocating(true);
+      try {
+        const query = new URLSearchParams({ city: resolvedCity, country: resolvedCountry });
+        const response = await fetch(`${mapApi}/api/locations?${query}`);
+        const place = await response.json();
+        if (!response.ok) throw new Error(place.detail ?? "City lookup failed.");
+        coordinates = { latitude: place.latitude, longitude: place.longitude };
+        resolvedCity = place.city;
+        resolvedCountry = place.country;
+      } catch (cause) {
+        setError(cause instanceof Error ? cause.message : "City lookup failed.");
+        setLocating(false);
+        return;
+      }
+      setLocating(false);
+    }
+    const area = { name, city: resolvedCity, country: resolvedCountry, ...coordinates, radiusKm: radius };
+    saveAreas([...areas, area]);
+    onSelect(area);
+    setAreaName("");
+    setCity("");
+    setCountry("");
+    setError("");
+  };
 
   const applyCoordinates = () => {
     const lat = Number(latitude);
@@ -28,7 +127,7 @@ export function LocationPicker({ selection, onSelect }: LocationPickerProps) {
       return;
     }
     setError("");
-    onSelect({ name: "Custom coordinates", latitude: lat, longitude: lon });
+    onSelect({ name: "Custom coordinates", latitude: lat, longitude: lon, radiusKm: selection.radiusKm ?? 500 });
   };
 
   return (
@@ -39,7 +138,7 @@ export function LocationPicker({ selection, onSelect }: LocationPickerProps) {
       </div>
       <div className="preset-row" aria-label="Location presets">
         {PRESETS.map((preset) => (
-          <button key={preset.name} type="button" onClick={() => onSelect(preset)}>{preset.name}</button>
+          <button key={preset.name} type="button" onClick={() => { setCity(""); setCountry(""); onSelect({ ...preset, radiusKm: selection.radiusKm ?? 500 }); }}>{preset.name}</button>
         ))}
       </div>
       <div className="coordinate-form">
@@ -48,6 +147,26 @@ export function LocationPicker({ selection, onSelect }: LocationPickerProps) {
         <button type="button" onClick={applyCoordinates}>Set point</button>
       </div>
       {error && <p className="field-error" role="alert">{error}</p>}
+      <section className="areas-section" aria-labelledby="areas-title">
+        <h3 id="areas-title">Areas</h3>
+        <p>Enter an area name and a radius from 10 to 10,000 km. Add a city and country to place the marker at the city’s coordinates.</p>
+        <div className="area-form">
+          <label>Area name<input value={areaName} maxLength={40} onChange={(event) => setAreaName(event.target.value)} placeholder="e.g. North Atlantic" /></label>
+          <label>City<input value={city} maxLength={80} onChange={(event) => setCity(event.target.value)} placeholder="e.g. Istanbul" /></label>
+          <label>Country<input value={country} maxLength={80} onChange={(event) => setCountry(event.target.value)} placeholder="e.g. Türkiye" /></label>
+          <label>Radius (km)<input inputMode="numeric" type="number" min="10" max="10000" value={radiusKm} onChange={(event) => { const value = event.target.value; setRadiusKm(value); const radius = Number(value); if (value && Number.isFinite(radius) && radius >= 10 && radius <= 10000) onSelect({ ...selection, radiusKm: radius }); }} /></label>
+          <button type="button" onClick={() => void addArea()} disabled={locating}>{locating ? "Finding city…" : "Add area"}</button>
+        </div>
+        {areas.length > 0 && <ul className="area-list">{areas.map((area, index) => (
+          <li key={`${area.name}-${index}`}>
+            <button type="button" onClick={() => onSelect(area)} aria-label={`Select ${area.name}`}>
+              <strong>{area.name}</strong><small>{[area.city, area.country].filter(Boolean).join(", ")}{area.city || area.country ? " · " : ""}{area.latitude.toFixed(1)}°, {area.longitude.toFixed(1)}° · {area.radiusKm} km</small>
+            </button>
+            <button type="button" className="remove-area" onClick={() => saveAreas(areas.filter((_, areaIndex) => areaIndex !== index))} aria-label={`Remove ${area.name}`}>Remove</button>
+          </li>
+        ))}</ul>}
+        <p className="location-note">City coordinates from GeoNames via Open-Meteo.</p>
+      </section>
       <p className="location-note">Place selection is exploratory. It does not change the global visualization data or the sound mapping.</p>
     </div>
   );
