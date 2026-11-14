@@ -1,6 +1,6 @@
-# Earth Information Jukebox
+# Team Lychee · Earth Information Jukebox
 
-NASA Space Apps dashboard with synchronized live browser audio.
+Team Lychee's project for the 2026 NASA Space Apps Challenge's Earth Information Jukebox challenge. The site pairs Earth visualizations with sound and highlights the five-person team and its Eindhoven local event. See the [official Team Lychee profile](https://www.spaceappschallenge.org/2026/find-a-team/team-lychee/). The interactive dashboard has synchronized live browser audio.
 
 ## Repository layout
 

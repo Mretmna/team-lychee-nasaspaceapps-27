@@ -12,6 +12,8 @@ import { cropGlobalPng, filterPoints, type PointCollection } from "@/lib/geo";
 import type { LoadedTrack, LocationSelection } from "@/types/track";
 
 const soundApiBase = process.env.NEXT_PUBLIC_SONIFY_API_URL ?? "http://localhost:8001";
+const teamProfileUrl = "https://www.spaceappschallenge.org/2026/find-a-team/team-lychee/";
+const teamMembers = ["Mert Özcan", "Ahmet Efe Erdoğan", "Utku Aras Aytürk", "Boran Okandan", "Umut ÇAYCI"];
 
 export function JukeboxDashboard() {
   const [loadedTrack, setLoadedTrack] = useState<LoadedTrack | null>(null);
@@ -112,16 +114,18 @@ export function JukeboxDashboard() {
   return (
     <main>
       <header className="site-header">
-        <a className="brand" href="#top" aria-label="Earth Information Jukebox home"><span>EI</span><strong>Earth Information<br />Jukebox</strong></a>
-        <nav aria-label="Main navigation"><a href="#explore">Explore</a><a href="#maps">Your maps</a><a href="#mapping">How it sounds</a><a href="#sources">Sources</a></nav>
+        <a className="brand" href="#top" aria-label="Team Lychee Earth Jukebox home"><span className="brand-mark" aria-hidden="true">L</span><strong>Team Lychee<br /><small>Earth Jukebox</small></strong></a>
+        <nav aria-label="Main navigation"><a href="#explore">Explore</a><a href="#maps">Your maps</a><a href="#mapping">How it sounds</a><a href="#team">Our team</a><a href="#sources">Sources</a></nav>
         <a className="header-cta" href="#listen">Start listening <ArrowIcon /></a>
       </header>
 
       <section className="hero" id="top">
-        <p className="eyebrow">NASA Space Apps · Earth Information Jukebox</p>
-        <h1>Choose a place.<br /><em>Hear Earth move.</em></h1>
-        <p className="hero-copy">Turn the globe, mark a point, then listen as visual patterns in an Earth observation timeline become pitch, rhythm, and texture.</p>
+        <div className="hero-fruit" aria-hidden="true" />
+        <p className="eyebrow">Team Lychee · 2026 NASA Space Apps Challenge</p>
+        <h1>Hear Earth.<br /><em>With Team Lychee.</em></h1>
+        <p className="hero-copy">We are Team Lychee, five students from Türkiye turning Earth imagery into an experience you can see, hear, and explore. Pick a place, set a radius, and listen to visualizations of our planet.</p>
         <a className="text-link" href="#explore">Explore the globe <ArrowIcon /></a>
+        <div className="hero-meta" aria-label="Team and challenge information"><span>Earth Information Jukebox</span><span>Eindhoven local event</span><a href={teamProfileUrl} target="_blank" rel="noreferrer">Official team page <ArrowIcon /></a></div>
       </section>
 
       <section className="experience" id="explore" aria-labelledby="explore-title">
@@ -155,8 +159,21 @@ export function JukeboxDashboard() {
         </div>
       </section>
 
+      <section className="team-section" id="team" aria-labelledby="team-title">
+        <div className="team-intro">
+          <p className="eyebrow">03 · The people behind the jukebox</p>
+          <h2 id="team-title">Curiosity has a team name.</h2>
+          <p>Our official Space Apps profile describes Team Lychee as high schoolers who bring creativity, curiosity, and coding together. We are taking on The Earth Information Jukebox challenge to make Earth science more accessible through sight and sound.</p>
+          <a className="text-link" href={teamProfileUrl} target="_blank" rel="noreferrer">Meet us on Space Apps <ArrowIcon /></a>
+        </div>
+        <div className="team-roster" aria-label="Team Lychee members">
+          {teamMembers.map((member, index) => <div className="team-member" key={member}><span className="member-number">{String(index + 1).padStart(2, "0")}</span><strong>{member}</strong>{index === 0 && <small>Team owner</small>}</div>)}
+          <p className="team-event">2026 NASA Space Apps Challenge <span>·</span> Eindhoven, Netherlands</p>
+        </div>
+      </section>
+
       <section className="source-section" id="sources" aria-labelledby="sources-title">
-        <p className="eyebrow">03 · Sources & limits</p>
+        <p className="eyebrow">04 · Sources & limits</p>
         <h2 id="sources-title">Clear about what you’re hearing.</h2>
         <div className="source-grid">
           <p>The sound is generated live in your browser from timestamped features. It is an interpretation of visualization frames, not a direct recording of Earth and not a substitute for calibrated scientific measurements.</p>
@@ -168,7 +185,7 @@ export function JukeboxDashboard() {
         </div>
       </section>
 
-      <footer><span>Earth Information Jukebox</span><p>Built for NASA Space Apps 2026 · Browser audio begins only after you press Play.</p></footer>
+      <footer><span>Team Lychee · Earth Information Jukebox</span><p>Built for the 2026 NASA Space Apps Challenge · <a href={teamProfileUrl} target="_blank" rel="noreferrer">Our team profile</a> · Browser audio begins only after you press Play.</p></footer>
     </main>
   );
 }
