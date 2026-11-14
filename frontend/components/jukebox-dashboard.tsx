@@ -133,7 +133,7 @@ export function JukeboxDashboard() {
 
         <div id="listen" className="player-column">
           <MapUpload selection={selection} points={visiblePoints} onPointsChange={setPointData} onCropChange={setCrop} soundTemplate={soundTemplate} />
-          <RotationVisualization key={`${dataset}:${soundTemplate}:${activeCrop?.url ?? "no-crop"}`} crop={activeCrop} duration={duration} onDurationChange={setDuration} dataset={dataset} onDatasetChange={setDataset} templates={templates} soundTemplate={soundTemplate} onSoundTemplateChange={setSoundTemplate} templateError={templateError} onRetryTemplates={() => setTemplateReload((value) => value + 1)} track={!loading && !loadError && loadedTrack?.track.videoUrl.includes(trackId) ? loadedTrack : null} />
+          <RotationVisualization key={`${dataset}:${soundTemplate}:${activeCrop?.url ?? "no-crop"}`} crop={activeCrop} selection={selection} duration={duration} onDurationChange={setDuration} dataset={dataset} onDatasetChange={setDataset} templates={templates} soundTemplate={soundTemplate} onSoundTemplateChange={setSoundTemplate} templateError={templateError} onRetryTemplates={() => setTemplateReload((value) => value + 1)} track={!loading && !loadError && loadedTrack?.track.videoUrl.includes(trackId) ? loadedTrack : null} />
           {cropError && !activeCrop && <p className="field-error" role="alert">{cropError}</p>}
           {(dataset === "precipitation" || dataset === "ocean") && loading && <div className="load-state" role="status"><span className="loader" />Loading the visualization timeline…</div>}
           {(dataset === "precipitation" || dataset === "ocean") && !loading && loadError && (

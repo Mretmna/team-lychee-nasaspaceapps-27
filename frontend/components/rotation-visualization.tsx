@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { VisualizationCrop } from "@/components/map-upload";
 import { cropGlobalPng, drawCircularGlobalFrame, projectCircularPng } from "@/lib/geo";
-import type { LoadedTrack } from "@/types/track";
+import type { LoadedTrack, LocationSelection } from "@/types/track";
 
 const apiBase = process.env.NEXT_PUBLIC_MAP_API_URL ?? "http://localhost:8000";
 const soundApiBase = process.env.NEXT_PUBLIC_SONIFY_API_URL ?? "http://localhost:8001";
@@ -13,8 +13,22 @@ export type Dataset = "actual" | "precipitation" | "ocean" | "map1" | "map2" | "
 export const datasetLabels: Record<Dataset, string> = { actual: "Actual World", precipitation: "Global Precipitation", ocean: "North Pacific Color", map1: "Air Quality", map2: "Near Surface Ozone", map3: "Earth Now" };
 const datasets = (Object.entries(datasetLabels) as [Dataset, string][]).map(([id, label]) => ({ id, label }));
 const hasVideo = (dataset: Dataset) => dataset === "precipitation" || dataset === "ocean";
+const datasetDescriptions: Record<Dataset, string> = {
+  actual: "A still reference image of Earth. The line sweeps clockwise across the selected region.",
+  precipitation: "A NASA global precipitation animation. Colored patterns change as the observation timeline advances; this view shows only the selected region.",
+  ocean: "A NASA ocean visualization. Ocean colors change through the timeline, while land appears gray. This view shows only the selected region.",
+  map1: "A still air quality map supplied for this project. It has no time sequence.",
+  map2: "A still near surface ozone map supplied for this project. It has no time sequence.",
+  map3: "A still Earth Now map supplied for this project. It has no time sequence.",
+};
 
-export function RotationVisualization({ crop, duration, onDurationChange, dataset, onDatasetChange, templates, soundTemplate, onSoundTemplateChange, templateError, onRetryTemplates, track }: { crop: VisualizationCrop | null; duration: 10 | 20 | 30; onDurationChange: (duration: 10 | 20 | 30) => void; dataset: Dataset; onDatasetChange: (dataset: Dataset) => void; templates: SoundTemplateOption[]; soundTemplate: string; onSoundTemplateChange: (template: string) => void; templateError: string; onRetryTemplates: () => void; track: LoadedTrack | null }) {
+function describeCoordinates(selection: LocationSelection) {
+  const latitude = `${Math.abs(selection.latitude).toFixed(2)} degrees ${selection.latitude >= 0 ? "north" : "south"}`;
+  const longitude = `${Math.abs(selection.longitude).toFixed(2)} degrees ${selection.longitude >= 0 ? "east" : "west"}`;
+  return `${latitude}, ${longitude}`;
+}
+
+export function RotationVisualization({ crop, selection, duration, onDurationChange, dataset, onDatasetChange, templates, soundTemplate, onSoundTemplateChange, templateError, onRetryTemplates, track }: { crop: VisualizationCrop | null; selection: LocationSelection; duration: 10 | 20 | 30; onDurationChange: (duration: 10 | 20 | 30) => void; dataset: Dataset; onDatasetChange: (dataset: Dataset) => void; templates: SoundTemplateOption[]; soundTemplate: string; onSoundTemplateChange: (template: string) => void; templateError: string; onRetryTemplates: () => void; track: LoadedTrack | null }) {
   const [angle, setAngle] = useState(0);
   const [running, setRunning] = useState(false);
   const [starting, setStarting] = useState(false);
@@ -22,6 +36,7 @@ export function RotationVisualization({ crop, duration, onDurationChange, datase
   const [size, setSize] = useState({ width: 0, height: 0 });
   const [circularUrl, setCircularUrl] = useState("");
   const [soundUrl, setSoundUrl] = useState("");
+  const [announcement, setAnnouncement] = useState("");
   const audioRef = useRef<HTMLAudioElement>(null);
   const imageRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -30,6 +45,14 @@ export function RotationVisualization({ crop, duration, onDurationChange, datase
   const requestRef = useRef<AbortController | null>(null);
   const busyRef = useRef(false);
   const lastVideoUpdateRef = useRef(-Infinity);
+  const announcedQuarterRef = useRef(0);
+
+  function announceProgress(fraction: number) {
+    const quarter = Math.min(4, Math.floor(fraction * 4));
+    if (quarter <= announcedQuarterRef.current) return;
+    announcedQuarterRef.current = quarter;
+    setAnnouncement(quarter === 4 ? `${datasetLabels[dataset]} complete.` : `${datasetLabels[dataset]} ${quarter * 25} percent complete.`);
+  }
 
   const renderVideoFrame = () => {
     if (videoRef.current && frameCanvasRef.current && crop) {
@@ -75,6 +98,7 @@ export function RotationVisualization({ crop, duration, onDurationChange, datase
     const length = Number.isFinite(audio.duration) && audio.duration > 0 ? audio.duration : duration;
     const fraction = Math.min(1, audio.currentTime / length);
     setAngle(fraction * 360);
+    announceProgress(fraction);
     const video = videoRef.current;
     if (video && track && (Math.abs(audio.currentTime - lastVideoUpdateRef.current) >= 0.08 || fraction === 1)) {
       const videoLength = Number.isFinite(video.duration) ? video.duration : track.track.durationSeconds;
@@ -92,6 +116,7 @@ export function RotationVisualization({ crop, duration, onDurationChange, datase
   function onAudioPlay() {
     setError("");
     setRunning(true);
+    setAnnouncement(`${datasetLabels[dataset]} playback started. ${duration} seconds total.`);
     if (frameRef.current !== null) cancelAnimationFrame(frameRef.current);
     frameRef.current = requestAnimationFrame(animateAudio);
   }
@@ -107,11 +132,13 @@ export function RotationVisualization({ crop, duration, onDurationChange, datase
     setStarting(false);
     setError(`${message} The visualization is playing without generated sound.`);
     setRunning(true);
+    setAnnouncement(`${datasetLabels[dataset]} playback started without sound. ${duration} seconds total.`);
     const startedAt = performance.now();
     let lastVideoUpdate = -Infinity;
     const tick = (now: number) => {
       const fraction = Math.min(1, (now - startedAt) / (duration * 1000));
       setAngle(fraction * 360);
+      announceProgress(fraction);
       const video = videoRef.current;
       if (video && track && (now - lastVideoUpdate >= 80 || fraction === 1)) {
         const videoLength = Number.isFinite(video.duration) ? video.duration : track.track.durationSeconds;
@@ -134,6 +161,8 @@ export function RotationVisualization({ crop, duration, onDurationChange, datase
     setStarting(true);
     setRunning(false);
     setAngle(0);
+    announcedQuarterRef.current = 0;
+    setAnnouncement(`Preparing ${datasetLabels[dataset]} for ${duration} seconds.`);
     setError("");
     if (frameRef.current !== null) cancelAnimationFrame(frameRef.current);
     audioRef.current?.pause();
@@ -237,7 +266,9 @@ export function RotationVisualization({ crop, duration, onDurationChange, datase
   return <section className="rotation-visualization" aria-labelledby="rotation-title">
     <h2 id="rotation-title">Explore a visualization</h2>
       <div className="dataset-options" role="group" aria-label="Visualization dataset">{datasets.map((option) => <button key={option.id} type="button" aria-pressed={dataset === option.id} className={dataset === option.id ? "active" : ""} onClick={() => onDatasetChange(option.id)}>{option.label}</button>)}</div>
-      <div className="rotation-image" ref={imageRef}>{!hasVideo(dataset) ? circularUrl ? <img src={circularUrl} alt={`Circular view of ${datasets.find((option) => option.id === dataset)?.label}`} /> : <p>Preparing selected region…</p> : track && !track.isSynthetic ? <><video ref={videoRef} className="timeline-source" src={track.track.videoUrl} preload="auto" muted playsInline onLoadedData={renderVideoFrame} onSeeked={renderVideoFrame} onError={() => setError("The NASA video could not be loaded.")} /><canvas ref={frameCanvasRef} className="timeline-canvas" role="img" aria-label={`${datasets.find((option) => option.id === dataset)?.label} within the selected radius`} /></> : <p>{track?.isSynthetic ? "NASA timeline unavailable. The synthetic preview is not shown here." : "Loading NASA timeline…"}</p>}<svg className="rotation-overlay" width={size.width} height={size.height} viewBox={`0 0 ${size.width || 1} ${size.height || 1}`} aria-hidden="true"><line x1={halfWidth} y1={halfHeight} x2={endX} y2={endY} /></svg></div>
+      <div className="rotation-image" ref={imageRef} role="img" aria-label={`${datasetLabels[dataset]} in a circular view`} aria-describedby="visualization-description">{!hasVideo(dataset) ? circularUrl ? <img src={circularUrl} alt="" aria-hidden="true" /> : <p>Preparing selected region…</p> : track && !track.isSynthetic ? <><video ref={videoRef} className="timeline-source" src={track.track.videoUrl} preload="auto" muted playsInline onLoadedData={renderVideoFrame} onSeeked={renderVideoFrame} onError={() => setError("The NASA video could not be loaded.")} /><canvas ref={frameCanvasRef} className="timeline-canvas" aria-hidden="true" /></> : <p>{track?.isSynthetic ? "NASA timeline unavailable. The synthetic preview is not shown here." : "Loading NASA timeline…"}</p>}<svg className="rotation-overlay" width={size.width} height={size.height} viewBox={`0 0 ${size.width || 1} ${size.height || 1}`} aria-hidden="true"><line x1={halfWidth} y1={halfHeight} x2={endX} y2={endY} /></svg></div>
+      <div className="accessible-description" id="visualization-description"><strong>About this view and sound</strong><p>{datasetDescriptions[dataset]}</p><p>Selected area: {selection.name}, centered at {describeCoordinates(selection)}, with a {selection.radiusKm ?? 500} kilometer radius. The line makes one clockwise circle in {duration} seconds.</p><p>Generated sound maps image colors and brightness to tones. It is an interpretation of the imagery, not a direct recording or a measurement at this location.</p></div>
+      <p className="sr-only" role="status" aria-live="polite" aria-atomic="true">{announcement}</p>
       <div className="sound-template-choice">
         <label htmlFor="sound-template">Sound template</label>
         <select id="sound-template" value={soundTemplate} disabled={!templates.length || starting} onChange={(event) => onSoundTemplateChange(event.target.value)}>
