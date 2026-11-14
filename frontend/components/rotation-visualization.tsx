@@ -103,6 +103,31 @@ export function RotationVisualization({ crop, duration, onDurationChange, datase
     busyRef.current = false;
   }
 
+  function startWithoutSound(message: string) {
+    setStarting(false);
+    setError(`${message} The visualization is playing without generated sound.`);
+    setRunning(true);
+    const startedAt = performance.now();
+    let lastVideoUpdate = -Infinity;
+    const tick = (now: number) => {
+      const fraction = Math.min(1, (now - startedAt) / (duration * 1000));
+      setAngle(fraction * 360);
+      const video = videoRef.current;
+      if (video && track && (now - lastVideoUpdate >= 80 || fraction === 1)) {
+        const videoLength = Number.isFinite(video.duration) ? video.duration : track.track.durationSeconds;
+        video.currentTime = Math.min(videoLength, fraction * videoLength);
+        lastVideoUpdate = now;
+      }
+      if (fraction < 1) frameRef.current = requestAnimationFrame(tick);
+      else {
+        frameRef.current = null;
+        busyRef.current = false;
+        setRunning(false);
+      }
+    };
+    frameRef.current = requestAnimationFrame(tick);
+  }
+
   async function start() {
     if (!crop || busyRef.current || (hasVideo(dataset) && (!track || track.isSynthetic))) return;
     busyRef.current = true;
@@ -169,13 +194,19 @@ export function RotationVisualization({ crop, duration, onDurationChange, datase
       if (controller.signal.aborted) return;
       const soundBody = new FormData();
       soundBody.append("file", soundImage, "selected-area.png");
-      const soundResponse = await fetch(`${soundApiBase}/sonify?duration_seconds=${duration}&scan_mode=clockwise&sound_template=${encodeURIComponent(soundTemplate)}`, { method: "POST", body: soundBody, signal: controller.signal });
-      if (!soundResponse.ok) {
-        const detail = await soundResponse.json().catch(() => null) as { detail?: string } | null;
-        throw new Error(detail?.detail ?? `Sound service returned ${soundResponse.status}.`);
+      let sound: Blob;
+      try {
+        const soundResponse = await fetch(`${soundApiBase}/sonify?duration_seconds=${duration}&scan_mode=clockwise&sound_template=${encodeURIComponent(soundTemplate)}`, { method: "POST", body: soundBody, signal: controller.signal });
+        if (!soundResponse.ok) {
+          const detail = await soundResponse.json().catch(() => null) as { detail?: string } | null;
+          throw new Error(detail?.detail ?? `Sound service returned ${soundResponse.status}.`);
+        }
+        sound = await soundResponse.blob();
+        if (!sound.type.startsWith("audio/")) throw new Error("The sound service did not return audio.");
+      } catch (cause) {
+        if (!controller.signal.aborted) startWithoutSound(cause instanceof Error ? cause.message : "The sound service is unavailable.");
+        return;
       }
-      const sound = await soundResponse.blob();
-      if (!sound.type.startsWith("audio/")) throw new Error("The sound service did not return audio.");
       if (controller.signal.aborted) return;
       const url = URL.createObjectURL(sound);
       setSoundUrl(url);
@@ -216,7 +247,7 @@ export function RotationVisualization({ crop, duration, onDurationChange, datase
         {templateError && <p role="alert">{templateError} <button type="button" onClick={onRetryTemplates}>Retry</button></p>}
       </div>
       <p className="duration-label">Choose animation duration</p>
-      <div className="rotation-controls"><div className="duration-options" role="group" aria-label="Rotation duration">{durations.map((seconds) => <button key={seconds} type="button" aria-pressed={duration === seconds} className={duration === seconds ? "active" : ""} disabled={running || starting} onClick={() => onDurationChange(seconds)}>{seconds} seconds</button>)}</div><button type="button" className="rotation-start" disabled={!crop || running || starting || (hasVideo(dataset) && (!track || track.isSynthetic))} onClick={() => void start()}>{starting ? "Generating sound…" : running ? "Playing…" : "Start with sound"}</button></div>
+      <div className="rotation-controls"><div className="duration-options" role="group" aria-label="Rotation duration">{durations.map((seconds) => <button key={seconds} type="button" aria-pressed={duration === seconds} className={duration === seconds ? "active" : ""} disabled={running || starting} onClick={() => onDurationChange(seconds)}>{seconds} seconds</button>)}</div><button type="button" className="rotation-start" disabled={!crop || running || starting || (hasVideo(dataset) && (!track || track.isSynthetic))} onClick={() => void start()}>{starting ? "Generating sound…" : running ? "Playing…" : templateError ? "Start visualization" : "Start with sound"}</button></div>
       <div className="rotation-audio"><p>{soundUrl ? "Sound ready for this region." : "Start generates sound for the selected region."}</p>{soundUrl && <button type="button" className="rotation-start" onClick={() => void audioRef.current?.play().catch(() => setError("Playback was blocked. Use the audio controls to start it."))}>{running ? "Resume sound" : "Play generated sound"}</button>}<audio ref={audioRef} controls={Boolean(soundUrl)} style={{ display: soundUrl ? "block" : "none" }} aria-label="Generated region sound" onPlay={onAudioPlay} onPause={onAudioStop} onSeeked={syncToAudio} onEnded={() => { setAngle(360); onAudioStop(); }} onError={() => setError("The generated audio could not be played by this browser.")} /></div>
       <p role="status">{running ? `Rotating at ${360 / duration}° per second.` : angle === 360 ? "One revolution complete." : "Choose a duration and press Start."}</p>
       {error && <p className="field-error" role="alert">{error}</p>}

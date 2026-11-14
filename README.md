@@ -23,6 +23,8 @@ The location picker supports coordinates, city search, radius selection, and sav
 
 From `backend/`, install `server/requirements.txt` and start `uvicorn server.main:app --reload --port 8000` with Python 3.10 or newer. Set `NEXT_PUBLIC_MAP_API_URL` in the frontend if the service is not at `http://localhost:8000`. The map upload accepts GeoJSON Point FeatureCollections and full-world equirectangular PNGs up to 10 MB, filters them to the chosen circular region, and validates the received selection. The trial controls preview and download the crop. Start the separate STRAUSS sound service from `TeamLychee_NasaSpaceApps_Backend` on port 8001 (see its README); set `NEXT_PUBLIC_SONIFY_API_URL` if hosted elsewhere. After raster selection, the frontend sends the cropped PNG to that service's `POST /sonify` and offers a Play generated sound button. The rotating region preview has 10, 20, and 30 second duration controls.
 
+If the optional sound service on port 8001 is unavailable, Start still plays the circular visualization for the selected duration and displays a sound warning. The local Next.js config also supports dependencies left at the repository root after moving the app into `frontend/`; a normal install inside `frontend/` remains the preferred setup.
+
 ## Checks and deployment
 
 From `frontend/`, run `npm run test`, `npm run typecheck`, `npm run lint`, and `npm run build`. For Vercel, set Root Directory to `frontend` and configure `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` and `NEXT_PUBLIC_MAP_API_URL` as needed. Deploy the FastAPI service separately and configure its allowed frontend origin.
