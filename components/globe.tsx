@@ -41,6 +41,8 @@ export function Globe({ selection, onSelect }: GlobeProps) {
   const mountRef = useRef<HTMLDivElement>(null);
   const markerRef = useRef<THREE.Mesh | null>(null);
   const areaRef = useRef<THREE.LineLoop | null>(null);
+  const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
+  const controlsRef = useRef<OrbitControls | null>(null);
   const onSelectRef = useRef(onSelect);
   const initialSelectionRef = useRef(selection);
   const [available, setAvailable] = useState(true);
@@ -51,6 +53,11 @@ export function Globe({ selection, onSelect }: GlobeProps) {
 
   useEffect(() => {
     markerRef.current?.position.copy(toVector(selection.latitude, selection.longitude, RADIUS + 0.08));
+    if (cameraRef.current && controlsRef.current) {
+      const distance = cameraRef.current.position.length();
+      cameraRef.current.position.copy(toVector(selection.latitude, selection.longitude).normalize().multiplyScalar(distance));
+      controlsRef.current.update();
+    }
     const area = areaRef.current;
     if (!area) return;
     area.visible = Boolean(selection.radiusKm);
@@ -148,12 +155,16 @@ export function Globe({ selection, onSelect }: GlobeProps) {
     scene.add(keyLight);
 
     const controls = new OrbitControls(camera, renderer.domElement);
+    cameraRef.current = camera;
+    controlsRef.current = controls;
     controls.enableDamping = true;
     controls.enablePan = false;
     controls.minDistance = 3.5;
     controls.maxDistance = 7;
     controls.rotateSpeed = 0.55;
     controls.zoomSpeed = 0.7;
+    camera.position.copy(toVector(initialSelectionRef.current.latitude, initialSelectionRef.current.longitude).normalize().multiplyScalar(5.4));
+    controls.update();
 
     const raycaster = new THREE.Raycaster();
     const pointer = new THREE.Vector2();
@@ -211,6 +222,8 @@ export function Globe({ selection, onSelect }: GlobeProps) {
       renderer.domElement.remove();
       markerRef.current = null;
       areaRef.current = null;
+      cameraRef.current = null;
+      controlsRef.current = null;
     };
   }, []); // Selection updates use the marker ref; rebuilding WebGL would be wasteful.
 

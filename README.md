@@ -22,6 +22,7 @@ The three feature scores are normalized from sampled animation frames: relative 
 If the production document is missing, the app falls back to the separately labeled synthetic fixture at `public/fixtures/ocean.synthetic.json`.
 
 The location picker retains latitude and longitude inputs. Visitors can save named circular areas around a selected point in their browser. A selected area is outlined on the globe. Place and area selection do not filter the global feature timeline or change the sound.
+Entering a city resolves its coordinates through the FastAPI `/api/locations` endpoint, using [Open-Meteo's GeoNames-based geocoding service](https://open-meteo.com/en/docs/geocoding-api). The globe turns to the resolved city when the area is saved.
 
 ## Visitor map API
 

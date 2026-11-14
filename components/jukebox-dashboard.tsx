@@ -67,6 +67,7 @@ export function JukeboxDashboard() {
         </div>
 
         <div id="listen" className="player-column">
+          <MapUpload selection={selection} />
           <div className="track-choice" aria-label="Earth visualization"><span>Explore a visualization</span><button type="button" className={trackId === "precipitation" ? "active" : ""} onClick={() => setTrackId("precipitation")}>Global precipitation</button><button type="button" className={trackId === "ocean" ? "active" : ""} onClick={() => setTrackId("ocean")}>North Pacific color</button></div>
           {loading && <div className="load-state" role="status"><span className="loader" />Loading the visualization timeline…</div>}
           {!loading && loadError && (
@@ -78,8 +79,6 @@ export function JukeboxDashboard() {
           {!loading && loadedTrack && <JukeboxPlayer key={loadedTrack.track.id} loadedTrack={loadedTrack} />}
         </div>
       </section>
-
-      <MapUpload selection={selection} />
 
       <section className="mapping-section" id="mapping" aria-labelledby="mapping-title">
         <div><p className="eyebrow">02 · Understand the mapping</p><h2 id="mapping-title">A score you can follow.</h2></div>

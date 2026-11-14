@@ -43,8 +43,9 @@ export function MapUpload({ selection }: { selection: LocationSelection }) {
     <p>Upload a PNG, JPEG, WebP, or GeoJSON file (up to 10 MB) to the map API.</p>
     <p>Selected area: {selection.name}{selection.city ? ` · ${selection.city}` : ""}{selection.country ? `, ${selection.country}` : ""} ({selection.latitude.toFixed(1)}°, {selection.longitude.toFixed(1)}°{selection.radiusKm ? `, ${selection.radiusKm} km radius` : ""}). This area is sent with the map.</p>
     <form onSubmit={upload}>
-      <label htmlFor="map-file">Map file</label>
       <input id="map-file" type="file" accept=".png,.jpg,.jpeg,.webp,.geojson,application/geo+json" onChange={(event) => setFile(event.target.files?.[0] ?? null)} required />
+      <label htmlFor="map-file" className="file-picker">Choose a map</label>
+      <span className="file-name" aria-live="polite">{file?.name ?? "No file selected"}</span>
       <button type="submit" disabled={!file || uploading}>{uploading ? "Uploading…" : "Upload map"}</button>
     </form>
     {error && <p className="field-error" role="alert">{error}</p>}

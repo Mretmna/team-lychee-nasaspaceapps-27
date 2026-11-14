@@ -1,10 +1,14 @@
 """Small FastAPI service for visitor-supplied map images and GeoJSON."""
 
 import json
+import unicodedata
 from pathlib import Path
+from urllib.parse import urlencode
+from urllib.request import urlopen
 from uuid import uuid4
+from asyncio import to_thread
 
-from fastapi import FastAPI, File, Form, HTTPException, UploadFile
+from fastapi import FastAPI, File, Form, HTTPException, Query, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
@@ -14,8 +18,37 @@ MAX_BYTES = 10 * 1024 * 1024
 EXTENSIONS = {"image/png": ".png", "image/jpeg": ".jpg", "image/webp": ".webp", "application/geo+json": ".geojson", "application/json": ".geojson"}
 
 app = FastAPI(title="Earth Jukebox map API")
-app.add_middleware(CORSMiddleware, allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"], allow_methods=["POST"], allow_headers=["*"])
+app.add_middleware(CORSMiddleware, allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"], allow_methods=["GET", "POST"], allow_headers=["*"])
 app.mount("/maps", StaticFiles(directory=UPLOADS), name="maps")
+
+
+def normalized(value: str) -> str:
+    return "".join(character for character in unicodedata.normalize("NFKD", value.casefold()) if not unicodedata.combining(character))
+
+
+@app.get("/api/locations")
+async def locate_city(city: str = Query(min_length=2, max_length=80), country: str = Query(default="", max_length=80)):
+    query = urlencode({"name": city.strip(), "count": 20, "language": "en", "format": "json"})
+
+    def fetch_locations():
+        with urlopen(f"https://geocoding-api.open-meteo.com/v1/search?{query}", timeout=8) as response:
+            return json.load(response).get("results", [])
+
+    try:
+        results = await to_thread(fetch_locations)
+    except Exception:
+        raise HTTPException(502, "City lookup is temporarily unavailable.") from None
+
+    country_query = normalized(country.strip())
+    if country_query:
+        country_code = "tr" if country_query in {"turkey", "turkiye", "republic of turkiye"} else country_query
+        results = [item for item in results if country_code == normalized(item.get("country_code", "")) or country_query in normalized(item.get("country", ""))]
+    city_query = normalized(city.strip())
+    results = [item for item in results if normalized(item.get("name", "")) == city_query] or results
+    if not results:
+        raise HTTPException(404, "City not found. Check the city and country names.")
+    place = results[0]
+    return {"city": place["name"], "country": place["country"], "latitude": place["latitude"], "longitude": place["longitude"], "region": place.get("admin1", "")}
 
 
 @app.post("/api/maps")
