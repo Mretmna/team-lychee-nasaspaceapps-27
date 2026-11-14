@@ -5,8 +5,9 @@ import { cropGlobalPng, parsePointCollection, type PointCollection } from "@/lib
 import type { LocationSelection } from "@/types/track";
 
 const apiBase = process.env.NEXT_PUBLIC_MAP_API_URL ?? "http://localhost:8000";
+export type VisualizationCrop = { blob: Blob; url: string; latitude: number; longitude: number; radiusKm: number; bounds: { west: number; east: number; south: number; north: number } };
 
-export function MapUpload({ selection, points, onPointsChange }: { selection: LocationSelection; points: PointCollection; onPointsChange: (value: PointCollection | null) => void }) {
+export function MapUpload({ selection, points, onPointsChange, onCropChange }: { selection: LocationSelection; points: PointCollection; onPointsChange: (value: PointCollection | null) => void; onCropChange: (crop: VisualizationCrop | null) => void }) {
   const [fileName, setFileName] = useState("");
   const [sourceCount, setSourceCount] = useState(0);
   const [rasterFile, setRasterFile] = useState<File | null>(null);
@@ -30,6 +31,7 @@ export function MapUpload({ selection, points, onPointsChange }: { selection: Lo
     setActive(false);
     setStatus("");
     setPreview(null);
+    onCropChange(null);
     setSound(null);
     setSoundError("");
     setError("");
@@ -65,11 +67,13 @@ export function MapUpload({ selection, points, onPointsChange }: { selection: Lo
       try {
         let response: Response;
         let croppedBlob: Blob | null = null;
+        let croppedBounds: VisualizationCrop["bounds"] | null = null;
         let soundBody: FormData | null = null;
         if (rasterFile) {
           const cropped = await cropGlobalPng(rasterFile, selection);
           if (controller.signal.aborted) return;
           croppedBlob = cropped.blob;
+          croppedBounds = cropped.bounds;
           const body = new FormData();
           body.append("file", cropped.blob, "selected-area.png");
           body.append("latitude", String(selection.latitude));
@@ -91,6 +95,7 @@ export function MapUpload({ selection, points, onPointsChange }: { selection: Lo
         if (croppedBlob) {
           if (controller.signal.aborted) return;
           setPreview({ key: selectionKey, pngUrl: URL.createObjectURL(croppedBlob) });
+          if (croppedBounds) onCropChange({ blob: croppedBlob, url: URL.createObjectURL(croppedBlob), latitude: selection.latitude, longitude: selection.longitude, radiusKm: selection.radiusKm ?? 500, bounds: croppedBounds });
         }
         setStatus(rasterFile ? `Cropped ${result.width} × ${result.height} map pixels within ${result.radiusKm} km sent to FastAPI.` : `${result.receivedPoints} points within ${result.radiusKm} km sent to FastAPI.`);
         setConfirmedKey(selectionKey);
@@ -113,7 +118,7 @@ export function MapUpload({ selection, points, onPointsChange }: { selection: Lo
       }
     }, 200);
     return () => { controller.abort(); window.clearTimeout(timer); };
-  }, [active, points, rasterFile, selection, selectionKey]);
+  }, [active, points, rasterFile, selection, selectionKey, onCropChange]);
 
   return <section className="map-upload-section" id="maps" aria-labelledby="maps-title">
     <p className="eyebrow">Your maps</p>

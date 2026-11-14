@@ -86,7 +86,10 @@ async def process_raster_selection(
     east: float = Form(...),
     south: float = Form(...),
     north: float = Form(...),
+    duration_seconds: int | None = Form(None),
 ):
+    if duration_seconds is not None and duration_seconds not in (10, 20, 30):
+        raise HTTPException(422, "Duration must be 10, 20, or 30 seconds.")
     values = (latitude, longitude, radius_km, west, east, south, north)
     if not all(math.isfinite(value) for value in values) or not -90 <= latitude <= 90 or not -180 <= longitude <= 180 or not 10 <= radius_km <= 10000:
         raise HTTPException(422, "Invalid selected center or radius.")
@@ -113,7 +116,7 @@ async def process_raster_selection(
         if distance_km(latitude, longitude, pixel_latitude, pixel_longitude) > radius_km + 1:
             raise HTTPException(422, "The PNG contains pixels outside the selected radius.")
         covered += 1
-    return {"latitude": latitude, "longitude": longitude, "radiusKm": radius_km, "width": width, "height": height, "coveredPixels": covered}
+    return {"latitude": latitude, "longitude": longitude, "radiusKm": radius_km, "width": width, "height": height, "coveredPixels": covered, "durationSeconds": duration_seconds}
 
 
 @app.get("/api/locations")

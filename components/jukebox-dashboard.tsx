@@ -5,7 +5,8 @@ import { ArrowIcon } from "@/components/icons";
 import { JukeboxPlayer } from "@/components/jukebox-player";
 import { LocationPicker } from "@/components/location-picker";
 import { RadiusMap } from "@/components/radius-map";
-import { MapUpload } from "@/components/map-upload";
+import { MapUpload, type VisualizationCrop } from "@/components/map-upload";
+import { RotationVisualization } from "@/components/rotation-visualization";
 import { loadTrack } from "@/lib/track";
 import { filterPoints, type PointCollection } from "@/lib/geo";
 import type { LoadedTrack, LocationSelection } from "@/types/track";
@@ -17,8 +18,12 @@ export function JukeboxDashboard() {
   const [selection, setSelection] = useState<LocationSelection>({ name: "North Atlantic", latitude: 38, longitude: -35, radiusKm: 500 });
   const [trackId, setTrackId] = useState<"precipitation" | "ocean">("precipitation");
   const [pointData, setPointData] = useState<PointCollection | null>(null);
+  const [crop, setCrop] = useState<VisualizationCrop | null>(null);
+  const activeCrop = crop && crop.latitude === selection.latitude && crop.longitude === selection.longitude && crop.radiusKm === (selection.radiusKm ?? 500) ? crop : null;
   const visiblePoints = useMemo(() => pointData ? filterPoints(pointData, selection) : { type: "FeatureCollection" as const, features: [] }, [pointData, selection]);
   const requestId = useRef(0);
+
+  useEffect(() => () => { if (crop) URL.revokeObjectURL(crop.url); }, [crop]);
 
   const fetchTrack = useCallback(async (fixture = false) => {
     const currentRequest = ++requestId.current;
@@ -65,7 +70,8 @@ export function JukeboxDashboard() {
         </div>
 
         <div id="listen" className="player-column">
-          <MapUpload selection={selection} points={visiblePoints} onPointsChange={setPointData} />
+          <MapUpload selection={selection} points={visiblePoints} onPointsChange={setPointData} onCropChange={setCrop} />
+          <RotationVisualization key={activeCrop?.url ?? "no-crop"} crop={activeCrop} />
           <div className="track-choice" aria-label="Earth visualization"><span>Explore a visualization</span><button type="button" className={trackId === "precipitation" ? "active" : ""} onClick={() => setTrackId("precipitation")}>Global precipitation</button><button type="button" className={trackId === "ocean" ? "active" : ""} onClick={() => setTrackId("ocean")}>North Pacific color</button></div>
           {loading && <div className="load-state" role="status"><span className="loader" />Loading the visualization timeline…</div>}
           {!loading && loadError && (

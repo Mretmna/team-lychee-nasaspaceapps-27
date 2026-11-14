@@ -162,6 +162,21 @@ input[type="range"] { accent-color: var(--sun); cursor: pointer; }
 .crop-preview img { display: block; max-width: 100%; max-height: 360px; width: auto; height: auto; border: 1px solid var(--line); background: repeating-conic-gradient(#e9eee9 0% 25%, #fff 0% 50%) 50% / 20px 20px; }
 .crop-preview a { display: inline-flex; padding: 10px 14px; border: 1px solid var(--ink); color: var(--ink); text-decoration: none; font-size: 12px; font-weight: 700; }
 .crop-preview a:hover { background: var(--mint-light); }
+.rotation-visualization { max-width: 710px; width: 100%; margin: 0 auto 28px; }
+.rotation-visualization h2 { margin: 0 0 16px; font-family: var(--serif); font-size: clamp(30px, 3vw, 42px); font-weight: 400; }
+.rotation-visualization > p { color: var(--ink-soft); font-size: 13px; }
+.rotation-image { position: relative; width: min(100%, 480px); margin: 0 auto 18px; }
+.rotation-image img { display: block; width: 100%; height: auto; }
+.rotation-overlay { position: absolute; inset: 0; pointer-events: none; overflow: visible; }
+.rotation-overlay line { stroke: var(--sun); stroke-width: 3; stroke-linecap: round; filter: drop-shadow(0 1px 2px #102d35); }
+.rotation-controls { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; }
+.duration-options { display: flex; gap: 0; }
+.duration-options button { padding: 10px 13px; border: 1px solid var(--ink); background: transparent; color: var(--ink); cursor: pointer; }
+.duration-options button + button { border-left: 0; }
+.duration-options button.active { background: var(--ink); color: white; }
+.duration-options button:disabled { cursor: default; opacity: .65; }
+.rotation-start { padding: 11px 20px; border: 0; background: var(--sun); color: var(--ink); font-weight: 700; cursor: pointer; }
+.rotation-start:disabled { opacity: .6; cursor: default; }
 footer { display: flex; justify-content: space-between; gap: 30px; padding: 34px clamp(24px, 5vw, 76px); background: #102d35; color: #b6cac6; font-size: 11px; }
 footer span { color: white; font-family: var(--serif); font-size: 17px; }
 footer p { margin: 0; }
