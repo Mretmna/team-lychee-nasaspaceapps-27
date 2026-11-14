@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { VisualizationCrop } from "@/components/map-upload";
+import { projectCircularPng } from "@/lib/geo";
 
 const apiBase = process.env.NEXT_PUBLIC_MAP_API_URL ?? "http://localhost:8000";
 const durations = [10, 20, 30] as const;
@@ -12,10 +13,23 @@ export function RotationVisualization({ crop, duration, onDurationChange }: { cr
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState("");
   const [size, setSize] = useState({ width: 0, height: 0 });
+  const [circularUrl, setCircularUrl] = useState("");
   const imageRef = useRef<HTMLDivElement>(null);
   const frameRef = useRef<number | null>(null);
   const requestRef = useRef<AbortController | null>(null);
   const busyRef = useRef(false);
+
+  useEffect(() => {
+    if (!crop) return;
+    let cancelled = false;
+    let url = "";
+    projectCircularPng(crop).then((image) => {
+      url = URL.createObjectURL(image);
+      if (cancelled) URL.revokeObjectURL(url);
+      else setCircularUrl(url);
+    }).catch((cause) => { if (!cancelled) setError(cause instanceof Error ? cause.message : "The circular map could not be displayed."); });
+    return () => { cancelled = true; if (url) URL.revokeObjectURL(url); };
+  }, [crop]);
 
   useEffect(() => {
     const image = imageRef.current;
@@ -83,7 +97,7 @@ export function RotationVisualization({ crop, duration, onDurationChange }: { cr
 
   return <section className="rotation-visualization" aria-labelledby="rotation-title">
     <h2 id="rotation-title">Explore a visualization</h2>
-      <div className="rotation-image" ref={imageRef}>{crop ? <img src={crop.url} alt="Cropped selected map" /> : <p>Preparing selected region…</p>}<svg className="rotation-overlay" width={size.width} height={size.height} viewBox={`0 0 ${size.width || 1} ${size.height || 1}`} aria-hidden="true"><line x1={halfWidth} y1={halfHeight} x2={endX} y2={endY} /></svg></div>
+      <div className="rotation-image" ref={imageRef}>{circularUrl ? <img src={circularUrl} alt="Circular view of the selected map region" /> : <p>Preparing selected region…</p>}<svg className="rotation-overlay" width={size.width} height={size.height} viewBox={`0 0 ${size.width || 1} ${size.height || 1}`} aria-hidden="true"><line x1={halfWidth} y1={halfHeight} x2={endX} y2={endY} /></svg></div>
       <p className="duration-label">Choose animation duration</p>
       <div className="rotation-controls"><div className="duration-options" role="group" aria-label="Rotation duration">{durations.map((seconds) => <button key={seconds} type="button" aria-pressed={duration === seconds} className={duration === seconds ? "active" : ""} disabled={running || starting} onClick={() => onDurationChange(seconds)}>{seconds} seconds</button>)}</div><button type="button" className="rotation-start" disabled={!crop || running || starting} onClick={() => void start()}>{starting ? "Starting…" : running ? "Rotating…" : "Start"}</button></div>
       <p role="status">{running ? `Rotating at ${360 / duration}° per second.` : angle === 360 ? "One revolution complete." : "Choose a duration and press Start."}</p>
