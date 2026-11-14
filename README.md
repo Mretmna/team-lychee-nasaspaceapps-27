@@ -21,12 +21,13 @@ The three feature scores are normalized from sampled animation frames: relative 
 
 If the production document is missing, the app falls back to the separately labeled synthetic fixture at `public/fixtures/ocean.synthetic.json`.
 
-The location picker retains latitude and longitude inputs. Visitors can save named circular areas around a selected point in their browser. A selected area is outlined on the globe. Place and area selection do not filter the global feature timeline or change the sound.
-Entering a city resolves its coordinates through the FastAPI `/api/locations` endpoint, using [Open-Meteo's GeoNames-based geocoding service](https://open-meteo.com/en/docs/geocoding-api). The globe turns to the resolved city when the area is saved.
+The location picker retains latitude and longitude inputs. Visitors can save named circular areas around a selected point in their browser. City input resolves coordinates as it changes through FastAPI's `/api/locations` endpoint, using [Open-Meteo's GeoNames-based geocoding service](https://open-meteo.com/en/docs/geocoding-api). Radius changes update the map immediately. The global NASA video tracks contain temporal frame features, so place selection does not change their sound.
+
+For the detailed map, create a [Google Maps JavaScript API key](https://developers.google.com/maps/documentation/javascript/get-api-key), enable Maps JavaScript API, and set `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` in `.env.local` before starting Next.js. With a key, Google Maps supports click selection, pan, zoom, and a view masked to the selected radius. Without a key, the existing textured globe remains available.
 
 ## Visitor map API
 
-Start the map upload service separately with `pip install -r server/requirements.txt` and `uvicorn server.main:app --reload --port 8000`. The **Your maps** section accepts PNG, JPEG, WebP, and GeoJSON files up to 10 MB. Each upload sends the selected area's name, city, country, coordinates, and optional radius to FastAPI. The server stores the map and its area metadata in `server/uploads/`. Set `NEXT_PUBLIC_MAP_API_URL` to the API origin when it differs from `http://localhost:8000`.
+Start the map service separately with `pip install -r server/requirements.txt` and `uvicorn server.main:app --reload --port 8000`. The **Your maps** section accepts GeoJSON Point FeatureCollections and full-world equirectangular PNGs up to 10 MB. The browser filters GeoJSON points by great-circle distance or crops and masks PNG pixels before sending the selected region to FastAPI. Changing the location or radius sends a new filtered selection after the first submission. The server checks that received points and visible PNG pixels lie within the same radius. PNGs are interpreted as spanning 180° W to 180° E and 90° S to 90° N. Set `NEXT_PUBLIC_MAP_API_URL` to the API origin when it differs from `http://localhost:8000`.
 
 ## Commands
 
@@ -38,4 +39,4 @@ Start the map upload service separately with `pip install -r server/requirements
 
 ## Deploy to Vercel
 
-Import this repository into Vercel and keep the detected Next.js defaults. There are no environment variables, database services, server runtimes, or Python build steps. The required Node version is declared in `package.json`.
+Import the Next.js frontend into Vercel and set `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` and `NEXT_PUBLIC_MAP_API_URL` in the project environment. Deploy the FastAPI service separately and configure its allowed frontend origin before using uploads across domains. The required Node version is declared in `package.json`.

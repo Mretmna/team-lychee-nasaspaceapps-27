@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { PinIcon } from "@/components/icons";
 import type { LocationSelection } from "@/types/track";
 
@@ -26,6 +26,39 @@ export function LocationPicker({ selection, onSelect }: LocationPickerProps) {
   const [country, setCountry] = useState("");
   const [radiusKm, setRadiusKm] = useState("500");
   const [locating, setLocating] = useState(false);
+  const radiusRef = useRef(radiusKm);
+
+  useEffect(() => { radiusRef.current = radiusKm; }, [radiusKm]);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setLatitude(String(selection.latitude));
+      setLongitude(String(selection.longitude));
+      setRadiusKm(String(selection.radiusKm ?? 500));
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [selection.latitude, selection.longitude, selection.radiusKm]);
+
+  useEffect(() => {
+    if (city.trim().length < 2) return;
+    const controller = new AbortController();
+    const timer = window.setTimeout(async () => {
+      setLocating(true);
+      try {
+        const query = new URLSearchParams({ city: city.trim(), country: country.trim() });
+        const response = await fetch(`${mapApi}/api/locations?${query}`, { signal: controller.signal });
+        const place = await response.json();
+        if (!response.ok) throw new Error(place.detail ?? "City lookup failed.");
+        onSelect({ name: `${place.city}, ${place.country}`, city: place.city, country: place.country, latitude: place.latitude, longitude: place.longitude, radiusKm: Number(radiusRef.current) || 500 });
+        setError("");
+      } catch (cause) {
+        if (!controller.signal.aborted) setError(cause instanceof Error ? cause.message : "City lookup failed.");
+      } finally {
+        if (!controller.signal.aborted) setLocating(false);
+      }
+    }, 400);
+    return () => { controller.abort(); window.clearTimeout(timer); };
+  }, [city, country, onSelect]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -94,7 +127,7 @@ export function LocationPicker({ selection, onSelect }: LocationPickerProps) {
       return;
     }
     setError("");
-    onSelect({ name: "Custom coordinates", latitude: lat, longitude: lon });
+    onSelect({ name: "Custom coordinates", latitude: lat, longitude: lon, radiusKm: selection.radiusKm ?? 500 });
   };
 
   return (
@@ -105,7 +138,7 @@ export function LocationPicker({ selection, onSelect }: LocationPickerProps) {
       </div>
       <div className="preset-row" aria-label="Location presets">
         {PRESETS.map((preset) => (
-          <button key={preset.name} type="button" onClick={() => onSelect(preset)}>{preset.name}</button>
+          <button key={preset.name} type="button" onClick={() => { setCity(""); setCountry(""); onSelect({ ...preset, radiusKm: selection.radiusKm ?? 500 }); }}>{preset.name}</button>
         ))}
       </div>
       <div className="coordinate-form">
@@ -121,7 +154,7 @@ export function LocationPicker({ selection, onSelect }: LocationPickerProps) {
           <label>Area name<input value={areaName} maxLength={40} onChange={(event) => setAreaName(event.target.value)} placeholder="e.g. North Atlantic" /></label>
           <label>City<input value={city} maxLength={80} onChange={(event) => setCity(event.target.value)} placeholder="e.g. Istanbul" /></label>
           <label>Country<input value={country} maxLength={80} onChange={(event) => setCountry(event.target.value)} placeholder="e.g. Türkiye" /></label>
-          <label>Radius (km)<input inputMode="numeric" type="number" min="10" max="10000" value={radiusKm} onChange={(event) => setRadiusKm(event.target.value)} /></label>
+          <label>Radius (km)<input inputMode="numeric" type="number" min="10" max="10000" value={radiusKm} onChange={(event) => { const value = event.target.value; setRadiusKm(value); const radius = Number(value); if (value && Number.isFinite(radius) && radius >= 10 && radius <= 10000) onSelect({ ...selection, radiusKm: radius }); }} /></label>
           <button type="button" onClick={() => void addArea()} disabled={locating}>{locating ? "Finding city…" : "Add area"}</button>
         </div>
         {areas.length > 0 && <ul className="area-list">{areas.map((area, index) => (

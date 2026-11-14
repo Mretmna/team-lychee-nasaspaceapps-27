@@ -1,54 +1,101 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { cropGlobalPng, parsePointCollection, type PointCollection } from "@/lib/geo";
 import type { LocationSelection } from "@/types/track";
 
-interface UploadedMap { id: string; name: string; kind: "image" | "geojson"; url: string; area: LocationSelection }
 const apiBase = process.env.NEXT_PUBLIC_MAP_API_URL ?? "http://localhost:8000";
 
-export function MapUpload({ selection }: { selection: LocationSelection }) {
-  const [file, setFile] = useState<File | null>(null);
-  const [map, setMap] = useState<UploadedMap | null>(null);
+export function MapUpload({ selection, points, onPointsChange }: { selection: LocationSelection; points: PointCollection; onPointsChange: (value: PointCollection | null) => void }) {
+  const [fileName, setFileName] = useState("");
+  const [sourceCount, setSourceCount] = useState(0);
+  const [rasterFile, setRasterFile] = useState<File | null>(null);
+  const [active, setActive] = useState(false);
+  const [status, setStatus] = useState("");
+  const [confirmedKey, setConfirmedKey] = useState("");
   const [error, setError] = useState("");
-  const [uploading, setUploading] = useState(false);
+  const selectionKey = `${selection.latitude}:${selection.longitude}:${selection.radiusKm ?? 500}:${fileName}:${JSON.stringify(points.features)}`;
 
-  async function upload(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!file) return;
-    setUploading(true);
+  async function chooseFile(file: File | undefined) {
+    setActive(false);
+    setStatus("");
     setError("");
-    const body = new FormData();
-    body.append("file", file);
-    body.append("area_name", selection.name);
-    body.append("city", selection.city ?? "");
-    body.append("country", selection.country ?? "");
-    body.append("latitude", String(selection.latitude));
-    body.append("longitude", String(selection.longitude));
-    if (selection.radiusKm) body.append("radius_km", String(selection.radiusKm));
+    onPointsChange(null);
+    setRasterFile(null);
+    setFileName("");
+    if (!file) return;
+    if (file.size > 10 * 1024 * 1024) {
+      setError("Choose a map file smaller than 10 MB.");
+      return;
+    }
+    if (file.name.toLowerCase().endsWith(".png") && file.type === "image/png") {
+      setRasterFile(file);
+      setFileName(file.name);
+      return;
+    }
     try {
-      const response = await fetch(`${apiBase}/api/maps`, { method: "POST", body });
-      const result = await response.json();
-      if (!response.ok) throw new Error(result.detail ?? "The map could not be uploaded.");
-      setMap(result as UploadedMap);
+      const collection = parsePointCollection(JSON.parse(await file.text()));
+      onPointsChange(collection);
+      setSourceCount(collection.features.length);
+      setFileName(file.name);
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "The map API is unavailable.");
-    } finally {
-      setUploading(false);
+      setError(cause instanceof Error ? cause.message : "The map file could not be read.");
     }
   }
+
+  useEffect(() => {
+    if (!active) return;
+    const controller = new AbortController();
+    const timer = window.setTimeout(async () => {
+      setError("");
+      try {
+        let response: Response;
+        if (rasterFile) {
+          const cropped = await cropGlobalPng(rasterFile, selection);
+          if (controller.signal.aborted) return;
+          const body = new FormData();
+          body.append("file", cropped.blob, "selected-area.png");
+          body.append("latitude", String(selection.latitude));
+          body.append("longitude", String(selection.longitude));
+          body.append("radius_km", String(selection.radiusKm ?? 500));
+          for (const [name, value] of Object.entries(cropped.bounds)) body.append(name, String(value));
+          response = await fetch(`${apiBase}/api/raster-selection`, { method: "POST", body, signal: controller.signal });
+        } else {
+          response = await fetch(`${apiBase}/api/selection`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ latitude: selection.latitude, longitude: selection.longitude, radiusKm: selection.radiusKm ?? 500, data: points }),
+            signal: controller.signal,
+          });
+        }
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.detail ?? "The selected area could not be sent.");
+        setStatus(rasterFile ? `Cropped ${result.width} × ${result.height} map pixels within ${result.radiusKm} km sent to FastAPI.` : `${result.receivedPoints} points within ${result.radiusKm} km sent to FastAPI.`);
+        setConfirmedKey(selectionKey);
+      } catch (cause) {
+        if (!controller.signal.aborted) {
+          setStatus("");
+          setError(cause instanceof Error ? cause.message : "The map API is unavailable.");
+        }
+      }
+    }, 200);
+    return () => { controller.abort(); window.clearTimeout(timer); };
+  }, [active, points, rasterFile, selection, selectionKey]);
 
   return <section className="map-upload-section" id="maps" aria-labelledby="maps-title">
     <p className="eyebrow">Your maps</p>
     <h2 id="maps-title">Bring your own map.</h2>
-    <p>Upload a PNG, JPEG, WebP, or GeoJSON file (up to 10 MB) to the map API.</p>
-    <p>Selected area: {selection.name}{selection.city ? ` · ${selection.city}` : ""}{selection.country ? `, ${selection.country}` : ""} ({selection.latitude.toFixed(1)}°, {selection.longitude.toFixed(1)}°{selection.radiusKm ? `, ${selection.radiusKm} km radius` : ""}). This area is sent with the map.</p>
-    <form onSubmit={upload}>
-      <input id="map-file" type="file" accept=".png,.jpg,.jpeg,.webp,.geojson,application/geo+json" onChange={(event) => setFile(event.target.files?.[0] ?? null)} required />
+    <p>Choose GeoJSON points or a full-world equirectangular PNG. Only the selected radius is sent.</p>
+    <p>Selected area: {selection.name} ({selection.latitude.toFixed(3)}°, {selection.longitude.toFixed(3)}°; {selection.radiusKm ?? 500} km).</p>
+    <form onSubmit={(event) => { event.preventDefault(); setActive(true); }}>
+      <input id="map-file" type="file" accept=".png,.geojson,.json,image/png,application/geo+json,application/json" onChange={(event) => void chooseFile(event.target.files?.[0])} />
       <label htmlFor="map-file" className="file-picker">Choose a map</label>
-      <span className="file-name" aria-live="polite">{file?.name ?? "No file selected"}</span>
-      <button type="submit" disabled={!file || uploading}>{uploading ? "Uploading…" : "Upload map"}</button>
+      <span className="file-name" aria-live="polite">{fileName || "No file selected"}</span>
+      <button type="submit" disabled={!fileName}>Send selected area</button>
     </form>
+    {fileName && !rasterFile && <p>{points.features.length} of {sourceCount} points are inside the radius. The map updates as you change the center or radius.</p>}
+    {rasterFile && <p>The PNG is interpreted as a global equirectangular map spanning 180° W to 180° E and 90° S to 90° N.</p>}
+    {active && <p role="status">{confirmedKey === selectionKey ? status : "Updating selected area…"}</p>}
     {error && <p className="field-error" role="alert">{error}</p>}
-    {map && <div className="uploaded-map" role="status"><strong>{map.name}</strong>{map.kind === "image" ? <img src={`${apiBase}${map.url}`} alt={`Uploaded map: ${map.name}`} /> : <a href={`${apiBase}${map.url}`} target="_blank" rel="noreferrer">View uploaded GeoJSON</a>}</div>}
   </section>;
 }

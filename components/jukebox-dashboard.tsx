@@ -1,25 +1,23 @@
 "use client";
 
-import dynamic from "next/dynamic";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowIcon } from "@/components/icons";
 import { JukeboxPlayer } from "@/components/jukebox-player";
 import { LocationPicker } from "@/components/location-picker";
+import { RadiusMap } from "@/components/radius-map";
 import { MapUpload } from "@/components/map-upload";
 import { loadTrack } from "@/lib/track";
+import { filterPoints, type PointCollection } from "@/lib/geo";
 import type { LoadedTrack, LocationSelection } from "@/types/track";
-
-const Globe = dynamic(() => import("@/components/globe").then((module) => module.Globe), {
-  ssr: false,
-  loading: () => <div className="globe-loading" role="status">Preparing interactive globe…</div>,
-});
 
 export function JukeboxDashboard() {
   const [loadedTrack, setLoadedTrack] = useState<LoadedTrack | null>(null);
   const [loadError, setLoadError] = useState("");
   const [loading, setLoading] = useState(true);
-  const [selection, setSelection] = useState<LocationSelection>({ name: "North Atlantic", latitude: 38, longitude: -35 });
+  const [selection, setSelection] = useState<LocationSelection>({ name: "North Atlantic", latitude: 38, longitude: -35, radiusKm: 500 });
   const [trackId, setTrackId] = useState<"precipitation" | "ocean">("precipitation");
+  const [pointData, setPointData] = useState<PointCollection | null>(null);
+  const visiblePoints = useMemo(() => pointData ? filterPoints(pointData, selection) : { type: "FeatureCollection" as const, features: [] }, [pointData, selection]);
   const requestId = useRef(0);
 
   const fetchTrack = useCallback(async (fixture = false) => {
@@ -61,13 +59,13 @@ export function JukeboxDashboard() {
 
       <section className="experience" id="explore" aria-labelledby="explore-title">
         <div className="globe-column">
-          <div className="section-heading"><p className="eyebrow">01 · Choose a place</p><h2 id="explore-title">Where will you listen from?</h2><p>Drag to rotate, scroll to zoom, or click the globe. Keyboard users can use the presets and coordinate fields below.</p></div>
-          <Globe selection={selection} onSelect={setSelection} />
-          <LocationPicker key={`${selection.latitude}:${selection.longitude}`} selection={selection} onSelect={setSelection} />
+          <div className="section-heading"><p className="eyebrow">01 · Choose a place</p><h2 id="explore-title">Where will you listen from?</h2><p>Pan, zoom, or click the map to choose a center. You can also use the presets and coordinate fields below.</p></div>
+          <RadiusMap selection={selection} onSelect={setSelection} points={visiblePoints} />
+          <LocationPicker selection={selection} onSelect={setSelection} />
         </div>
 
         <div id="listen" className="player-column">
-          <MapUpload selection={selection} />
+          <MapUpload selection={selection} points={visiblePoints} onPointsChange={setPointData} />
           <div className="track-choice" aria-label="Earth visualization"><span>Explore a visualization</span><button type="button" className={trackId === "precipitation" ? "active" : ""} onClick={() => setTrackId("precipitation")}>Global precipitation</button><button type="button" className={trackId === "ocean" ? "active" : ""} onClick={() => setTrackId("ocean")}>North Pacific color</button></div>
           {loading && <div className="load-state" role="status"><span className="loader" />Loading the visualization timeline…</div>}
           {!loading && loadError && (

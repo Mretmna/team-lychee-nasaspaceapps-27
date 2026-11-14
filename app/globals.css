@@ -46,6 +46,10 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 3px solid 
 .globe-canvas, .globe-loading, .globe-fallback { width: 100%; height: clamp(340px, 43vw, 560px); margin-top: 16px; }
 .globe-canvas canvas { display: block; width: 100%; height: 100%; cursor: grab; }
 .globe-canvas canvas:active { cursor: grabbing; }
+.radius-map-shell { position: relative; width: 100%; height: clamp(340px, 43vw, 560px); margin-top: 16px; overflow: hidden; }
+.radius-map, .radius-map-mask { position: absolute; inset: 0; }
+.radius-map-mask { pointer-events: none; }
+.map-setup-note { margin: 0 0 12px; color: var(--ink-soft); font-size: 11px; line-height: 1.5; }
 .globe-loading, .globe-fallback { display: grid; place-content: center; text-align: center; color: var(--ink-soft); }
 .globe-fallback span { color: var(--ink); font-family: var(--serif); font-size: 28px; }
 .globe-fallback p { max-width: 350px; line-height: 1.6; }
@@ -173,6 +177,7 @@ footer p { margin: 0; }
   .hero-copy, .text-link { margin-left: 0; }
   .globe-column, .player-column { padding-left: 20px; padding-right: 20px; }
   .globe-canvas, .globe-loading, .globe-fallback { height: 340px; margin-left: -20px; width: calc(100% + 40px); }
+  .radius-map-shell { height: 340px; margin-left: -20px; width: calc(100% + 40px); }
   .location-picker { margin-top: 0; }
   .coordinate-form { grid-template-columns: 1fr 1fr; }
   .coordinate-form button { grid-column: 1 / -1; }
