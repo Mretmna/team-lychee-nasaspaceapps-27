@@ -81,10 +81,10 @@ async function fetchAndValidate(url: string): Promise<TrackDocument> {
   return validateTrack(await response.json());
 }
 
-export async function loadTrack(forceFixture = false): Promise<LoadedTrack> {
+export async function loadTrack(forceFixture = false, trackId: "precipitation" | "ocean" = "precipitation"): Promise<LoadedTrack> {
   if (!forceFixture) {
     try {
-      return { track: await fetchAndValidate("/data/ocean.json"), isSynthetic: false };
+      return { track: await fetchAndValidate(`/data/${trackId}.json`), isSynthetic: false };
     } catch (error) {
       if (!(error instanceof Error) || error.message !== "NOT_FOUND") throw error;
     }

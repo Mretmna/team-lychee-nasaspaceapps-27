@@ -1,0 +1,322 @@
+{
+  "schemaVersion": 1,
+  "id": "gpm-imerg-precipitation-4285",
+  "title": "A Week of Rain",
+  "videoUrl": "/media/precipitation.webm",
+  "durationSeconds": 12.67,
+  "sourceUrl": "https://svs.gsfc.nasa.gov/4285/",
+  "credits": "NASA Scientific Visualization Studio. IMERG precipitation animation by Horace Mitchell (NASA/GSFC). Audio mapping and frame features by Team Lychee.",
+  "featureDefinitions": {
+    "colorWarmth": "Relative warm-color share extracted from the published animation frames; not a calibrated precipitation rate",
+    "motion": "Relative frame-to-frame pixel change in the published animation",
+    "variation": "Relative spatial brightness variation in the published animation"
+  },
+  "samples": [
+    {
+      "timeSeconds": 0,
+      "colorWarmth": 0.88,
+      "motion": 0.12,
+      "variation": 0.285
+    },
+    {
+      "timeSeconds": 0.25,
+      "colorWarmth": 0.533,
+      "motion": 0.605,
+      "variation": 0.292
+    },
+    {
+      "timeSeconds": 0.5,
+      "colorWarmth": 0.454,
+      "motion": 0.624,
+      "variation": 0.255
+    },
+    {
+      "timeSeconds": 0.75,
+      "colorWarmth": 0.485,
+      "motion": 0.61,
+      "variation": 0.322
+    },
+    {
+      "timeSeconds": 1,
+      "colorWarmth": 0.474,
+      "motion": 0.648,
+      "variation": 0.227
+    },
+    {
+      "timeSeconds": 1.25,
+      "colorWarmth": 0.515,
+      "motion": 0.624,
+      "variation": 0.245
+    },
+    {
+      "timeSeconds": 1.5,
+      "colorWarmth": 0.427,
+      "motion": 0.648,
+      "variation": 0.241
+    },
+    {
+      "timeSeconds": 1.75,
+      "colorWarmth": 0.608,
+      "motion": 0.596,
+      "variation": 0.169
+    },
+    {
+      "timeSeconds": 2,
+      "colorWarmth": 0.569,
+      "motion": 0.615,
+      "variation": 0.133
+    },
+    {
+      "timeSeconds": 2.25,
+      "colorWarmth": 0.487,
+      "motion": 0.571,
+      "variation": 0.132
+    },
+    {
+      "timeSeconds": 2.5,
+      "colorWarmth": 0.592,
+      "motion": 0.606,
+      "variation": 0.145
+    },
+    {
+      "timeSeconds": 2.75,
+      "colorWarmth": 0.582,
+      "motion": 0.595,
+      "variation": 0.187
+    },
+    {
+      "timeSeconds": 3,
+      "colorWarmth": 0.596,
+      "motion": 0.599,
+      "variation": 0.166
+    },
+    {
+      "timeSeconds": 3.25,
+      "colorWarmth": 0.567,
+      "motion": 0.577,
+      "variation": 0.14
+    },
+    {
+      "timeSeconds": 3.5,
+      "colorWarmth": 0.487,
+      "motion": 0.593,
+      "variation": 0.173
+    },
+    {
+      "timeSeconds": 3.75,
+      "colorWarmth": 0.531,
+      "motion": 0.567,
+      "variation": 0.12
+    },
+    {
+      "timeSeconds": 4,
+      "colorWarmth": 0.529,
+      "motion": 0.605,
+      "variation": 0.208
+    },
+    {
+      "timeSeconds": 4.25,
+      "colorWarmth": 0.519,
+      "motion": 0.584,
+      "variation": 0.162
+    },
+    {
+      "timeSeconds": 4.5,
+      "colorWarmth": 0.375,
+      "motion": 0.88,
+      "variation": 0.42
+    },
+    {
+      "timeSeconds": 4.75,
+      "colorWarmth": 0.267,
+      "motion": 0.598,
+      "variation": 0.439
+    },
+    {
+      "timeSeconds": 5,
+      "colorWarmth": 0.271,
+      "motion": 0.62,
+      "variation": 0.453
+    },
+    {
+      "timeSeconds": 5.25,
+      "colorWarmth": 0.269,
+      "motion": 0.596,
+      "variation": 0.396
+    },
+    {
+      "timeSeconds": 5.5,
+      "colorWarmth": 0.282,
+      "motion": 0.609,
+      "variation": 0.545
+    },
+    {
+      "timeSeconds": 5.75,
+      "colorWarmth": 0.313,
+      "motion": 0.584,
+      "variation": 0.554
+    },
+    {
+      "timeSeconds": 6,
+      "colorWarmth": 0.299,
+      "motion": 0.599,
+      "variation": 0.461
+    },
+    {
+      "timeSeconds": 6.25,
+      "colorWarmth": 0.357,
+      "motion": 0.577,
+      "variation": 0.487
+    },
+    {
+      "timeSeconds": 6.5,
+      "colorWarmth": 0.483,
+      "motion": 0.586,
+      "variation": 0.536
+    },
+    {
+      "timeSeconds": 6.75,
+      "colorWarmth": 0.451,
+      "motion": 0.556,
+      "variation": 0.44
+    },
+    {
+      "timeSeconds": 7,
+      "colorWarmth": 0.459,
+      "motion": 0.582,
+      "variation": 0.437
+    },
+    {
+      "timeSeconds": 7.25,
+      "colorWarmth": 0.448,
+      "motion": 0.561,
+      "variation": 0.513
+    },
+    {
+      "timeSeconds": 7.5,
+      "colorWarmth": 0.474,
+      "motion": 0.612,
+      "variation": 0.523
+    },
+    {
+      "timeSeconds": 7.75,
+      "colorWarmth": 0.465,
+      "motion": 0.576,
+      "variation": 0.555
+    },
+    {
+      "timeSeconds": 8,
+      "colorWarmth": 0.442,
+      "motion": 0.61,
+      "variation": 0.546
+    },
+    {
+      "timeSeconds": 8.25,
+      "colorWarmth": 0.391,
+      "motion": 0.563,
+      "variation": 0.45
+    },
+    {
+      "timeSeconds": 8.5,
+      "colorWarmth": 0.443,
+      "motion": 0.582,
+      "variation": 0.504
+    },
+    {
+      "timeSeconds": 8.75,
+      "colorWarmth": 0.22,
+      "motion": 0.73,
+      "variation": 0.725
+    },
+    {
+      "timeSeconds": 9,
+      "colorWarmth": 0.15,
+      "motion": 0.61,
+      "variation": 0.739
+    },
+    {
+      "timeSeconds": 9.25,
+      "colorWarmth": 0.12,
+      "motion": 0.607,
+      "variation": 0.828
+    },
+    {
+      "timeSeconds": 9.5,
+      "colorWarmth": 0.166,
+      "motion": 0.633,
+      "variation": 0.788
+    },
+    {
+      "timeSeconds": 9.75,
+      "colorWarmth": 0.265,
+      "motion": 0.592,
+      "variation": 0.799
+    },
+    {
+      "timeSeconds": 10,
+      "colorWarmth": 0.334,
+      "motion": 0.626,
+      "variation": 0.661
+    },
+    {
+      "timeSeconds": 10.25,
+      "colorWarmth": 0.44,
+      "motion": 0.603,
+      "variation": 0.758
+    },
+    {
+      "timeSeconds": 10.5,
+      "colorWarmth": 0.297,
+      "motion": 0.627,
+      "variation": 0.593
+    },
+    {
+      "timeSeconds": 10.75,
+      "colorWarmth": 0.33,
+      "motion": 0.636,
+      "variation": 0.78
+    },
+    {
+      "timeSeconds": 11,
+      "colorWarmth": 0.216,
+      "motion": 0.646,
+      "variation": 0.869
+    },
+    {
+      "timeSeconds": 11.25,
+      "colorWarmth": 0.131,
+      "motion": 0.639,
+      "variation": 0.88
+    },
+    {
+      "timeSeconds": 11.5,
+      "colorWarmth": 0.209,
+      "motion": 0.65,
+      "variation": 0.776
+    },
+    {
+      "timeSeconds": 11.75,
+      "colorWarmth": 0.323,
+      "motion": 0.546,
+      "variation": 0.78
+    },
+    {
+      "timeSeconds": 12,
+      "colorWarmth": 0.297,
+      "motion": 0.223,
+      "variation": 0.814
+    },
+    {
+      "timeSeconds": 12.25,
+      "colorWarmth": 0.262,
+      "motion": 0.201,
+      "variation": 0.851
+    },
+    {
+      "timeSeconds": 12.5,
+      "colorWarmth": 0.194,
+      "motion": 0.196,
+      "variation": 0.857
+    }
+  ]
+}

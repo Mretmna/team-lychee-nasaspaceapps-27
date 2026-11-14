@@ -141,6 +141,7 @@ export function JukeboxPlayer({ loadedTrack }: JukeboxPlayerProps) {
             onError={() => setMediaError("The NASA video could not be loaded. Confirm the file at the URL declared by the track data.")}
           >Your browser does not support HTML video.</video>
         )}
+        {!isSynthetic && <div className="scan-line" style={{ left: `${((currentTime % 3) / 3) * 100}%` }} aria-hidden="true" />}
         {buffering && <div className="media-overlay" role="status">Buffering visualization…</div>}
       </div>
 
@@ -165,9 +166,9 @@ export function JukeboxPlayer({ loadedTrack }: JukeboxPlayerProps) {
       <div className="feature-readout" aria-label="Current normalized visual feature scores">
         <FeatureMeter label="Color warmth" value={feature.colorWarmth} note="Pitch register" />
         <FeatureMeter label="Frame motion" value={feature.motion} note="Note density" />
-        <FeatureMeter label="Color variation" value={feature.variation} note="Timbre" />
+        <FeatureMeter label="Visual variation" value={feature.variation} note="Instrument" />
       </div>
-      <p className="measurement-note">These are normalized visual scores from image frames—not measured temperature, ocean current speed, or other physical quantities.</p>
+      <p className="measurement-note">These are normalized visual scores extracted from the animation frames, not calibrated precipitation measurements.</p>
     </section>
   );
 }
