@@ -13,7 +13,7 @@ export function MapUpload({ selection, points, onPointsChange }: { selection: Lo
   const [active, setActive] = useState(false);
   const [status, setStatus] = useState("");
   const [confirmedKey, setConfirmedKey] = useState("");
-  const [preview, setPreview] = useState<{ key: string; pngUrl: string; jpgUrl: string } | null>(null);
+  const [preview, setPreview] = useState<{ key: string; pngUrl: string } | null>(null);
   const [sound, setSound] = useState<{ key: string; url: string } | null>(null);
   const [soundError, setSoundError] = useState("");
   const [error, setError] = useState("");
@@ -22,7 +22,6 @@ export function MapUpload({ selection, points, onPointsChange }: { selection: Lo
   useEffect(() => () => {
     if (preview) {
       URL.revokeObjectURL(preview.pngUrl);
-      URL.revokeObjectURL(preview.jpgUrl);
     }
   }, [preview]);
   useEffect(() => () => { if (sound) URL.revokeObjectURL(sound.url); }, [sound]);
@@ -90,19 +89,8 @@ export function MapUpload({ selection, points, onPointsChange }: { selection: Lo
         const result = await response.json();
         if (!response.ok) throw new Error(result.detail ?? "The selected area could not be sent.");
         if (croppedBlob) {
-          const bitmap = await createImageBitmap(croppedBlob);
-          const canvas = document.createElement("canvas");
-          canvas.width = bitmap.width;
-          canvas.height = bitmap.height;
-          const context = canvas.getContext("2d");
-          if (!context) throw new Error("The cropped image preview could not be created.");
-          context.fillStyle = "#ffffff";
-          context.fillRect(0, 0, canvas.width, canvas.height);
-          context.drawImage(bitmap, 0, 0);
-          bitmap.close();
-          const jpgBlob = await new Promise<Blob>((resolve, reject) => canvas.toBlob((value) => value ? resolve(value) : reject(new Error("The JPG could not be created.")), "image/jpeg", 0.92));
           if (controller.signal.aborted) return;
-          setPreview({ key: selectionKey, pngUrl: URL.createObjectURL(croppedBlob), jpgUrl: URL.createObjectURL(jpgBlob) });
+          setPreview({ key: selectionKey, pngUrl: URL.createObjectURL(croppedBlob) });
         }
         setStatus(rasterFile ? `Cropped ${result.width} × ${result.height} map pixels within ${result.radiusKm} km sent to FastAPI.` : `${result.receivedPoints} points within ${result.radiusKm} km sent to FastAPI.`);
         setConfirmedKey(selectionKey);
@@ -141,7 +129,7 @@ export function MapUpload({ selection, points, onPointsChange }: { selection: Lo
     {fileName && !rasterFile && <p>{points.features.length} of {sourceCount} points are inside the radius. The map updates as you change the center or radius.</p>}
     {rasterFile && <p>The PNG is interpreted as a global equirectangular map spanning 180° W to 180° E and 90° S to 90° N.</p>}
     {active && <p role="status">{confirmedKey === selectionKey ? status : "Updating selected area…"}</p>}
-    {preview?.key === selectionKey && <div className="crop-preview"><p>Trial crop: this PNG is exactly what FastAPI received. The JPG download has a white background outside the radius.</p><img src={preview.pngUrl} alt={`Cropped map within ${selection.radiusKm ?? 500} km of ${selection.name}`} /><a href={preview.jpgUrl} download="selected-area-trial.jpg">Download cropped JPG</a><a href={preview.pngUrl} download="selected-area.png">Download exact PNG</a></div>}
+    {preview?.key === selectionKey && <div className="crop-preview"><p>Trial crop: this PNG is exactly what FastAPI received.</p><img src={preview.pngUrl} alt={`Cropped map within ${selection.radiusKm ?? 500} km of ${selection.name}`} /><a href={preview.pngUrl} download="selected-area.png">Download cropped PNG</a></div>}
     {sound?.key === selectionKey && <div className="crop-sound"><p>Sound from /sonfy</p><audio controls src={sound.url} /></div>}
     {soundError && active && <p className="field-error" role="alert">{soundError}</p>}
     {error && <p className="field-error" role="alert">{error}</p>}
