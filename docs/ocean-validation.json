@@ -1,0 +1,41 @@
+{
+  "videoSha256": "fb1d9129502437d790d92a1df4acb99c5fdac8f7879ac602c64df5f5f3d933ec",
+  "videoBytes": 5509657,
+  "durationSeconds": 30.0,
+  "frames": 900,
+  "fps": 30.0,
+  "width": 1280,
+  "height": 640,
+  "sampleRateHz": 5,
+  "sampleCount": 150,
+  "roi": [
+    0.03,
+    0.28,
+    0.14,
+    0.44
+  ],
+  "maskPixels": 13900,
+  "roiPixels": 14382,
+  "motionPreclipMax": 0.6627187661635398,
+  "motionSaturatedSamples": 0,
+  "features": {
+    "colorWarmth": {
+      "min": 0.665344054,
+      "max": 0.733911412,
+      "mean": 0.7154841961933333,
+      "std": 0.021989872832763168
+    },
+    "motion": {
+      "min": 0.0,
+      "max": 0.662718766,
+      "mean": 0.33652473157333335,
+      "std": 0.09530139916229152
+    },
+    "variation": {
+      "min": 0.165084444,
+      "max": 0.426324875,
+      "mean": 0.30000544285333336,
+      "std": 0.07648865002090738
+    }
+  }
+}
