@@ -29,4 +29,6 @@ export interface LocationSelection {
   latitude: number;
   longitude: number;
   radiusKm?: number;
+  city?: string;
+  country?: string;
 }

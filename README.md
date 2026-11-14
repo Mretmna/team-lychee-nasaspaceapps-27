@@ -23,6 +23,10 @@ If the production document is missing, the app falls back to the separately labe
 
 The location picker retains latitude and longitude inputs. Visitors can save named circular areas around a selected point in their browser. A selected area is outlined on the globe. Place and area selection do not filter the global feature timeline or change the sound.
 
+## Visitor map API
+
+Start the map upload service separately with `pip install -r server/requirements.txt` and `uvicorn server.main:app --reload --port 8000`. The **Your maps** section accepts PNG, JPEG, WebP, and GeoJSON files up to 10 MB. Each upload sends the selected area's name, city, country, coordinates, and optional radius to FastAPI. The server stores the map and its area metadata in `server/uploads/`. Set `NEXT_PUBLIC_MAP_API_URL` to the API origin when it differs from `http://localhost:8000`.
+
 ## Commands
 
 - `npm run dev` — local development server

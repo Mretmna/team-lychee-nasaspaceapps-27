@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowIcon } from "@/components/icons";
 import { JukeboxPlayer } from "@/components/jukebox-player";
 import { LocationPicker } from "@/components/location-picker";
+import { MapUpload } from "@/components/map-upload";
 import { loadTrack } from "@/lib/track";
 import type { LoadedTrack, LocationSelection } from "@/types/track";
 
@@ -47,7 +48,7 @@ export function JukeboxDashboard() {
     <main>
       <header className="site-header">
         <a className="brand" href="#top" aria-label="Earth Information Jukebox home"><span>EI</span><strong>Earth Information<br />Jukebox</strong></a>
-        <nav aria-label="Main navigation"><a href="#explore">Explore</a><a href="#mapping">How it sounds</a><a href="#sources">Sources</a></nav>
+        <nav aria-label="Main navigation"><a href="#explore">Explore</a><a href="#maps">Your maps</a><a href="#mapping">How it sounds</a><a href="#sources">Sources</a></nav>
         <a className="header-cta" href="#listen">Start listening <ArrowIcon /></a>
       </header>
 
@@ -77,6 +78,8 @@ export function JukeboxDashboard() {
           {!loading && loadedTrack && <JukeboxPlayer key={loadedTrack.track.id} loadedTrack={loadedTrack} />}
         </div>
       </section>
+
+      <MapUpload selection={selection} />
 
       <section className="mapping-section" id="mapping" aria-labelledby="mapping-title">
         <div><p className="eyebrow">02 · Understand the mapping</p><h2 id="mapping-title">A score you can follow.</h2></div>

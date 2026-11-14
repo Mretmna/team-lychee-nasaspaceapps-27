@@ -10,3 +10,5 @@ coverage
 *.tsbuildinfo
 .DS_Store
 .vercel
+server/uploads/
+server/__pycache__/

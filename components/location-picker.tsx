@@ -21,6 +21,8 @@ export function LocationPicker({ selection, onSelect }: LocationPickerProps) {
   const [error, setError] = useState("");
   const [areas, setAreas] = useState<LocationSelection[]>([]);
   const [areaName, setAreaName] = useState("");
+  const [city, setCity] = useState("");
+  const [country, setCountry] = useState("");
   const [radiusKm, setRadiusKm] = useState("500");
 
   useEffect(() => {
@@ -49,10 +51,12 @@ export function LocationPicker({ selection, onSelect }: LocationPickerProps) {
       setError("Enter an area name and a radius from 10 to 10,000 km.");
       return;
     }
-    const area = { name, latitude: selection.latitude, longitude: selection.longitude, radiusKm: radius };
+    const area = { name, city: city.trim(), country: country.trim(), latitude: selection.latitude, longitude: selection.longitude, radiusKm: radius };
     saveAreas([...areas, area]);
     onSelect(area);
     setAreaName("");
+    setCity("");
+    setCountry("");
     setError("");
   };
 
@@ -89,13 +93,15 @@ export function LocationPicker({ selection, onSelect }: LocationPickerProps) {
         <p>Save an area around the selected coordinates. Its outline appears on the globe.</p>
         <div className="area-form">
           <label>Area name<input value={areaName} maxLength={40} onChange={(event) => setAreaName(event.target.value)} placeholder="e.g. North Atlantic" /></label>
+          <label>City<input value={city} maxLength={80} onChange={(event) => setCity(event.target.value)} placeholder="e.g. Istanbul" /></label>
+          <label>Country<input value={country} maxLength={80} onChange={(event) => setCountry(event.target.value)} placeholder="e.g. Türkiye" /></label>
           <label>Radius (km)<input inputMode="numeric" type="number" min="10" max="10000" value={radiusKm} onChange={(event) => setRadiusKm(event.target.value)} /></label>
           <button type="button" onClick={addArea}>Add area</button>
         </div>
         {areas.length > 0 && <ul className="area-list">{areas.map((area, index) => (
           <li key={`${area.name}-${index}`}>
             <button type="button" onClick={() => onSelect(area)} aria-label={`Select ${area.name}`}>
-              <strong>{area.name}</strong><small>{area.latitude.toFixed(1)}°, {area.longitude.toFixed(1)}° · {area.radiusKm} km</small>
+              <strong>{area.name}</strong><small>{[area.city, area.country].filter(Boolean).join(", ")}{area.city || area.country ? " · " : ""}{area.latitude.toFixed(1)}°, {area.longitude.toFixed(1)}° · {area.radiusKm} km</small>
             </button>
             <button type="button" className="remove-area" onClick={() => saveAreas(areas.filter((_, areaIndex) => areaIndex !== index))} aria-label={`Remove ${area.name}`}>Remove</button>
           </li>
