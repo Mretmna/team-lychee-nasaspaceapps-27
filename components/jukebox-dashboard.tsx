@@ -6,7 +6,7 @@ import { JukeboxPlayer } from "@/components/jukebox-player";
 import { LocationPicker } from "@/components/location-picker";
 import { RadiusMap } from "@/components/radius-map";
 import { MapUpload, type VisualizationCrop } from "@/components/map-upload";
-import { RotationVisualization, type Dataset } from "@/components/rotation-visualization";
+import { RotationVisualization, datasetLabels, type Dataset } from "@/components/rotation-visualization";
 import { loadTrack } from "@/lib/track";
 import { cropGlobalPng, filterPoints, type PointCollection } from "@/lib/geo";
 import type { LoadedTrack, LocationSelection } from "@/types/track";
@@ -128,7 +128,7 @@ export function JukeboxDashboard() {
         <div className="source-grid">
           <p>The sound is generated live in your browser from timestamped features. It is an interpretation of visualization frames, not a direct recording of Earth and not a substitute for calibrated scientific measurements.</p>
           <div>
-            {dataset.startsWith("map") ? <><strong>Map source</strong><p>Map {dataset.slice(-1)} is a still NASA/GMAO-labeled image supplied for this project. It has no timeline frames.</p></> : dataset === "actual" ? <><strong>Actual World source</strong><p>The existing Earth texture is a still image from the Three.js imagery example. It has no NASA timeline frames.</p></> : loadedTrack?.isSynthetic ? <><strong>Preview status</strong><p>The NASA timeline is unavailable; the synthetic preview is shown only in the sound player.</p></> : <><strong>Visualization credit</strong><p>{loadedTrack?.track.credits}</p></>}
+            {dataset.startsWith("map") ? <><strong>{datasetLabels[dataset]} source</strong><p>{datasetLabels[dataset]} is a still NASA/GMAO-labeled image supplied for this project. It has no timeline frames.</p></> : dataset === "actual" ? <><strong>Actual World source</strong><p>The existing Earth texture is a still image from the Three.js imagery example. It has no NASA timeline frames.</p></> : loadedTrack?.isSynthetic ? <><strong>Preview status</strong><p>The NASA timeline is unavailable; the synthetic preview is shown only in the sound player.</p></> : <><strong>Visualization credit</strong><p>{loadedTrack?.track.credits}</p></>}
             {(dataset === "precipitation" || dataset === "ocean") && loadedTrack && <a href={loadedTrack.track.sourceUrl} target="_blank" rel="noreferrer">View source information <ArrowIcon /></a>}
             <p className="globe-credit">Globe texture from the <a href="https://github.com/mrdoob/three.js/blob/dev/examples/textures/planets/earth_atmos_2048.jpg" target="_blank" rel="noreferrer">Three.js Earth imagery example</a>.</p>
           </div>

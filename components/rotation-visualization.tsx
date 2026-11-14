@@ -8,7 +8,8 @@ import type { LoadedTrack } from "@/types/track";
 const apiBase = process.env.NEXT_PUBLIC_MAP_API_URL ?? "http://localhost:8000";
 const durations = [10, 20, 30] as const;
 export type Dataset = "actual" | "precipitation" | "ocean" | "map1" | "map2" | "map3";
-const datasets: { id: Dataset; label: string }[] = [{ id: "actual", label: "Actual World" }, { id: "precipitation", label: "Global Precipitation" }, { id: "ocean", label: "North Pacific Color" }, { id: "map1", label: "Map 1" }, { id: "map2", label: "Map 2" }, { id: "map3", label: "Map 3" }];
+export const datasetLabels: Record<Dataset, string> = { actual: "Actual World", precipitation: "Global Precipitation", ocean: "North Pacific Color", map1: "Air Quality", map2: "Near Surface Ozone", map3: "Earth Now" };
+const datasets = (Object.entries(datasetLabels) as [Dataset, string][]).map(([id, label]) => ({ id, label }));
 const hasVideo = (dataset: Dataset) => dataset === "precipitation" || dataset === "ocean";
 
 export function RotationVisualization({ crop, duration, onDurationChange, dataset, onDatasetChange, track }: { crop: VisualizationCrop | null; duration: 10 | 20 | 30; onDurationChange: (duration: 10 | 20 | 30) => void; dataset: Dataset; onDatasetChange: (dataset: Dataset) => void; track: LoadedTrack | null }) {
