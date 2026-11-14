@@ -1,8 +1,5 @@
-node_modules
-.next
-out
-coverage
-*.log
+# Generated files from the previous root-level app layout.
+node_modules/
+.next/
 *.tsbuildinfo
 .DS_Store
-.vercel
