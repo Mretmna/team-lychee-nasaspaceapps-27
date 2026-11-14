@@ -163,3 +163,42 @@ export async function projectCircularPng(crop: { blob: Blob; latitude: number; l
     bitmap.close();
   }
 }
+
+export function drawCircularGlobalFrame(video: HTMLVideoElement, canvas: HTMLCanvasElement, selection: Pick<LocationSelection, "latitude" | "longitude" | "radiusKm">) {
+  if (video.readyState < 2 || !video.videoWidth || !video.videoHeight) return;
+  const sourceCanvas = document.createElement("canvas");
+  sourceCanvas.width = video.videoWidth;
+  sourceCanvas.height = video.videoHeight;
+  const sourceContext = sourceCanvas.getContext("2d", { willReadFrequently: true });
+  const context = canvas.getContext("2d");
+  if (!sourceContext || !context) throw new Error("The NASA frame could not be displayed.");
+  sourceContext.drawImage(video, 0, 0);
+  const source = sourceContext.getImageData(0, 0, video.videoWidth, video.videoHeight).data;
+  const size = 480;
+  if (canvas.width !== size || canvas.height !== size) { canvas.width = size; canvas.height = size; }
+  const output = context.createImageData(size, size);
+  const latitude0 = selection.latitude * Math.PI / 180;
+  const longitude0 = selection.longitude * Math.PI / 180;
+  const sinLatitude0 = Math.sin(latitude0);
+  const cosLatitude0 = Math.cos(latitude0);
+  const maxAngle = (selection.radiusKm ?? 500) / 6371.0088;
+  for (let y = 0; y < size; y++) {
+    const north = 1 - (y + 0.5) / size * 2;
+    for (let x = 0; x < size; x++) {
+      const east = (x + 0.5) / size * 2 - 1;
+      const distance = Math.hypot(east, north);
+      if (distance > 1) continue;
+      const bearing = Math.atan2(east, north);
+      const arc = distance * maxAngle;
+      const latitude = Math.asin(sinLatitude0 * Math.cos(arc) + cosLatitude0 * Math.sin(arc) * Math.cos(bearing));
+      const longitude = longitude0 + Math.atan2(Math.sin(bearing) * Math.sin(arc) * cosLatitude0, Math.cos(arc) - sinLatitude0 * Math.sin(latitude));
+      const longitudeDegrees = ((longitude * 180 / Math.PI + 180) % 360 + 360) % 360;
+      const sourceX = Math.min(video.videoWidth - 1, Math.floor(longitudeDegrees / 360 * video.videoWidth));
+      const sourceY = Math.min(video.videoHeight - 1, Math.max(0, Math.floor((90 - latitude * 180 / Math.PI) / 180 * video.videoHeight)));
+      const from = (sourceY * video.videoWidth + sourceX) * 4;
+      const to = (y * size + x) * 4;
+      output.data.set(source.subarray(from, from + 4), to);
+    }
+  }
+  context.putImageData(output, 0, 0);
+}

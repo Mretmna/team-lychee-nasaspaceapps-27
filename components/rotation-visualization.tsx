@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { VisualizationCrop } from "@/components/map-upload";
-import { projectCircularPng } from "@/lib/geo";
+import { drawCircularGlobalFrame, projectCircularPng } from "@/lib/geo";
 import type { LoadedTrack } from "@/types/track";
 
 const apiBase = process.env.NEXT_PUBLIC_MAP_API_URL ?? "http://localhost:8000";
@@ -20,9 +20,17 @@ export function RotationVisualization({ crop, duration, onDurationChange, datase
   const [circularUrl, setCircularUrl] = useState("");
   const imageRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const frameCanvasRef = useRef<HTMLCanvasElement>(null);
   const frameRef = useRef<number | null>(null);
   const requestRef = useRef<AbortController | null>(null);
   const busyRef = useRef(false);
+
+  const renderVideoFrame = () => {
+    if (videoRef.current && frameCanvasRef.current && crop) {
+      try { drawCircularGlobalFrame(videoRef.current, frameCanvasRef.current, crop); }
+      catch (cause) { setError(cause instanceof Error ? cause.message : "The NASA frame could not be displayed."); }
+    }
+  };
 
   useEffect(() => {
     if (!crop || hasVideo(dataset)) return;
@@ -122,7 +130,7 @@ export function RotationVisualization({ crop, duration, onDurationChange, datase
   return <section className="rotation-visualization" aria-labelledby="rotation-title">
     <h2 id="rotation-title">Explore a visualization</h2>
       <div className="dataset-options" role="group" aria-label="Visualization dataset">{datasets.map((option) => <button key={option.id} type="button" aria-pressed={dataset === option.id} className={dataset === option.id ? "active" : ""} onClick={() => onDatasetChange(option.id)}>{option.label}</button>)}</div>
-      <div className="rotation-image" ref={imageRef}>{!hasVideo(dataset) ? circularUrl ? <img src={circularUrl} alt={`Circular view of ${datasets.find((option) => option.id === dataset)?.label}`} /> : <p>Preparing selected region…</p> : track && !track.isSynthetic ? <video ref={videoRef} src={track.track.videoUrl} preload="auto" muted playsInline aria-label={`${datasets.find((option) => option.id === dataset)?.label} NASA timeline`} onError={() => setError("The NASA video could not be loaded.")} /> : <p>{track?.isSynthetic ? "NASA timeline unavailable. The synthetic preview is not shown here." : "Loading NASA timeline…"}</p>}<svg className="rotation-overlay" width={size.width} height={size.height} viewBox={`0 0 ${size.width || 1} ${size.height || 1}`} aria-hidden="true"><line x1={halfWidth} y1={halfHeight} x2={endX} y2={endY} /></svg></div>
+      <div className="rotation-image" ref={imageRef}>{!hasVideo(dataset) ? circularUrl ? <img src={circularUrl} alt={`Circular view of ${datasets.find((option) => option.id === dataset)?.label}`} /> : <p>Preparing selected region…</p> : track && !track.isSynthetic ? <><video ref={videoRef} className="timeline-source" src={track.track.videoUrl} preload="auto" muted playsInline onLoadedData={renderVideoFrame} onSeeked={renderVideoFrame} onError={() => setError("The NASA video could not be loaded.")} /><canvas ref={frameCanvasRef} className="timeline-canvas" role="img" aria-label={`${datasets.find((option) => option.id === dataset)?.label} within the selected radius`} /></> : <p>{track?.isSynthetic ? "NASA timeline unavailable. The synthetic preview is not shown here." : "Loading NASA timeline…"}</p>}<svg className="rotation-overlay" width={size.width} height={size.height} viewBox={`0 0 ${size.width || 1} ${size.height || 1}`} aria-hidden="true"><line x1={halfWidth} y1={halfHeight} x2={endX} y2={endY} /></svg></div>
       <p className="duration-label">Choose animation duration</p>
       <div className="rotation-controls"><div className="duration-options" role="group" aria-label="Rotation duration">{durations.map((seconds) => <button key={seconds} type="button" aria-pressed={duration === seconds} className={duration === seconds ? "active" : ""} disabled={running || starting} onClick={() => onDurationChange(seconds)}>{seconds} seconds</button>)}</div><button type="button" className="rotation-start" disabled={!crop || running || starting || (hasVideo(dataset) && (!track || track.isSynthetic))} onClick={() => void start()}>{starting ? "Starting…" : running ? "Rotating…" : "Start"}</button></div>
       <p role="status">{running ? `Rotating at ${360 / duration}° per second.` : angle === 360 ? "One revolution complete." : "Choose a duration and press Start."}</p>
