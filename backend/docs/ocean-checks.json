@@ -1,9 +1,0 @@
-{
-  "unitTestsPassed": 6,
-  "freshExtractionMatches": true,
-  "fullFfmpegDecode": "passed",
-  "fastStart": true,
-  "audioStreams": 0,
-  "encoding": "H.264 Main level 3.1, yuv420p",
-  "visualReview": "Six timestamps inspected: 0, 5, 10, 15, 20, 29.8 seconds; fixed camera, no caption/legend in ROI."
-}
