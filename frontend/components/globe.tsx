@@ -37,24 +37,9 @@ function makeGridLine(points: THREE.Vector3[], material: THREE.LineBasicMaterial
   return new THREE.Line(geometry, material);
 }
 
-function areaPoints(selection: LocationSelection) {
-  const center = toVector(selection.latitude, selection.longitude, 1).normalize();
-  const east = new THREE.Vector3(0, 1, 0).cross(center).normalize();
-  if (east.lengthSq() < 0.01) east.set(1, 0, 0);
-  const north = center.clone().cross(east).normalize();
-  const angle = Math.max(0.018, Math.min(Math.PI, (selection.radiusKm ?? 500) / 6371));
-  return Array.from({ length: 96 }, (_, index) => {
-    const bearing = (index / 96) * Math.PI * 2;
-    return center.clone().multiplyScalar(Math.cos(angle))
-      .addScaledVector(east, Math.sin(angle) * Math.cos(bearing))
-      .addScaledVector(north, Math.sin(angle) * Math.sin(bearing))
-      .normalize().multiplyScalar(RADIUS + 0.025);
-  });
-}
-
 export function Globe({ selection, onSelect }: GlobeProps) {
   const mountRef = useRef<HTMLDivElement>(null);
-  const areaRef = useRef<THREE.LineLoop | null>(null);
+  const ringRef = useRef<HTMLDivElement>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const controlsRef = useRef<OrbitControls | null>(null);
   const onSelectRef = useRef(onSelect);
@@ -72,12 +57,6 @@ export function Globe({ selection, onSelect }: GlobeProps) {
       cameraRef.current.position.copy(toVector(selection.latitude, selection.longitude).normalize().multiplyScalar(distance));
       controlsRef.current.update();
     }
-    const area = areaRef.current;
-    if (!area) return;
-    area.visible = Boolean(selection.radiusKm);
-    if (!selection.radiusKm) return;
-    area.geometry.dispose();
-    area.geometry = new THREE.BufferGeometry().setFromPoints(areaPoints(selection));
   }, [selection]);
 
   useEffect(() => {
@@ -97,7 +76,7 @@ export function Globe({ selection, onSelect }: GlobeProps) {
     camera.position.set(0, 0.25, 5.4);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setClearColor(0x000000, 0);
-    renderer.domElement.setAttribute("aria-label", "Interactive globe. Drag to rotate, scroll to zoom, or click to select coordinates.");
+    renderer.domElement.setAttribute("aria-label", "Interactive globe. Drag to rotate Earth beneath the fixed selection circle, scroll to zoom, or click to select coordinates.");
     renderer.domElement.setAttribute("role", "img");
     mount.appendChild(renderer.domElement);
 
@@ -135,14 +114,6 @@ export function Globe({ selection, onSelect }: GlobeProps) {
       scene.add(makeGridLine(points, gridMaterial));
     }
 
-    const area = new THREE.LineLoop(
-      new THREE.BufferGeometry().setFromPoints(areaPoints(initialSelectionRef.current)),
-      new THREE.LineBasicMaterial({ color: 0xf5b544, transparent: true, opacity: 0.9 }),
-    );
-    area.visible = Boolean(initialSelectionRef.current.radiusKm);
-    areaRef.current = area;
-    scene.add(area);
-
     scene.add(new THREE.HemisphereLight(0xd8fbf3, 0x102733, 2.4));
     const keyLight = new THREE.DirectionalLight(0xffffff, 2.3);
     keyLight.position.set(-3, 4, 5);
@@ -159,6 +130,26 @@ export function Globe({ selection, onSelect }: GlobeProps) {
     controls.zoomSpeed = 0.7;
     camera.position.copy(toVector(initialSelectionRef.current.latitude, initialSelectionRef.current.longitude).normalize().multiplyScalar(5.4));
     controls.update();
+    const updateRing = () => {
+      const ring = ringRef.current;
+      if (!ring) return;
+      const distance = camera.position.length();
+      const angularRadius = Math.min((initialSelectionRef.current.radiusKm ?? 500) / 6371.0088, Math.acos(RADIUS / distance));
+      const focalLength = mount.clientHeight / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2));
+      const projectedRadius = focalLength * RADIUS * Math.sin(angularRadius) / (distance - RADIUS * Math.cos(angularRadius));
+      const diameter = Math.max(8, projectedRadius * 2);
+      ring.style.width = `${diameter}px`;
+      ring.style.height = `${diameter}px`;
+    };
+    const updateSelectionFromView = () => {
+      const next = fromVector(camera.position);
+      const current = initialSelectionRef.current;
+      if (Math.abs(next.latitude - current.latitude) < 0.05 && Math.abs(next.longitude - current.longitude) < 0.05) return;
+      const selected = { name: "Selected area", ...next, radiusKm: current.radiusKm ?? 500 };
+      initialSelectionRef.current = selected;
+      onSelectRef.current(selected);
+    };
+    controls.addEventListener("end", updateSelectionFromView);
 
     const raycaster = new THREE.Raycaster();
     const pointer = new THREE.Vector2();
@@ -186,12 +177,14 @@ export function Globe({ selection, onSelect }: GlobeProps) {
       renderer.setSize(width, height, false);
       camera.aspect = width / Math.max(1, height);
       camera.updateProjectionMatrix();
+      updateRing();
     };
     const observer = new ResizeObserver(resize);
     observer.observe(mount);
     resize();
     const animate = () => {
       controls.update();
+      updateRing();
       renderer.render(scene, camera);
       frame = requestAnimationFrame(animate);
     };
@@ -203,6 +196,7 @@ export function Globe({ selection, onSelect }: GlobeProps) {
       observer.disconnect();
       renderer.domElement.removeEventListener("pointerdown", handlePointerDown);
       renderer.domElement.removeEventListener("pointerup", handlePointerUp);
+      controls.removeEventListener("end", updateSelectionFromView);
       controls.dispose();
       scene.traverse((object) => {
         if (object instanceof THREE.Mesh || object instanceof THREE.Line) {
@@ -214,7 +208,6 @@ export function Globe({ selection, onSelect }: GlobeProps) {
       globeMaterial.map?.dispose();
       renderer.dispose();
       renderer.domElement.remove();
-      areaRef.current = null;
       cameraRef.current = null;
       controlsRef.current = null;
     };
@@ -229,5 +222,5 @@ export function Globe({ selection, onSelect }: GlobeProps) {
     );
   }
 
-  return <div className="globe-canvas" ref={mountRef} />;
+  return <div className="globe-canvas" ref={mountRef}><div className="globe-selection-ring" ref={ringRef} aria-hidden="true" /></div>;
 }
