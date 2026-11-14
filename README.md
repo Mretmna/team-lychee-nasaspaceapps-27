@@ -33,6 +33,8 @@ The temporary trial controls preview and download the exact cropped PNG sent to 
 
 The **Explore a visualization** panel displays the selected region in a circular view with a rotating line. Its 10, 20, and 30-second controls are always visible. By default the region is cropped from the globe texture; an uploaded and submitted PNG overrides this imagery. Press Start to post the cropped PNG and geographic fields plus numeric `duration_seconds` to the existing `/api/raster-selection` route. FastAPI confirms the duration before a linear, one-revolution browser animation begins. Changing the crop resets the animation while retaining the selected duration.
 
+The selector places **Actual World**, **Global Precipitation**, **North Pacific Color**, and three supplied stills (**Map 1–3**) in the circular view. The precipitation and ocean options play the existing NASA video assets in chronological order, mapping their full video duration onto the chosen 10, 20, or 30 seconds. Their frame position and the rotating line use the same elapsed-time fraction. Actual World uses the existing Three.js Earth texture; Maps 1–3 are user-supplied NASA/GMAO-labeled JPEG stills cropped by the selected radius. Those four options do not have frame sequences. The separate video panel is hidden while the audio controls remain available for the two NASA timelines.
+
 ## Commands
 
 - `npm run dev` — local development server

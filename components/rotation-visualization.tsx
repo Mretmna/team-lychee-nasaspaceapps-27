@@ -3,11 +3,15 @@
 import { useEffect, useRef, useState } from "react";
 import type { VisualizationCrop } from "@/components/map-upload";
 import { projectCircularPng } from "@/lib/geo";
+import type { LoadedTrack } from "@/types/track";
 
 const apiBase = process.env.NEXT_PUBLIC_MAP_API_URL ?? "http://localhost:8000";
 const durations = [10, 20, 30] as const;
+export type Dataset = "actual" | "precipitation" | "ocean" | "map1" | "map2" | "map3";
+const datasets: { id: Dataset; label: string }[] = [{ id: "actual", label: "Actual World" }, { id: "precipitation", label: "Global Precipitation" }, { id: "ocean", label: "North Pacific Color" }, { id: "map1", label: "Map 1" }, { id: "map2", label: "Map 2" }, { id: "map3", label: "Map 3" }];
+const hasVideo = (dataset: Dataset) => dataset === "precipitation" || dataset === "ocean";
 
-export function RotationVisualization({ crop, duration, onDurationChange }: { crop: VisualizationCrop | null; duration: 10 | 20 | 30; onDurationChange: (duration: 10 | 20 | 30) => void }) {
+export function RotationVisualization({ crop, duration, onDurationChange, dataset, onDatasetChange, track }: { crop: VisualizationCrop | null; duration: 10 | 20 | 30; onDurationChange: (duration: 10 | 20 | 30) => void; dataset: Dataset; onDatasetChange: (dataset: Dataset) => void; track: LoadedTrack | null }) {
   const [angle, setAngle] = useState(0);
   const [running, setRunning] = useState(false);
   const [starting, setStarting] = useState(false);
@@ -15,12 +19,13 @@ export function RotationVisualization({ crop, duration, onDurationChange }: { cr
   const [size, setSize] = useState({ width: 0, height: 0 });
   const [circularUrl, setCircularUrl] = useState("");
   const imageRef = useRef<HTMLDivElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const frameRef = useRef<number | null>(null);
   const requestRef = useRef<AbortController | null>(null);
   const busyRef = useRef(false);
 
   useEffect(() => {
-    if (!crop) return;
+    if (!crop || hasVideo(dataset)) return;
     let cancelled = false;
     let url = "";
     projectCircularPng(crop).then((image) => {
@@ -29,7 +34,7 @@ export function RotationVisualization({ crop, duration, onDurationChange }: { cr
       else setCircularUrl(url);
     }).catch((cause) => { if (!cancelled) setError(cause instanceof Error ? cause.message : "The circular map could not be displayed."); });
     return () => { cancelled = true; if (url) URL.revokeObjectURL(url); };
-  }, [crop]);
+  }, [crop, dataset]);
 
   useEffect(() => {
     const image = imageRef.current;
@@ -47,7 +52,7 @@ export function RotationVisualization({ crop, duration, onDurationChange }: { cr
   }, [crop]);
 
   async function start() {
-    if (!crop || busyRef.current) return;
+    if (!crop || busyRef.current || (hasVideo(dataset) && (!track || track.isSynthetic))) return;
     busyRef.current = true;
     setStarting(true);
     setRunning(false);
@@ -56,6 +61,7 @@ export function RotationVisualization({ crop, duration, onDurationChange }: { cr
     if (frameRef.current !== null) cancelAnimationFrame(frameRef.current);
     const controller = new AbortController();
     requestRef.current = controller;
+    const video = videoRef.current;
     const body = new FormData();
     body.append("file", crop.blob, "selected-area.png");
     body.append("latitude", String(crop.latitude));
@@ -63,18 +69,36 @@ export function RotationVisualization({ crop, duration, onDurationChange }: { cr
     body.append("radius_km", String(crop.radiusKm));
     for (const [key, value] of Object.entries(crop.bounds)) body.append(key, String(value));
     body.append("duration_seconds", String(duration));
+    body.append("visualization_id", dataset);
     try {
+      if (hasVideo(dataset) && video && video.readyState < 1) {
+        await new Promise<void>((resolve, reject) => {
+          const loaded = () => { cleanup(); resolve(); };
+          const failed = () => { cleanup(); reject(new Error("The NASA video could not be loaded.")); };
+          const cleanup = () => { video.removeEventListener("loadedmetadata", loaded); video.removeEventListener("error", failed); };
+          video.addEventListener("loadedmetadata", loaded);
+          video.addEventListener("error", failed);
+          video.load();
+        });
+      }
       const response = await fetch(`${apiBase}/api/raster-selection`, { method: "POST", body, signal: controller.signal });
       const result = await response.json();
       if (!response.ok) throw new Error(result.detail ?? "The visualization could not start.");
       if (result.durationSeconds !== duration) throw new Error("The backend did not confirm the selected duration.");
+      if (result.visualizationId !== dataset) throw new Error("The backend did not confirm the selected visualization.");
       if (controller.signal.aborted) return;
       setStarting(false);
       setRunning(true);
+      if (video) video.currentTime = 0;
       const startedAt = performance.now();
+      let lastVideoUpdate = -Infinity;
       const tick = (now: number) => {
         const fraction = Math.min(1, (now - startedAt) / (duration * 1000));
         setAngle(fraction * 360);
+        if (video && track && (now - lastVideoUpdate >= 80 || fraction === 1)) {
+          video.currentTime = fraction * (Number.isFinite(video.duration) ? video.duration : track.track.durationSeconds);
+          lastVideoUpdate = now;
+        }
         if (fraction < 1) frameRef.current = requestAnimationFrame(tick);
         else { frameRef.current = null; busyRef.current = false; setRunning(false); }
       };
@@ -97,9 +121,10 @@ export function RotationVisualization({ crop, duration, onDurationChange }: { cr
 
   return <section className="rotation-visualization" aria-labelledby="rotation-title">
     <h2 id="rotation-title">Explore a visualization</h2>
-      <div className="rotation-image" ref={imageRef}>{circularUrl ? <img src={circularUrl} alt="Circular view of the selected map region" /> : <p>Preparing selected region…</p>}<svg className="rotation-overlay" width={size.width} height={size.height} viewBox={`0 0 ${size.width || 1} ${size.height || 1}`} aria-hidden="true"><line x1={halfWidth} y1={halfHeight} x2={endX} y2={endY} /></svg></div>
+      <div className="dataset-options" role="group" aria-label="Visualization dataset">{datasets.map((option) => <button key={option.id} type="button" aria-pressed={dataset === option.id} className={dataset === option.id ? "active" : ""} onClick={() => onDatasetChange(option.id)}>{option.label}</button>)}</div>
+      <div className="rotation-image" ref={imageRef}>{!hasVideo(dataset) ? circularUrl ? <img src={circularUrl} alt={`Circular view of ${datasets.find((option) => option.id === dataset)?.label}`} /> : <p>Preparing selected region…</p> : track && !track.isSynthetic ? <video ref={videoRef} src={track.track.videoUrl} preload="auto" muted playsInline aria-label={`${datasets.find((option) => option.id === dataset)?.label} NASA timeline`} onError={() => setError("The NASA video could not be loaded.")} /> : <p>{track?.isSynthetic ? "NASA timeline unavailable. The synthetic preview is not shown here." : "Loading NASA timeline…"}</p>}<svg className="rotation-overlay" width={size.width} height={size.height} viewBox={`0 0 ${size.width || 1} ${size.height || 1}`} aria-hidden="true"><line x1={halfWidth} y1={halfHeight} x2={endX} y2={endY} /></svg></div>
       <p className="duration-label">Choose animation duration</p>
-      <div className="rotation-controls"><div className="duration-options" role="group" aria-label="Rotation duration">{durations.map((seconds) => <button key={seconds} type="button" aria-pressed={duration === seconds} className={duration === seconds ? "active" : ""} disabled={running || starting} onClick={() => onDurationChange(seconds)}>{seconds} seconds</button>)}</div><button type="button" className="rotation-start" disabled={!crop || running || starting} onClick={() => void start()}>{starting ? "Starting…" : running ? "Rotating…" : "Start"}</button></div>
+      <div className="rotation-controls"><div className="duration-options" role="group" aria-label="Rotation duration">{durations.map((seconds) => <button key={seconds} type="button" aria-pressed={duration === seconds} className={duration === seconds ? "active" : ""} disabled={running || starting} onClick={() => onDurationChange(seconds)}>{seconds} seconds</button>)}</div><button type="button" className="rotation-start" disabled={!crop || running || starting || (hasVideo(dataset) && (!track || track.isSynthetic))} onClick={() => void start()}>{starting ? "Starting…" : running ? "Rotating…" : "Start"}</button></div>
       <p role="status">{running ? `Rotating at ${360 / duration}° per second.` : angle === 360 ? "One revolution complete." : "Choose a duration and press Start."}</p>
       {error && <p className="field-error" role="alert">{error}</p>}
   </section>;

@@ -6,7 +6,7 @@ import { JukeboxPlayer } from "@/components/jukebox-player";
 import { LocationPicker } from "@/components/location-picker";
 import { RadiusMap } from "@/components/radius-map";
 import { MapUpload, type VisualizationCrop } from "@/components/map-upload";
-import { RotationVisualization } from "@/components/rotation-visualization";
+import { RotationVisualization, type Dataset } from "@/components/rotation-visualization";
 import { loadTrack } from "@/lib/track";
 import { cropGlobalPng, filterPoints, type PointCollection } from "@/lib/geo";
 import type { LoadedTrack, LocationSelection } from "@/types/track";
@@ -16,14 +16,16 @@ export function JukeboxDashboard() {
   const [loadError, setLoadError] = useState("");
   const [loading, setLoading] = useState(true);
   const [selection, setSelection] = useState<LocationSelection>({ name: "North Atlantic", latitude: 38, longitude: -35, radiusKm: 500 });
-  const [trackId, setTrackId] = useState<"precipitation" | "ocean">("precipitation");
+  const [dataset, setDataset] = useState<Dataset>("actual");
+  const trackId = dataset === "ocean" ? "ocean" : "precipitation";
   const [pointData, setPointData] = useState<PointCollection | null>(null);
   const [crop, setCrop] = useState<VisualizationCrop | null>(null);
   const [earthCrop, setEarthCrop] = useState<VisualizationCrop | null>(null);
+  const [cropSource, setCropSource] = useState<Dataset>("actual");
   const [cropError, setCropError] = useState("");
   const [duration, setDuration] = useState<10 | 20 | 30>(10);
   const matchesSelection = (value: VisualizationCrop | null) => value && value.latitude === selection.latitude && value.longitude === selection.longitude && value.radiusKm === (selection.radiusKm ?? 500);
-  const activeCrop = matchesSelection(crop) ? crop : matchesSelection(earthCrop) ? earthCrop : null;
+  const activeCrop = dataset === "actual" && matchesSelection(crop) ? crop : cropSource === dataset && matchesSelection(earthCrop) ? earthCrop : null;
   const visiblePoints = useMemo(() => pointData ? filterPoints(pointData, selection) : { type: "FeatureCollection" as const, features: [] }, [pointData, selection]);
   const requestId = useRef(0);
 
@@ -35,12 +37,14 @@ export function JukeboxDashboard() {
     const selected = { latitude: selection.latitude, longitude: selection.longitude, radiusKm: selection.radiusKm ?? 500, name: "Selected region" };
     async function prepareRegion() {
       try {
-        const response = await fetch("/earth-atmos-2048.jpg", { signal: controller.signal });
+        const sourcePath = dataset.startsWith("map") ? `/media/map-${dataset.slice(-1)}.jpeg` : "/earth-atmos-2048.jpg";
+        const response = await fetch(sourcePath, { signal: controller.signal });
         if (!response.ok) throw new Error("The Earth imagery could not be loaded.");
         const source = new File([await response.blob()], "earth.jpg", { type: "image/jpeg" });
         const result = await cropGlobalPng(source, selected);
         if (controller.signal.aborted) return;
         setEarthCrop({ ...selected, blob: result.blob, bounds: result.bounds, url: URL.createObjectURL(result.blob) });
+        setCropSource(dataset);
         setCropError("");
       } catch (cause) {
         if (!controller.signal.aborted) setCropError(cause instanceof Error ? cause.message : "The region could not be prepared.");
@@ -48,7 +52,7 @@ export function JukeboxDashboard() {
     }
     void prepareRegion();
     return () => controller.abort();
-  }, [selection.latitude, selection.longitude, selection.radiusKm]);
+  }, [dataset, selection.latitude, selection.longitude, selection.radiusKm]);
 
   const fetchTrack = useCallback(async (fixture = false) => {
     const currentRequest = ++requestId.current;
@@ -96,17 +100,16 @@ export function JukeboxDashboard() {
 
         <div id="listen" className="player-column">
           <MapUpload selection={selection} points={visiblePoints} onPointsChange={setPointData} onCropChange={setCrop} />
-          <RotationVisualization key={activeCrop?.url ?? "no-crop"} crop={activeCrop} duration={duration} onDurationChange={setDuration} />
+          <RotationVisualization key={`${dataset}:${activeCrop?.url ?? "no-crop"}`} crop={activeCrop} duration={duration} onDurationChange={setDuration} dataset={dataset} onDatasetChange={setDataset} track={!loading && !loadError && loadedTrack?.track.videoUrl.includes(trackId) ? loadedTrack : null} />
           {cropError && !activeCrop && <p className="field-error" role="alert">{cropError}</p>}
-          <div className="track-choice" aria-label="Earth visualization"><span>NASA visualization timelines</span><button type="button" className={trackId === "precipitation" ? "active" : ""} onClick={() => setTrackId("precipitation")}>Global precipitation</button><button type="button" className={trackId === "ocean" ? "active" : ""} onClick={() => setTrackId("ocean")}>North Pacific color</button></div>
-          {loading && <div className="load-state" role="status"><span className="loader" />Loading the visualization timeline…</div>}
-          {!loading && loadError && (
+          {(dataset === "precipitation" || dataset === "ocean") && loading && <div className="load-state" role="status"><span className="loader" />Loading the visualization timeline…</div>}
+          {(dataset === "precipitation" || dataset === "ocean") && !loading && loadError && (
             <div className="load-state error" role="alert">
               <strong>We couldn’t read the track data.</strong><p>{loadError}</p>
               <div><button type="button" onClick={() => void fetchTrack()}>Try again</button><button type="button" onClick={() => void fetchTrack(true)}>Use synthetic preview</button></div>
             </div>
           )}
-          {!loading && loadedTrack && <JukeboxPlayer key={loadedTrack.track.id} loadedTrack={loadedTrack} />}
+          {(dataset === "precipitation" || dataset === "ocean") && !loading && loadedTrack && <JukeboxPlayer key={loadedTrack.track.id} loadedTrack={loadedTrack} hideVisual />}
         </div>
       </section>
 
@@ -125,8 +128,8 @@ export function JukeboxDashboard() {
         <div className="source-grid">
           <p>The sound is generated live in your browser from timestamped features. It is an interpretation of visualization frames, not a direct recording of Earth and not a substitute for calibrated scientific measurements.</p>
           <div>
-            {loadedTrack?.isSynthetic ? <><strong>Preview status</strong><p>The production NASA clip and extracted feature document are not present yet. This session uses a separate synthetic fixture and visual animation.</p></> : <><strong>Visualization credit</strong><p>{loadedTrack?.track.credits}</p></>}
-            {loadedTrack && <a href={loadedTrack.track.sourceUrl} target="_blank" rel="noreferrer">View source information <ArrowIcon /></a>}
+            {dataset.startsWith("map") ? <><strong>Map source</strong><p>Map {dataset.slice(-1)} is a still NASA/GMAO-labeled image supplied for this project. It has no timeline frames.</p></> : dataset === "actual" ? <><strong>Actual World source</strong><p>The existing Earth texture is a still image from the Three.js imagery example. It has no NASA timeline frames.</p></> : loadedTrack?.isSynthetic ? <><strong>Preview status</strong><p>The NASA timeline is unavailable; the synthetic preview is shown only in the sound player.</p></> : <><strong>Visualization credit</strong><p>{loadedTrack?.track.credits}</p></>}
+            {(dataset === "precipitation" || dataset === "ocean") && loadedTrack && <a href={loadedTrack.track.sourceUrl} target="_blank" rel="noreferrer">View source information <ArrowIcon /></a>}
             <p className="globe-credit">Globe texture from the <a href="https://github.com/mrdoob/three.js/blob/dev/examples/textures/planets/earth_atmos_2048.jpg" target="_blank" rel="noreferrer">Three.js Earth imagery example</a>.</p>
           </div>
         </div>

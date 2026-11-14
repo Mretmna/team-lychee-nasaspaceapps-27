@@ -16,7 +16,7 @@ function formatTime(seconds: number) {
   return `${Math.floor(safe / 60)}:${Math.floor(safe % 60).toString().padStart(2, "0")}`;
 }
 
-export function JukeboxPlayer({ loadedTrack }: JukeboxPlayerProps) {
+export function JukeboxPlayer({ loadedTrack, hideVisual = false }: JukeboxPlayerProps & { hideVisual?: boolean }) {
   const { track, isSynthetic } = loadedTrack;
   const [currentTime, setCurrentTime] = useState(0);
   const [playing, setPlaying] = useState(false);
@@ -123,7 +123,7 @@ export function JukeboxPlayer({ loadedTrack }: JukeboxPlayerProps) {
         <span className={isSynthetic ? "data-badge fixture" : "data-badge"}>{isSynthetic ? "Synthetic preview" : "NASA-derived data"}</span>
       </div>
 
-      <div className="media-frame">
+      <div className="media-frame" style={hideVisual ? { display: "none" } : undefined}>
         {isSynthetic ? (
           <SyntheticVisual time={currentTime} feature={feature} />
         ) : (
