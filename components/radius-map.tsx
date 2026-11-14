@@ -16,11 +16,9 @@ type MapInstance = {
   data: { addGeoJson(data: PointCollection): void; forEach(callback: (feature: object) => void): void; remove(feature: object): void; setStyle(style: object): void };
 };
 type CircleInstance = { setCenter(center: object): void; setRadius(radius: number): void; getBounds(): object | null; setMap(map: MapInstance | null): void };
-type MarkerInstance = { setPosition(position: object): void; setMap(map: MapInstance | null): void };
 type MapsApi = {
   Map: new (element: HTMLElement, options: object) => MapInstance;
   Circle: new (options: object) => CircleInstance;
-  Marker: new (options: object) => MarkerInstance;
   LatLng: new (latitude: number, longitude: number) => LatLng;
   geometry: { spherical: { computeOffset(origin: LatLng, distance: number, heading: number): LatLng } };
 };
@@ -51,7 +49,6 @@ export function RadiusMap({ selection, onSelect, points }: { selection: Location
   const maskRef = useRef<SVGPathElement>(null);
   const mapRef = useRef<MapInstance | null>(null);
   const circleRef = useRef<CircleInstance | null>(null);
-  const markerRef = useRef<MarkerInstance | null>(null);
   const mapsRef = useRef<MapsApi | null>(null);
   const selectionRef = useRef(selection);
   const pointsRef = useRef(points);
@@ -74,10 +71,8 @@ export function RadiusMap({ selection, onSelect, points }: { selection: Location
       const center = { lat: selected.latitude, lng: selected.longitude };
       const map = new maps.Map(mapElement, { center, zoom: 5, gestureHandling: "greedy", clickableIcons: false, streetViewControl: false, mapTypeControl: false });
       const circle = new maps.Circle({ map, center, radius: (selected.radiusKm ?? 500) * 1000, strokeColor: "#d89026", strokeWeight: 2, fillColor: "#f2b64b", fillOpacity: 0.1, clickable: false });
-      const marker = new maps.Marker({ map, position: center });
       mapRef.current = map;
       circleRef.current = circle;
-      markerRef.current = marker;
       map.data.setStyle({ icon: { path: 0, fillColor: "#d89026", fillOpacity: 1, strokeColor: "#ffffff", strokeWeight: 1, scale: 5 } });
       map.data.addGeoJson(pointsRef.current);
 
@@ -120,10 +115,8 @@ export function RadiusMap({ selection, onSelect, points }: { selection: Location
       cancelled = true;
       listeners.forEach((listener) => listener.remove());
       circleRef.current?.setMap(null);
-      markerRef.current?.setMap(null);
       mapRef.current = null;
       circleRef.current = null;
-      markerRef.current = null;
       mapsRef.current = null;
       if (mapElement) mapElement.replaceChildren();
     };
@@ -133,12 +126,10 @@ export function RadiusMap({ selection, onSelect, points }: { selection: Location
     const maps = mapsRef.current;
     const map = mapRef.current;
     const circle = circleRef.current;
-    const marker = markerRef.current;
-    if (!maps || !map || !circle || !marker) return;
+    if (!maps || !map || !circle) return;
     const center = { lat: selection.latitude, lng: selection.longitude };
     circle.setCenter(center);
     circle.setRadius((selection.radiusKm ?? 500) * 1000);
-    marker.setPosition(center);
     const bounds = circle.getBounds();
     if (bounds) map.fitBounds(bounds, 28);
   }, [selection]);
