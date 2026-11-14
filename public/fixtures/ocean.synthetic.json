@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "id": "ocean-synthetic-preview",
+  "title": "Ocean Pulse — Preview",
+  "videoUrl": "/media/ocean.mp4",
+  "durationSeconds": 45,
+  "sourceUrl": "https://www.spaceappschallenge.org/2026/challenges/the-earth-information-jukebox/",
+  "credits": "Synthetic fixture created for interface development. It is not NASA observation data.",
+  "featureDefinitions": {
+    "colorWarmth": "Synthetic normalized warm-color score; not measured temperature",
+    "motion": "Synthetic normalized frame-change score; not measured current speed",
+    "variation": "Synthetic normalized spatial color variation"
+  },
+  "samples": [
+    { "timeSeconds": 0, "colorWarmth": 0.28, "motion": 0, "variation": 0.34 },
+    { "timeSeconds": 3, "colorWarmth": 0.34, "motion": 0.18, "variation": 0.38 },
+    { "timeSeconds": 6, "colorWarmth": 0.42, "motion": 0.31, "variation": 0.47 },
+    { "timeSeconds": 9, "colorWarmth": 0.54, "motion": 0.48, "variation": 0.58 },
+    { "timeSeconds": 12, "colorWarmth": 0.67, "motion": 0.65, "variation": 0.71 },
+    { "timeSeconds": 15, "colorWarmth": 0.74, "motion": 0.42, "variation": 0.64 },
+    { "timeSeconds": 18, "colorWarmth": 0.62, "motion": 0.28, "variation": 0.52 },
+    { "timeSeconds": 21, "colorWarmth": 0.48, "motion": 0.54, "variation": 0.43 },
+    { "timeSeconds": 24, "colorWarmth": 0.39, "motion": 0.73, "variation": 0.56 },
+    { "timeSeconds": 27, "colorWarmth": 0.51, "motion": 0.61, "variation": 0.69 },
+    { "timeSeconds": 30, "colorWarmth": 0.69, "motion": 0.37, "variation": 0.76 },
+    { "timeSeconds": 33, "colorWarmth": 0.79, "motion": 0.22, "variation": 0.62 },
+    { "timeSeconds": 36, "colorWarmth": 0.72, "motion": 0.44, "variation": 0.48 },
+    { "timeSeconds": 39, "colorWarmth": 0.58, "motion": 0.58, "variation": 0.41 },
+    { "timeSeconds": 42, "colorWarmth": 0.43, "motion": 0.33, "variation": 0.36 },
+    { "timeSeconds": 45, "colorWarmth": 0.31, "motion": 0.12, "variation": 0.32 }
+  ]
+}
