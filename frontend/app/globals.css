@@ -214,7 +214,7 @@ input[type="range"] { accent-color: var(--sun); cursor: pointer; }
 .sound-template-choice p button { border: 0; padding: 2px 4px; background: transparent; color: white; font-weight: 700; text-decoration: underline; cursor: pointer; }
 .duration-label { font-weight: 700; }
 .rotation-overlay { position: absolute; inset: 0; pointer-events: none; overflow: visible; }
-.rotation-overlay line { stroke: var(--sun); stroke-width: 3; stroke-linecap: round; filter: drop-shadow(0 1px 2px #102d35); }
+.rotation-overlay line, .rotation-overlay circle { stroke: var(--sun); stroke-width: 3; fill: none; stroke-linecap: round; filter: drop-shadow(0 1px 2px #102d35); }
 .rotation-controls { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; }
 .duration-options { display: flex; gap: 0; }
 .duration-options button { padding: 10px 13px; border: 1px solid #a9c6c2; background: transparent; color: #f3f8f5; cursor: pointer; }
@@ -223,6 +223,13 @@ input[type="range"] { accent-color: var(--sun); cursor: pointer; }
 .duration-options button:disabled { cursor: default; opacity: .65; }
 .rotation-start { padding: 11px 20px; border: 0; background: var(--sun); color: var(--ink); font-weight: 700; cursor: pointer; }
 .rotation-start:disabled { opacity: .6; cursor: default; }
+.instrument-playback { display: grid; gap: 10px; max-width: 380px; margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--line); }
+.instrument-playback label { display: grid; gap: 7px; font-size: 13px; font-weight: 700; }
+.instrument-playback select { width: 100%; min-height: 44px; padding: 9px 12px; border: 1px solid var(--ink); background: #fff; color: var(--ink); }
+.instrument-playback button { width: fit-content; min-height: 44px; padding: 10px 16px; border: 0; background: var(--ink); color: #fff; font-weight: 700; cursor: pointer; }
+.instrument-playback button:disabled { opacity: .6; cursor: default; }
+.instrument-playback p { margin: 0; color: var(--ink-soft); font-size: 12px; line-height: 1.5; }
+
 footer { display: flex; justify-content: space-between; gap: 30px; padding: 34px clamp(24px, 5vw, 76px); background: #102d35; color: #b6cac6; font-size: 11px; }
 footer span { color: white; font-family: var(--serif); font-size: 17px; }
 footer p { margin: 0; }
