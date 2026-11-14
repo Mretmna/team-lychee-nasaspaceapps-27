@@ -29,6 +29,8 @@ For the detailed map, create a [Google Maps JavaScript API key](https://develope
 
 Start the map service separately with `pip install -r server/requirements.txt` and `uvicorn server.main:app --reload --port 8000`. The **Your maps** section accepts GeoJSON Point FeatureCollections and full-world equirectangular PNGs up to 10 MB. The browser filters GeoJSON points by great-circle distance or crops and masks PNG pixels before sending the selected region to FastAPI. Changing the location or radius sends a new filtered selection after the first submission. The server checks that received points and visible PNG pixels lie within the same radius. PNGs are interpreted as spanning 180° W to 180° E and 90° S to 90° N. Set `NEXT_PUBLIC_MAP_API_URL` to the API origin when it differs from `http://localhost:8000`.
 
+The temporary trial controls preview the exact cropped PNG and offer PNG and white-background JPG downloads. After a successful raster submission, the frontend also posts the same multipart fields to `POST /sonfy` on the map API origin. When that route returns an `audio/*` response, an audio player appears below the crop. This repository does not implement `/sonfy`; the page reports its HTTP error until a sound service provides the route.
+
 ## Commands
 
 - `npm run dev` — local development server

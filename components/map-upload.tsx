@@ -13,12 +13,26 @@ export function MapUpload({ selection, points, onPointsChange }: { selection: Lo
   const [active, setActive] = useState(false);
   const [status, setStatus] = useState("");
   const [confirmedKey, setConfirmedKey] = useState("");
+  const [preview, setPreview] = useState<{ key: string; pngUrl: string; jpgUrl: string } | null>(null);
+  const [sound, setSound] = useState<{ key: string; url: string } | null>(null);
+  const [soundError, setSoundError] = useState("");
   const [error, setError] = useState("");
   const selectionKey = `${selection.latitude}:${selection.longitude}:${selection.radiusKm ?? 500}:${fileName}:${JSON.stringify(points.features)}`;
+
+  useEffect(() => () => {
+    if (preview) {
+      URL.revokeObjectURL(preview.pngUrl);
+      URL.revokeObjectURL(preview.jpgUrl);
+    }
+  }, [preview]);
+  useEffect(() => () => { if (sound) URL.revokeObjectURL(sound.url); }, [sound]);
 
   async function chooseFile(file: File | undefined) {
     setActive(false);
     setStatus("");
+    setPreview(null);
+    setSound(null);
+    setSoundError("");
     setError("");
     onPointsChange(null);
     setRasterFile(null);
@@ -48,17 +62,22 @@ export function MapUpload({ selection, points, onPointsChange }: { selection: Lo
     const controller = new AbortController();
     const timer = window.setTimeout(async () => {
       setError("");
+      setSoundError("");
       try {
         let response: Response;
+        let croppedBlob: Blob | null = null;
+        let soundBody: FormData | null = null;
         if (rasterFile) {
           const cropped = await cropGlobalPng(rasterFile, selection);
           if (controller.signal.aborted) return;
+          croppedBlob = cropped.blob;
           const body = new FormData();
           body.append("file", cropped.blob, "selected-area.png");
           body.append("latitude", String(selection.latitude));
           body.append("longitude", String(selection.longitude));
           body.append("radius_km", String(selection.radiusKm ?? 500));
           for (const [name, value] of Object.entries(cropped.bounds)) body.append(name, String(value));
+          soundBody = body;
           response = await fetch(`${apiBase}/api/raster-selection`, { method: "POST", body, signal: controller.signal });
         } else {
           response = await fetch(`${apiBase}/api/selection`, {
@@ -70,8 +89,34 @@ export function MapUpload({ selection, points, onPointsChange }: { selection: Lo
         }
         const result = await response.json();
         if (!response.ok) throw new Error(result.detail ?? "The selected area could not be sent.");
+        if (croppedBlob) {
+          const bitmap = await createImageBitmap(croppedBlob);
+          const canvas = document.createElement("canvas");
+          canvas.width = bitmap.width;
+          canvas.height = bitmap.height;
+          const context = canvas.getContext("2d");
+          if (!context) throw new Error("The cropped image preview could not be created.");
+          context.fillStyle = "#ffffff";
+          context.fillRect(0, 0, canvas.width, canvas.height);
+          context.drawImage(bitmap, 0, 0);
+          bitmap.close();
+          const jpgBlob = await new Promise<Blob>((resolve, reject) => canvas.toBlob((value) => value ? resolve(value) : reject(new Error("The JPG could not be created.")), "image/jpeg", 0.92));
+          if (controller.signal.aborted) return;
+          setPreview({ key: selectionKey, pngUrl: URL.createObjectURL(croppedBlob), jpgUrl: URL.createObjectURL(jpgBlob) });
+        }
         setStatus(rasterFile ? `Cropped ${result.width} × ${result.height} map pixels within ${result.radiusKm} km sent to FastAPI.` : `${result.receivedPoints} points within ${result.radiusKm} km sent to FastAPI.`);
         setConfirmedKey(selectionKey);
+        if (soundBody) {
+          try {
+            const soundResponse = await fetch(`${apiBase}/sonfy`, { method: "POST", body: soundBody, signal: controller.signal });
+            if (!soundResponse.ok) throw new Error(`Sound service returned ${soundResponse.status}.`);
+            const audio = await soundResponse.blob();
+            if (!audio.type.startsWith("audio/")) throw new Error("Sound service did not return an audio file.");
+            if (!controller.signal.aborted) setSound({ key: selectionKey, url: URL.createObjectURL(audio) });
+          } catch (cause) {
+            if (!controller.signal.aborted) setSoundError(cause instanceof Error ? cause.message : "Sound could not be loaded.");
+          }
+        }
       } catch (cause) {
         if (!controller.signal.aborted) {
           setStatus("");
@@ -96,6 +141,9 @@ export function MapUpload({ selection, points, onPointsChange }: { selection: Lo
     {fileName && !rasterFile && <p>{points.features.length} of {sourceCount} points are inside the radius. The map updates as you change the center or radius.</p>}
     {rasterFile && <p>The PNG is interpreted as a global equirectangular map spanning 180° W to 180° E and 90° S to 90° N.</p>}
     {active && <p role="status">{confirmedKey === selectionKey ? status : "Updating selected area…"}</p>}
+    {preview?.key === selectionKey && <div className="crop-preview"><p>Trial crop: this PNG is exactly what FastAPI received. The JPG download has a white background outside the radius.</p><img src={preview.pngUrl} alt={`Cropped map within ${selection.radiusKm ?? 500} km of ${selection.name}`} /><a href={preview.jpgUrl} download="selected-area-trial.jpg">Download cropped JPG</a><a href={preview.pngUrl} download="selected-area.png">Download exact PNG</a></div>}
+    {sound?.key === selectionKey && <div className="crop-sound"><p>Sound from /sonfy</p><audio controls src={sound.url} /></div>}
+    {soundError && active && <p className="field-error" role="alert">{soundError}</p>}
     {error && <p className="field-error" role="alert">{error}</p>}
   </section>;
 }

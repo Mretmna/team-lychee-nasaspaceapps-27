@@ -157,6 +157,11 @@ input[type="range"] { accent-color: var(--sun); cursor: pointer; }
 .map-upload-section form button:disabled { opacity: .5; cursor: default; }
 .uploaded-map { display: grid; gap: 10px; max-width: 640px; margin-top: 24px; }
 .uploaded-map img { max-width: 100%; height: auto; border: 1px solid var(--line); }
+.crop-preview { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 18px; }
+.crop-preview p, .crop-preview img { flex-basis: 100%; }
+.crop-preview img { display: block; max-width: 100%; max-height: 360px; width: auto; height: auto; border: 1px solid var(--line); background: repeating-conic-gradient(#e9eee9 0% 25%, #fff 0% 50%) 50% / 20px 20px; }
+.crop-preview a { display: inline-flex; padding: 10px 14px; border: 1px solid var(--ink); color: var(--ink); text-decoration: none; font-size: 12px; font-weight: 700; }
+.crop-preview a:hover { background: var(--mint-light); }
 footer { display: flex; justify-content: space-between; gap: 30px; padding: 34px clamp(24px, 5vw, 76px); background: #102d35; color: #b6cac6; font-size: 11px; }
 footer span { color: white; font-family: var(--serif); font-size: 17px; }
 footer p { margin: 0; }
