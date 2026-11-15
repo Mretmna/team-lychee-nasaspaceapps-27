@@ -400,7 +400,7 @@ footer a { text-underline-offset: 3px; }
 .sound-generate { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 20px 28px; background: var(--ink); color: #fff; }
 .sound-generate p { max-width: 270px; margin: 0; color: #c7d8d5; font-size: 12px; line-height: 1.5; }
 .sound-generate .rotation-start { min-height: 48px; border-radius: 5px; white-space: nowrap; }
-.rotation-audio { display: grid; justify-items: start; gap: 12px; margin-top: 16px; padding: 18px 20px; border: 1px solid rgba(207,228,220,.35); border-radius: 8px; background: rgba(255,255,255,.06); }
+.rotation-audio { display: grid; justify-items: start; gap: 12px; margin-top: 16px; padding: 0; }
 .rotation-audio > p { margin: 0; color: #dbe6df; font-size: 13px; line-height: 1.5; }
 .rotation-audio audio { width: min(100%, 520px); }
 .rotation-audio .instrument-playback { width: 100%; max-width: 520px; border-color: rgba(207,228,220,.35); }
@@ -411,7 +411,7 @@ footer a { text-underline-offset: 3px; }
 @media (max-width: 640px) {
   .sound-preview { padding: 12px; }
   .sound-preview-caption { padding-bottom: 14px; }
-  .sound-preview .rotation-audio { gap: 10px; padding: 14px; }
+  .sound-preview .rotation-audio { gap: 10px; }
   .rotation-audio .color-graph { padding-top: 14px; }
   .color-graph-heading { flex-wrap: wrap; gap: 4px 10px; margin-bottom: 12px; }
   .color-graph-bars { gap: 8px; }
