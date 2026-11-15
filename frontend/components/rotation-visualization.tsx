@@ -476,6 +476,10 @@ export function RotationVisualization({ crop, selection, duration, onDurationCha
       <h2 id="rotation-title">Map preview</h2>
       <p>The gold line shows which part of the map you’re hearing.</p>
     </div>
+    <section className="screen-reader-summary" aria-label="Current sound setup">
+      <strong>Current sound setup</strong>
+      <p>{sourceLabel} map. {regionShape === "full" ? "The entire map" : `${selection.name}, ${regionShape} area with a ${selection.radiusKm ?? 500} kilometer radius`} will become sound. Template: {selectedTemplate?.label ?? "loading"}. Scan: {scanOptions.find((option) => option.id === scanMode)?.label}. Listening mode: {selectedSoundMode.label}. Length: {duration} seconds. The color bars describe image colors and brightness at the current scan position.</p>
+    </section>
     <div className="sound-preview" id="sound-preview">
       <div className={`rotation-image region-${regionShape} ${manualScan ? "manual-scan-active" : ""}`} ref={imageRef} role="img" aria-label={`${sourceLabel} in a ${regionShape === "full" ? "whole-map" : regionShape} view`} onPointerDown={beginDjDrag} onPointerMove={(event) => { if (event.currentTarget.hasPointerCapture(event.pointerId)) seekFromPointer(event); }} onPointerUp={endDjDrag} onPointerCancel={endDjDrag}>{!hasVideo(dataset) ? circularUrl ? <img src={circularUrl} alt="" aria-hidden="true" /> : <p>{sourceMode === "upload" ? "Upload a PNG or JPEG, then prepare the selected area." : "Preparing selected region…"}</p> : track && !track.isSynthetic ? <><video ref={videoRef} className="timeline-source" src={track.track.videoUrl} preload="auto" muted playsInline onLoadedData={renderVideoFrame} onSeeked={renderVideoFrame} onError={() => setError("The NASA video could not be loaded.")} /><canvas ref={frameCanvasRef} className="timeline-canvas" aria-hidden="true" /></> : <p>{track?.isSynthetic ? "NASA timeline unavailable. The synthetic preview is not shown here." : "Loading NASA timeline…"}</p>}<svg className="rotation-overlay" width={size.width} height={size.height} viewBox={`0 0 ${size.width || 1} ${size.height || 1}`} aria-hidden="true">
         {scanMode === "clockwise" && <line x1={halfWidth} y1={halfHeight} x2={endX} y2={endY} />}
@@ -519,8 +523,8 @@ export function RotationVisualization({ crop, selection, duration, onDurationCha
       </section>
     </div>
     <p className="sr-only" role="status" aria-live="polite" aria-atomic="true">{announcement}</p>
-    <div className="sound-builder">
-      <div className="sound-builder-heading"><span className="sound-builder-kicker"><SoundWaveIcon /> SOUND SETTINGS</span><h3>Make the sound</h3><p>Choose a template, scan path, listening mode, and length.</p></div>
+    <div className="sound-builder" id="sound-settings" tabIndex={-1}>
+      <div className="sound-builder-heading"><span className="sound-builder-kicker"><SoundWaveIcon /> YOUR MIX</span><h3>Mix your sound</h3><p>Pick the instruments, move the scan, choose a listening mode, and set the length.</p></div>
       <div className="sound-step">
         <div className="sound-step-heading"><span className="sound-step-number">01</span><div><label htmlFor="sound-template">Sound template</label><p>Choose the instruments.</p></div></div>
         <div className="sound-template-choice"><select id="sound-template" value={soundTemplate} disabled={!templates.length || starting || running} onChange={(event) => onSoundTemplateChange(event.target.value)}>
@@ -543,9 +547,9 @@ export function RotationVisualization({ crop, selection, duration, onDurationCha
         <div className="sound-step-heading"><span className="sound-step-number">04</span><div><span id="duration-label" className="sound-step-label">Length</span><p>Choose 10, 20, or 30 seconds.</p></div></div>
         <div className="duration-options" role="group" aria-labelledby="duration-label">{durations.map((seconds) => <button key={seconds} type="button" aria-pressed={duration === seconds} className={duration === seconds ? "active" : ""} disabled={running || starting} onClick={() => onDurationChange(seconds)}><strong>{seconds}</strong><span>seconds</span></button>)}</div>
       </div>
-      <div className="sound-generate"><p>{!crop ? "Choose a map to continue." : "Ready to generate."}</p><button type="button" className="rotation-start" disabled={!canGenerate} onClick={() => void start()}>{starting ? "Generating your sound…" : running ? "Playing your sound…" : <><PlayIcon /> Generate & play sound</>}</button></div>
+      <div className="sound-generate"><p>{!crop ? "Pick a map to start your mix." : "Your mix is ready to make."}</p><button type="button" className="rotation-start" disabled={!canGenerate} onClick={() => void start()}>{starting ? "Making your mix…" : running ? "Playing your mix…" : <><PlayIcon /> Generate & play my mix</>}</button></div>
     </div>
-    <p className="sound-status" role="status">{starting ? "Turning your map into sound…" : running ? "Playing." : angle === 360 ? "Finished. Replay or change the settings." : crop ? "Ready to generate." : "Select a map to begin."}</p>
+    <p className="sound-status" role="status">{starting ? "Making your mix…" : running ? "Playing your mix." : angle === 360 ? "Finished. Replay or change the settings." : crop ? "Ready to make your mix." : "Pick a map to begin."}</p>
     {error && <p className="field-error" role="alert">{error}</p>}
   </section>;
 }

@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title">
+  <title id="title">Lychee Juicebox</title>
+  <path fill="#527c61" d="M34 13c4-7 11-9 17-7-2 7-7 11-15 11z"/>
+  <path fill="none" stroke="#173f54" stroke-linecap="round" stroke-width="2.5" d="M33 17c2-6 7-10 13-11"/>
+  <path fill="#b64866" stroke="#173f54" stroke-width="2.5" d="M32 15c15 0 25 10 25 24 0 12-10 21-25 21S7 51 7 39c0-14 10-24 25-24z"/>
+  <path fill="none" stroke="#e69aa6" stroke-linecap="round" stroke-width="2" opacity=".8" d="M17 29c4-5 9-7 15-7M14 38c4-4 10-6 17-6M18 47c4-3 9-4 14-4"/>
+  <path fill="none" stroke="#fff6df" stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M25 38h4l3-7 4 15 3-8h4"/>
+</svg>

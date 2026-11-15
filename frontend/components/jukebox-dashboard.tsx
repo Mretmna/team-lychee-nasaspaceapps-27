@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowIcon } from "@/components/icons";
+import { ArrowIcon, DjIcon } from "@/components/icons";
 import { DemoVideo } from "@/components/demo-video";
 import { LocationPicker } from "@/components/location-picker";
 import { MapChooser } from "@/components/map-chooser";
@@ -21,7 +21,7 @@ export function JukeboxDashboard() {
   const [loadedTrack, setLoadedTrack] = useState<LoadedTrack | null>(null);
   const [loadError, setLoadError] = useState("");
   const [loading, setLoading] = useState(true);
-  const [selection, setSelection] = useState<LocationSelection>({ name: "North Atlantic", latitude: 38, longitude: -35, radiusKm: 500 });
+  const [selection, setSelection] = useState<LocationSelection>({ name: "North Atlantic", latitude: 38, longitude: -35, radiusKm: 2500 });
   const [regionShape, setRegionShape] = useState<RegionShape>("circle");
   const [dataset, setDataset] = useState<Dataset>("actual");
   const [mapMode, setMapMode] = useState<"default" | "upload">("default");
@@ -119,23 +119,38 @@ export function JukeboxDashboard() {
   }, [fetchTrack]);
 
   const showPlayingMaps = useCallback(() => {
-    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const prefersReducedMotion = document.documentElement.dataset.reducedMotion === "true" || window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const target = document.getElementById("sound-preview");
     target?.scrollIntoView({ behavior: prefersReducedMotion ? "auto" : "smooth", block: "start" });
   }, []);
 
   return (
-    <main>
+    <main id="main-content">
       <header className="site-header">
-        <a className="brand" href="#maps" aria-label="Team Lychee Earth Jukebox home"><span className="brand-mark" aria-hidden="true">L</span><strong>Team Lychee<br /><small>Earth Jukebox</small></strong></a>
-        <nav aria-label="Main navigation"><a href="#maps">Maps</a><a href="#explore">Globe</a><a href="#demo">Demo</a><Link href="/tutorial">Tutorial</Link><a href="#team">Our team</a><a href="#sources">Sources</a></nav>
-        <a className="header-cta" href="#maps">Make a sound <ArrowIcon /></a>
+        <a className="brand" href="#demo" aria-label="Lychee Juicebox home"><span className="brand-logo" aria-hidden="true" /><strong>Lychee<br /><small>Juicebox</small></strong></a>
+        <nav aria-label="Main navigation"><a href="#demo">Demo</a><a href="#maps">Maps</a><a href="#explore">Globe</a><Link href="/tutorial">Tutorial</Link><a href="#team">Our team</a><a href="#sources">Sources</a></nav>
+        <a className="header-cta" href="#maps">Be the DJ <ArrowIcon /></a>
       </header>
+
+      <nav className="screen-reader-guide" id="screen-reader-guide" aria-label="Keyboard route through the jukebox">
+        <strong>Keyboard route</strong>
+        <p>Use Tab to move through controls and Enter or Space to select them. Choose a map, use the coordinate form instead of the globe, set an area, then generate and play sound.</p>
+        <div><a href="#maps">1. Map</a><a href="#location-controls">2. Location and area</a><a href="#sound-settings">3. Sound settings</a><a href="#sound-preview">4. Player</a></div>
+      </nav>
+      <section className="demo-section" id="demo" aria-labelledby="demo-title">
+        <div className="demo-copy">
+          <p className="eyebrow">Team Lychee · NASA Space Apps 2026</p>
+          <h1 id="demo-title">The Earth is your mixtape.</h1>
+          <p>Pick a map, choose a place, and turn it into your own mix with Lychee Juicebox.</p>
+          <a className="hero-primary demo-start" href="#maps"><DjIcon /> Be the DJ <ArrowIcon /></a>
+          <div className="demo-flow" aria-hidden="true"><span>Pick a map</span><ArrowIcon /><span>Find a spot</span><ArrowIcon /><span>Play your mix</span></div>
+        </div>
+        <DemoVideo />
+      </section>
 
       <section className="map-selection-stage" id="maps" aria-label="Choose a map">
           <div className="map-mode-picker">
-            <div className="page-intro"><p className="eyebrow">Team Lychee · NASA Space Apps 2026</p><h1>Earth Information Jukebox</h1><p>Choose a map and a place, then make sound from the selected area.</p></div>
-            <p className="eyebrow">01 · Choose a map</p>
+            <p className="eyebrow">01 · Pick your map</p>
             <div className="map-mode-tabs" role="tablist" aria-label="Map source" onKeyDown={(event) => {
               if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
               event.preventDefault();
@@ -143,13 +158,13 @@ export function JukeboxDashboard() {
               setMapMode(next);
               event.currentTarget.querySelector<HTMLButtonElement>(`#${next}-map-tab`)?.focus();
             }}>
-              <button id="default-map-tab" type="button" role="tab" tabIndex={mapMode === "default" ? 0 : -1} aria-selected={mapMode === "default"} aria-controls="default-map-panel" onClick={() => setMapMode("default")}>Use default maps</button>
-              <button id="upload-map-tab" type="button" role="tab" tabIndex={mapMode === "upload" ? 0 : -1} aria-selected={mapMode === "upload"} aria-controls="upload-map-panel" onClick={() => setMapMode("upload")}>Create your own map</button>
+              <button id="default-map-tab" type="button" role="tab" tabIndex={mapMode === "default" ? 0 : -1} aria-selected={mapMode === "default"} aria-controls="default-map-panel" onClick={() => setMapMode("default")}>Pick a map</button>
+              <button id="upload-map-tab" type="button" role="tab" tabIndex={mapMode === "upload" ? 0 : -1} aria-selected={mapMode === "upload"} aria-controls="upload-map-panel" onClick={() => setMapMode("upload")}>Bring your own map</button>
             </div>
           </div>
           <section id="default-map-panel" className="map-source-panel" role="tabpanel" aria-labelledby="default-map-tab" hidden={mapMode !== "default"}>
-            <h2>Use a default map</h2>
-            <p>Choose an Earth image or NASA visualization. Your globe selection and radius apply to every map.</p>
+            <h2>Pick your canvas</h2>
+            <p>Start with an Earth image or NASA visualization. Your chosen place and radius work with every map.</p>
             <MapChooser dataset={dataset} onSelect={setDataset} />
           </section>
           <div id="upload-map-panel" role="tabpanel" aria-labelledby="upload-map-tab" hidden={mapMode !== "upload"}>
@@ -159,7 +174,7 @@ export function JukeboxDashboard() {
 
       <section className="experience" id="explore" aria-labelledby="explore-title">
         <div className="globe-column">
-          <div className="section-heading"><p className="eyebrow">02 · Choose a place</p><h2 id="explore-title">Choose a place</h2><p>Click the globe to set a center. The radius slider and location options are below it.</p></div>
+          <div className="section-heading"><p className="eyebrow">02 · Find your spot</p><h2 id="explore-title">Find your spot</h2><p>Click the globe to choose a place. Use the radius slider below to hear more or less of the map.</p></div>
           <div className="globe-view" id="globe-view">
             <RadiusMap selection={selection} shape={regionShape} onSelect={setSelection} points={visiblePoints} />
           </div>
@@ -177,11 +192,6 @@ export function JukeboxDashboard() {
             </div>
           )}
         </div>
-      </section>
-
-      <section className="demo-section" id="demo" aria-labelledby="demo-title">
-        <div className="demo-copy"><h2 id="demo-title">Demo</h2><p>See how to choose a map, pick a place, and play the result.</p></div>
-        <DemoVideo />
       </section>
 
       <section className="team-section" id="team" aria-labelledby="team-title">
@@ -211,7 +221,7 @@ export function JukeboxDashboard() {
         <div><h2 id="tutorial-teaser-title">Need help?</h2><p>The tutorial walks through each step.</p></div>
         <Link href="/tutorial" className="tutorial-link">Read the tutorial <ArrowIcon /></Link>
       </section>
-      <footer><span>Team Lychee · Earth Information Jukebox</span><nav aria-label="Footer navigation"><a href="#demo">Demo</a><Link href="/tutorial">Tutorial</Link><a href="#sources">Sources</a></nav><p>Built for the 2026 NASA Space Apps Challenge · <a href={teamProfileUrl} target="_blank" rel="noreferrer">Our team profile</a></p></footer>
+      <footer><span>Team Lychee · Lychee Juicebox</span><nav aria-label="Footer navigation"><a href="#demo">Demo</a><Link href="/tutorial">Tutorial</Link><a href="#sources">Sources</a></nav><p>Built for the 2026 NASA Space Apps Challenge · <a href={teamProfileUrl} target="_blank" rel="noreferrer">Our team profile</a></p></footer>
     </main>
   );
 }

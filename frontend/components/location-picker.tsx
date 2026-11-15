@@ -26,9 +26,11 @@ export function LocationPicker({ selection, shape, onShapeChange, onSelect }: Lo
   const [areaName, setAreaName] = useState("");
   const [city, setCity] = useState("");
   const [country, setCountry] = useState("");
-  const [radiusKm, setRadiusKm] = useState("500");
+  const [radiusKm, setRadiusKm] = useState(String(selection.radiusKm ?? 2500));
   const [locating, setLocating] = useState(false);
   const radiusRef = useRef(radiusKm);
+  const advancedRef = useRef<HTMLDetailsElement>(null);
+  const latitudeRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => { radiusRef.current = radiusKm; }, [radiusKm]);
 
@@ -142,11 +144,12 @@ export function LocationPicker({ selection, shape, onShapeChange, onSelect }: Lo
   };
 
   return (
-    <div className="location-picker">
+    <div className="location-picker" id="location-controls" tabIndex={-1}>
       <div className="location-current" aria-live="polite">
         <PinIcon />
         <span><strong>{selection.name}</strong><small>{selection.latitude.toFixed(1)}°, {selection.longitude.toFixed(1)}°</small></span>
       </div>
+      <button type="button" className="keyboard-location-link" onClick={() => { if (advancedRef.current) advancedRef.current.open = true; latitudeRef.current?.focus(); }}>Enter a place without the globe</button>
       <fieldset className="region-shape-choice">
         <legend>Listen to</legend>
         <div>{([ ["circle", "Circle"], ["square", "Square"], ["full", "Entire map"] ] as const).map(([value, label]) => <button key={value} type="button" aria-pressed={shape === value} onClick={() => onShapeChange(value)}>{label}</button>)}</div>
@@ -158,7 +161,7 @@ export function LocationPicker({ selection, shape, onShapeChange, onSelect }: Lo
         <input id="radius-number" inputMode="numeric" type="number" min="10" max="10000" value={radiusKm} onChange={(event) => { setRadiusKm(event.target.value); commitRadius(event.target.value); }} />
       </div>}
       {shape === "full" && <p className="region-shape-note">The full map is included. The location and radius are saved for when you switch back to a region.</p>}
-      <details className="location-advanced">
+      <details className="location-advanced" ref={advancedRef}>
         <summary><span><strong>Advanced location options</strong><small>City, coordinates and presets</small></span></summary>
         <div className="preset-row" aria-label="Location presets">
           {PRESETS.map((preset) => (
@@ -166,7 +169,7 @@ export function LocationPicker({ selection, shape, onShapeChange, onSelect }: Lo
           ))}
         </div>
         <div className="coordinate-form">
-          <label>Latitude<input inputMode="decimal" value={latitude} onChange={(event) => setLatitude(event.target.value)} /></label>
+          <label>Latitude<input ref={latitudeRef} inputMode="decimal" value={latitude} onChange={(event) => setLatitude(event.target.value)} /></label>
           <label>Longitude<input inputMode="decimal" value={longitude} onChange={(event) => setLongitude(event.target.value)} /></label>
           <button type="button" onClick={applyCoordinates}>Set point</button>
         </div>

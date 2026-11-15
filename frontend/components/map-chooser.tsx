@@ -39,7 +39,7 @@ export function MapChooser({ dataset, onSelect }: { dataset: Dataset; onSelect: 
     <div className="map-chooser">
       <div className="map-chooser-topline"><span>Browse maps</span><strong aria-live="polite">Selected: {datasetLabels[dataset]}</strong></div>
       <div className="map-chooser-filters" role="group" aria-label="Filter maps">
-        {groups.map((item) => <button key={item.id} type="button" aria-pressed={group === item.id} onClick={() => setGroup(item.id)}>{item.label}<span>{item.maps.length}</span></button>)}
+        {groups.map((item) => <button key={item.id} type="button" aria-pressed={group === item.id} onClick={() => setGroup(item.id)}>{item.label}{item.id === "detailed" && <em className="map-recommended">Recommended</em>}<span>{item.maps.length}</span></button>)}
       </div>
       <div className="map-chooser-grid" role="group" aria-label={`${groups.find((item) => item.id === group)?.label} choices`}>
         {visibleMaps.map((id) => {

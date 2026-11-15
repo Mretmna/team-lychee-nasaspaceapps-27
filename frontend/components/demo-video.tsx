@@ -21,13 +21,19 @@ export function DemoVideo() {
   return <div className="demo-video">
     {id ? <iframe
       src={`https://www.youtube-nocookie.com/embed/${id}`}
-      title="Earth Information Jukebox demo video"
+      title="Lychee Juicebox demo video"
       loading="lazy"
       allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; web-share"
       referrerPolicy="strict-origin-when-cross-origin"
       allowFullScreen
     /> : <div className="demo-video-placeholder">
-      <strong>Video coming soon</strong>
+      <strong>How it works</strong>
+      <ol>
+        <li><span>01</span> Choose an Earth map or upload your own.</li>
+        <li><span>02</span> Pick an area on the globe or enter coordinates.</li>
+        <li><span>03</span> Pick a sound and press Generate &amp; play my mix.</li>
+      </ol>
+      <p>Demo video coming soon.</p>
     </div>}
   </div>;
 }
