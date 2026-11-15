@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Team Lychee | Earth Information Jukebox",
-  description: "Team Lychee's 2026 NASA Space Apps project turns Earth visualizations into an interactive sight and sound experience.",
+  description: "Choose an Earth map and location, then generate sound from the selected area.",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

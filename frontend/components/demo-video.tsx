@@ -1,5 +1,3 @@
-import { PlayIcon } from "@/components/icons";
-
 function youtubeId(value: string): string | null {
   const raw = value.trim();
   const validId = /^[A-Za-z0-9_-]{11}$/;
@@ -29,11 +27,7 @@ export function DemoVideo() {
       referrerPolicy="strict-origin-when-cross-origin"
       allowFullScreen
     /> : <div className="demo-video-placeholder">
-      <span className="demo-video-topline">A LOOK INSIDE THE JUKEBOX</span>
-      <span className="demo-video-play" aria-hidden="true"><PlayIcon /></span>
-      <strong>Demo video coming soon</strong>
-      <p>See how one place on Earth becomes a soundscape.</p>
-      <span className="demo-video-track" aria-hidden="true" />
+      <strong>Video coming soon</strong>
     </div>}
   </div>;
 }

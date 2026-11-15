@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowIcon, PlayIcon } from "@/components/icons";
+import { ArrowIcon } from "@/components/icons";
 import { DemoVideo } from "@/components/demo-video";
 import { LocationPicker } from "@/components/location-picker";
 import { MapChooser } from "@/components/map-chooser";
@@ -11,9 +11,9 @@ import { MapUpload, type VisualizationCrop } from "@/components/map-upload";
 import { RotationVisualization, datasetLabels, sharedMapIds, stillMapPaths, type Dataset, type ScanMode, type SoundMode, type SoundTemplateOption } from "@/components/rotation-visualization";
 import { loadTrack } from "@/lib/track";
 import { cropGlobalPng, filterPoints, type PointCollection } from "@/lib/geo";
-import type { LoadedTrack, LocationSelection } from "@/types/track";
+import type { LoadedTrack, LocationSelection, RegionShape } from "@/types/track";
 
-const soundApiBase = process.env.NEXT_PUBLIC_SONIFY_API_URL ?? "http://localhost:8001";
+const soundApiBase = process.env.NEXT_PUBLIC_SONIFY_API_URL ?? "/sound-api";
 const teamProfileUrl = "https://www.spaceappschallenge.org/2026/find-a-team/team-lychee/";
 const teamMembers = ["Mert Özcan", "Ahmet Efe Erdoğan", "Utku Aras Aytürk", "Boran Okandan", "Umut ÇAYCI"];
 
@@ -22,6 +22,7 @@ export function JukeboxDashboard() {
   const [loadError, setLoadError] = useState("");
   const [loading, setLoading] = useState(true);
   const [selection, setSelection] = useState<LocationSelection>({ name: "North Atlantic", latitude: 38, longitude: -35, radiusKm: 500 });
+  const [regionShape, setRegionShape] = useState<RegionShape>("circle");
   const [dataset, setDataset] = useState<Dataset>("actual");
   const [mapMode, setMapMode] = useState<"default" | "upload">("default");
   const trackId = dataset === "ocean" ? "ocean" : "precipitation";
@@ -37,9 +38,9 @@ export function JukeboxDashboard() {
   const [soundMode, setSoundMode] = useState<SoundMode>("normal");
   const [templateError, setTemplateError] = useState("");
   const [templateReload, setTemplateReload] = useState(0);
-  const matchesSelection = (value: VisualizationCrop | null) => value && value.latitude === selection.latitude && value.longitude === selection.longitude && value.radiusKm === (selection.radiusKm ?? 500);
+  const matchesSelection = (value: VisualizationCrop | null) => value && value.shape === regionShape && (regionShape === "full" || value.latitude === selection.latitude && value.longitude === selection.longitude && value.radiusKm === (selection.radiusKm ?? 500));
   const activeCrop = mapMode === "upload" ? matchesSelection(crop) ? crop : null : cropSource === dataset && matchesSelection(earthCrop) ? earthCrop : null;
-  const visiblePoints = useMemo(() => pointData ? filterPoints(pointData, selection) : { type: "FeatureCollection" as const, features: [] }, [pointData, selection]);
+  const visiblePoints = useMemo(() => pointData ? filterPoints(pointData, selection, regionShape) : { type: "FeatureCollection" as const, features: [] }, [pointData, selection, regionShape]);
   const requestId = useRef(0);
 
   useEffect(() => {
@@ -82,9 +83,9 @@ export function JukeboxDashboard() {
         if (!response.ok) throw new Error("The selected map could not be loaded.");
         const sourceBlob = await response.blob();
         const source = new File([sourceBlob], sourcePath.split("/").pop() ?? "map", { type: sourceBlob.type });
-        const result = await cropGlobalPng(source, selected);
+        const result = await cropGlobalPng(source, selected, regionShape);
         if (controller.signal.aborted) return;
-        setEarthCrop({ ...selected, blob: result.blob, bounds: result.bounds, url: URL.createObjectURL(result.blob) });
+        setEarthCrop({ ...selected, shape: regionShape, blob: result.blob, bounds: result.bounds, url: URL.createObjectURL(result.blob) });
         setCropSource(dataset);
         setCropError("");
       } catch (cause) {
@@ -93,7 +94,7 @@ export function JukeboxDashboard() {
     }
     void prepareRegion();
     return () => controller.abort();
-  }, [dataset, selection.latitude, selection.longitude, selection.radiusKm]);
+  }, [dataset, selection.latitude, selection.longitude, selection.radiusKm, regionShape]);
 
   const fetchTrack = useCallback(async (fixture = false) => {
     const currentRequest = ++requestId.current;
@@ -117,41 +118,24 @@ export function JukeboxDashboard() {
     return () => window.clearTimeout(timer);
   }, [fetchTrack]);
 
+  const showPlayingMaps = useCallback(() => {
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const target = document.getElementById("sound-preview");
+    target?.scrollIntoView({ behavior: prefersReducedMotion ? "auto" : "smooth", block: "start" });
+  }, []);
+
   return (
     <main>
       <header className="site-header">
-        <a className="brand" href="#top" aria-label="Team Lychee Earth Jukebox home"><span className="brand-mark" aria-hidden="true">L</span><strong>Team Lychee<br /><small>Earth Jukebox</small></strong></a>
-        <nav aria-label="Main navigation"><a href="#explore">Explore</a><a href="#demo">Demo</a><a href="#maps">Your maps</a><a href="#mapping">How it sounds</a><Link href="/tutorial">Tutorial</Link><a href="#team">Our team</a><a href="#sources">Sources</a></nav>
-        <a className="header-cta" href="#listen">Start listening <ArrowIcon /></a>
+        <a className="brand" href="#maps" aria-label="Team Lychee Earth Jukebox home"><span className="brand-mark" aria-hidden="true">L</span><strong>Team Lychee<br /><small>Earth Jukebox</small></strong></a>
+        <nav aria-label="Main navigation"><a href="#maps">Maps</a><a href="#explore">Globe</a><a href="#demo">Demo</a><Link href="/tutorial">Tutorial</Link><a href="#team">Our team</a><a href="#sources">Sources</a></nav>
+        <a className="header-cta" href="#maps">Make a sound <ArrowIcon /></a>
       </header>
 
-      <section className="hero" id="top" aria-labelledby="hero-title">
-        <div className="hero-content">
-          <p className="eyebrow">Team Lychee · 2026 NASA Space Apps Challenge</p>
-          <h1 id="hero-title">Earth has a story.<br /><em>Hear it unfold.</em></h1>
-          <p className="hero-copy">Choose a place and a map. Turn its colors and patterns into a soundscape you can follow, shape, and share.</p>
-          <div className="hero-actions"><a className="hero-primary" href="#explore">Start exploring <ArrowIcon /></a><a className="hero-secondary" href="#demo"><PlayIcon /> See the demo</a></div>
-          <p className="hero-footnote">Made by Team Lychee, five students from Türkiye. Your first sound is a place, a map, and one tap away.</p>
-        </div>
-        <div className="hero-art" aria-hidden="true"><span className="hero-art-label">EARTH, REIMAGINED AS SOUND</span><span className="hero-orbit" /><span className="hero-planet" /><svg className="hero-wave" viewBox="0 0 320 84" fill="none"><path d="M2 42h30l12-19 17 38 20-57 21 75 18-52 13 15h31l12-23 14 46 17-59 18 71 16-35h78" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" /></svg><span className="hero-art-caption">01 PLACE &nbsp; / &nbsp; 02 MAP &nbsp; / &nbsp; 03 SOUND</span></div>
-        <div className="hero-meta" aria-label="Team and challenge information"><span>Earth Information Jukebox</span><span>Eindhoven local event</span><a href={teamProfileUrl} target="_blank" rel="noreferrer">Official team page <ArrowIcon /></a></div>
-      </section>
-
-      <section className="demo-section" id="demo" aria-labelledby="demo-title">
-        <div className="demo-copy"><p className="eyebrow">Watch the idea come alive</p><h2 id="demo-title">See the map.<br />Follow the sound.</h2><p>Watch a quick walkthrough, then make your own version from any of the available Earth maps or an image you upload.</p><a href="#explore">Try the jukebox <ArrowIcon /></a></div>
-        <DemoVideo />
-      </section>
-
-      <section className="experience" id="explore" aria-labelledby="explore-title">
-        <div className="globe-column">
-          <div className="section-heading"><p className="eyebrow">01 · Choose a place</p><h2 id="explore-title">Where will you listen from?</h2><p>Pan, zoom, or click the globe to choose a center, then adjust the radius. City and coordinate search are under Advanced location options.</p></div>
-          <RadiusMap selection={selection} onSelect={setSelection} points={visiblePoints} />
-          <LocationPicker selection={selection} onSelect={setSelection} />
-        </div>
-
-        <div id="listen" className="player-column">
-          <div className="map-mode-picker" id="maps">
-            <p className="eyebrow">02 · Choose a map</p>
+      <section className="map-selection-stage" id="maps" aria-label="Choose a map">
+          <div className="map-mode-picker">
+            <div className="page-intro"><p className="eyebrow">Team Lychee · NASA Space Apps 2026</p><h1>Earth Information Jukebox</h1><p>Choose a map and a place, then make sound from the selected area.</p></div>
+            <p className="eyebrow">01 · Choose a map</p>
             <div className="map-mode-tabs" role="tablist" aria-label="Map source" onKeyDown={(event) => {
               if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
               event.preventDefault();
@@ -169,9 +153,21 @@ export function JukeboxDashboard() {
             <MapChooser dataset={dataset} onSelect={setDataset} />
           </section>
           <div id="upload-map-panel" role="tabpanel" aria-labelledby="upload-map-tab" hidden={mapMode !== "upload"}>
-            <MapUpload selection={selection} points={visiblePoints} onPointsChange={setPointData} onCropChange={setCrop} />
+            <MapUpload selection={selection} shape={regionShape} points={visiblePoints} onPointsChange={setPointData} onCropChange={setCrop} />
           </div>
-          <RotationVisualization key={`${mapMode}:${dataset}:${soundTemplate}:${scanMode}:${soundMode}:${activeCrop?.url ?? "no-crop"}`} crop={activeCrop} selection={selection} duration={duration} onDurationChange={setDuration} dataset={mapMode === "upload" ? "actual" : dataset} sourceMode={mapMode} sourceLabel={mapMode === "upload" ? "Your map" : datasetLabels[dataset]} templates={templates} soundTemplate={soundTemplate} onSoundTemplateChange={setSoundTemplate} scanMode={scanMode} onScanModeChange={setScanMode} soundMode={soundMode} onSoundModeChange={setSoundMode} templateError={templateError} onRetryTemplates={() => setTemplateReload((value) => value + 1)} track={mapMode === "default" && !loading && !loadError && loadedTrack?.track.videoUrl.includes(trackId) ? loadedTrack : null} />
+      </section>
+
+      <section className="experience" id="explore" aria-labelledby="explore-title">
+        <div className="globe-column">
+          <div className="section-heading"><p className="eyebrow">02 · Choose a place</p><h2 id="explore-title">Choose a place</h2><p>Click the globe to set a center. The radius slider and location options are below it.</p></div>
+          <div className="globe-view" id="globe-view">
+            <RadiusMap selection={selection} shape={regionShape} onSelect={setSelection} points={visiblePoints} />
+          </div>
+          <LocationPicker selection={selection} shape={regionShape} onShapeChange={setRegionShape} onSelect={setSelection} />
+        </div>
+
+        <div id="listen" className="player-column">
+          <RotationVisualization key={`${mapMode}:${dataset}:${regionShape}:${soundTemplate}:${scanMode}:${soundMode}:${activeCrop?.url ?? "no-crop"}`} crop={activeCrop} selection={selection} duration={duration} onDurationChange={setDuration} onPlaybackStart={showPlayingMaps} dataset={mapMode === "upload" ? "actual" : dataset} sourceMode={mapMode} sourceLabel={mapMode === "upload" ? "Your map" : datasetLabels[dataset]} regionShape={regionShape} templates={templates} soundTemplate={soundTemplate} onSoundTemplateChange={setSoundTemplate} scanMode={scanMode} onScanModeChange={setScanMode} soundMode={soundMode} onSoundModeChange={setSoundMode} templateError={templateError} onRetryTemplates={() => setTemplateReload((value) => value + 1)} track={mapMode === "default" && !loading && !loadError && loadedTrack?.track.videoUrl.includes(trackId) ? loadedTrack : null} />
           {mapMode === "default" && cropError && !activeCrop && <p className="field-error" role="alert">{cropError}</p>}
           {mapMode === "default" && (dataset === "precipitation" || dataset === "ocean") && loading && <div className="load-state" role="status"><span className="loader" />Loading the visualization timeline…</div>}
           {mapMode === "default" && (dataset === "precipitation" || dataset === "ocean") && !loading && loadError && (
@@ -183,35 +179,28 @@ export function JukeboxDashboard() {
         </div>
       </section>
 
-      <section className="mapping-section" id="mapping" aria-labelledby="mapping-title">
-        <div><p className="eyebrow">03 · Understand the mapping</p><h2 id="mapping-title">A score you can follow.</h2></div>
-        <div className="mapping-list">
-          <article><span>01</span><div><h3>Image details → notes</h3><p>Colors and brightness in the selected map region shape the generated tones.</p></div></article>
-          <article><span>02</span><div><h3>Scan path → movement</h3><p>The chosen path moves through the image over the selected duration. Spatial audio can move that sound between your ears.</p></div></article>
-          <article><span>03</span><div><h3>Template → sound character</h3><p>Choose a template to change the instruments and texture, then play the result or use the browser instrument option.</p></div></article>
-        </div>
+      <section className="demo-section" id="demo" aria-labelledby="demo-title">
+        <div className="demo-copy"><h2 id="demo-title">Demo</h2><p>See how to choose a map, pick a place, and play the result.</p></div>
+        <DemoVideo />
       </section>
 
       <section className="team-section" id="team" aria-labelledby="team-title">
         <div className="team-intro">
-          <p className="eyebrow">03 · The people behind the jukebox</p>
-          <h2 id="team-title">Curiosity has a team name.</h2>
-          <p>Our official Space Apps profile describes Team Lychee as high schoolers who bring creativity, curiosity, and coding together. We are taking on The Earth Information Jukebox challenge to make Earth science more accessible through sight and sound.</p>
+          <h2 id="team-title">Team Lychee</h2>
+          <p>We’re five students from Türkiye. We built this project for the 2026 NASA Space Apps Challenge in Eindhoven.</p>
           <a className="text-link" href={teamProfileUrl} target="_blank" rel="noreferrer">Meet us on Space Apps <ArrowIcon /></a>
         </div>
         <div className="team-roster" aria-label="Team Lychee members">
           {teamMembers.map((member, index) => <div className="team-member" key={member}><span className="member-number">{String(index + 1).padStart(2, "0")}</span><strong>{member}</strong>{index === 0 && <small>Team owner</small>}</div>)}
-          <p className="team-event">2026 NASA Space Apps Challenge <span>·</span> Eindhoven, Netherlands</p>
         </div>
       </section>
 
       <section className="source-section" id="sources" aria-labelledby="sources-title">
-        <p className="eyebrow">04 · Sources & limits</p>
-        <h2 id="sources-title">Clear about what you’re hearing.</h2>
+        <h2 id="sources-title">About the data</h2>
         <div className="source-grid">
-          <p>Sound is generated from the selected image or visualization frame. It is an interpretation of map pixels, not a direct recording of Earth or a calibrated scientific measurement.</p>
+          <p>The sound comes from the selected image or video frame. It represents image colors and brightness, not recorded audio or measured sound from Earth.</p>
           <div>
-            {mapMode === "upload" ? <><strong>Your uploaded map</strong><p>Your PNG or JPEG is treated as a full-world equirectangular image; the selected center and radius determine the region used for sound.</p></> : sharedMapIds.includes(dataset) ? <><strong>{datasetLabels[dataset]} source</strong><p>This still image came from the map folder you shared. It is a snapshot, not live data.</p></> : dataset.startsWith("map") ? <><strong>{datasetLabels[dataset]} source</strong><p>{datasetLabels[dataset]} is a still NASA/GMAO-labeled image supplied for this project. It has no timeline frames.</p></> : dataset === "actual" ? <><strong>Actual World source</strong><p>The existing Earth texture is a still image from the Three.js imagery example. It has no NASA timeline frames.</p></> : loadedTrack?.isSynthetic ? <><strong>Preview status</strong><p>The NASA timeline is unavailable. Choose a still map to generate sound.</p></> : <><strong>Visualization credit</strong><p>{loadedTrack?.track.credits}</p></>}
+            {mapMode === "upload" ? <><strong>Your uploaded map</strong><p>Your image is treated as a full-world map. The selected area is used for sound.</p></> : sharedMapIds.includes(dataset) ? <><strong>{datasetLabels[dataset]} source</strong><p>This is a still image supplied with the project, not live data.</p></> : dataset.startsWith("map") ? <><strong>{datasetLabels[dataset]} source</strong><p>{datasetLabels[dataset]} is a still image supplied for this project. It has no timeline.</p></> : dataset === "actual" ? <><strong>Actual World source</strong><p>This is a still Earth image from Three.js.</p></> : loadedTrack?.isSynthetic ? <><strong>Preview status</strong><p>The video timeline is unavailable. Choose a still map to generate sound.</p></> : <><strong>Visualization credit</strong><p>{loadedTrack?.track.credits}</p></>}
             {mapMode === "default" && (dataset === "precipitation" || dataset === "ocean") && loadedTrack && <a href={loadedTrack.track.sourceUrl} target="_blank" rel="noreferrer">View source information <ArrowIcon /></a>}
             <p className="globe-credit">Globe texture from the <a href="https://github.com/mrdoob/three.js/blob/dev/examples/textures/planets/earth_atmos_2048.jpg" target="_blank" rel="noreferrer">Three.js Earth imagery example</a>.</p>
           </div>
@@ -219,10 +208,10 @@ export function JukeboxDashboard() {
       </section>
 
       <section className="tutorial-teaser" id="tutorial" aria-labelledby="tutorial-teaser-title">
-        <div><p className="eyebrow">Need a hand?</p><h2 id="tutorial-teaser-title">Your first sound,<br />step by step.</h2><p>Follow a short guide from choosing a place to playing your finished soundscape.</p><Link href="/tutorial" className="tutorial-link">Open the tutorial <ArrowIcon /></Link></div>
-        <ol><li><span>01</span><div><strong>Pick a place</strong><p>Set the center and the area you want to hear.</p></div></li><li><span>02</span><div><strong>Choose a map</strong><p>Use an Earth map or upload your own image.</p></div></li><li><span>03</span><div><strong>Shape the sound</strong><p>Choose a voice, scan path, and listening style.</p></div></li></ol>
+        <div><h2 id="tutorial-teaser-title">Need help?</h2><p>The tutorial walks through each step.</p></div>
+        <Link href="/tutorial" className="tutorial-link">Read the tutorial <ArrowIcon /></Link>
       </section>
-      <footer><span>Team Lychee · Earth Information Jukebox</span><nav aria-label="Footer navigation"><a href="#demo">Demo</a><Link href="/tutorial">Tutorial</Link><a href="#sources">Sources</a></nav><p>Built for the 2026 NASA Space Apps Challenge · <a href={teamProfileUrl} target="_blank" rel="noreferrer">Our team profile</a> · Browser audio begins only after you press Play.</p></footer>
+      <footer><span>Team Lychee · Earth Information Jukebox</span><nav aria-label="Footer navigation"><a href="#demo">Demo</a><Link href="/tutorial">Tutorial</Link><a href="#sources">Sources</a></nav><p>Built for the 2026 NASA Space Apps Challenge · <a href={teamProfileUrl} target="_blank" rel="noreferrer">Our team profile</a></p></footer>
     </main>
   );
 }

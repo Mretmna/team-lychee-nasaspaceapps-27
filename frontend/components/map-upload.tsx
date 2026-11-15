@@ -2,12 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { cropGlobalPng, parsePointCollection, type PointCollection } from "@/lib/geo";
-import type { LocationSelection } from "@/types/track";
+import type { LocationSelection, RegionShape } from "@/types/track";
 
-const apiBase = process.env.NEXT_PUBLIC_MAP_API_URL ?? "http://localhost:8000";
-export type VisualizationCrop = { blob: Blob; url: string; latitude: number; longitude: number; radiusKm: number; bounds: { west: number; east: number; south: number; north: number } };
+const apiBase = process.env.NEXT_PUBLIC_MAP_API_URL ?? "/map-api";
+export type VisualizationCrop = { blob: Blob; url: string; latitude: number; longitude: number; radiusKm: number; shape: RegionShape; bounds: { west: number; east: number; south: number; north: number } };
 
-export function MapUpload({ selection, points, onPointsChange, onCropChange }: { selection: LocationSelection; points: PointCollection; onPointsChange: (value: PointCollection | null) => void; onCropChange: (crop: VisualizationCrop | null) => void }) {
+export function MapUpload({ selection, shape, points, onPointsChange, onCropChange }: { selection: LocationSelection; shape: RegionShape; points: PointCollection; onPointsChange: (value: PointCollection | null) => void; onCropChange: (crop: VisualizationCrop | null) => void }) {
   const [fileName, setFileName] = useState("");
   const [sourceCount, setSourceCount] = useState(0);
   const [rasterFile, setRasterFile] = useState<File | null>(null);
@@ -16,7 +16,7 @@ export function MapUpload({ selection, points, onPointsChange, onCropChange }: {
   const [confirmedKey, setConfirmedKey] = useState("");
   const [preview, setPreview] = useState<{ key: string; pngUrl: string } | null>(null);
   const [error, setError] = useState("");
-  const selectionKey = `${selection.latitude}:${selection.longitude}:${selection.radiusKm ?? 500}:${fileName}:${JSON.stringify(points.features)}`;
+  const selectionKey = `${selection.latitude}:${selection.longitude}:${selection.radiusKm ?? 500}:${shape}:${fileName}:${JSON.stringify(points.features)}`;
 
   useEffect(() => () => {
     if (preview) {
@@ -63,7 +63,7 @@ export function MapUpload({ selection, points, onPointsChange, onCropChange }: {
         let croppedBlob: Blob | null = null;
         let croppedBounds: VisualizationCrop["bounds"] | null = null;
         if (rasterFile) {
-          const cropped = await cropGlobalPng(rasterFile, selection);
+          const cropped = await cropGlobalPng(rasterFile, selection, shape);
           if (controller.signal.aborted) return;
           croppedBlob = cropped.blob;
           croppedBounds = cropped.bounds;
@@ -72,13 +72,14 @@ export function MapUpload({ selection, points, onPointsChange, onCropChange }: {
           body.append("latitude", String(selection.latitude));
           body.append("longitude", String(selection.longitude));
           body.append("radius_km", String(selection.radiusKm ?? 500));
+          body.append("region_shape", shape);
           for (const [name, value] of Object.entries(cropped.bounds)) body.append(name, String(value));
           response = await fetch(`${apiBase}/api/raster-selection`, { method: "POST", body, signal: controller.signal });
         } else {
           response = await fetch(`${apiBase}/api/selection`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ latitude: selection.latitude, longitude: selection.longitude, radiusKm: selection.radiusKm ?? 500, data: points }),
+            body: JSON.stringify({ latitude: selection.latitude, longitude: selection.longitude, radiusKm: selection.radiusKm ?? 500, regionShape: shape, data: points }),
             signal: controller.signal,
           });
         }
@@ -87,9 +88,9 @@ export function MapUpload({ selection, points, onPointsChange, onCropChange }: {
         if (croppedBlob) {
           if (controller.signal.aborted) return;
           setPreview({ key: selectionKey, pngUrl: URL.createObjectURL(croppedBlob) });
-          if (croppedBounds) onCropChange({ blob: croppedBlob, url: URL.createObjectURL(croppedBlob), latitude: selection.latitude, longitude: selection.longitude, radiusKm: selection.radiusKm ?? 500, bounds: croppedBounds });
+          if (croppedBounds) onCropChange({ blob: croppedBlob, url: URL.createObjectURL(croppedBlob), latitude: selection.latitude, longitude: selection.longitude, radiusKm: selection.radiusKm ?? 500, shape, bounds: croppedBounds });
         }
-        setStatus(rasterFile ? `Map ready: ${result.width} × ${result.height} pixels within ${result.radiusKm} km. Choose sound settings below, then press Start with sound.` : `${result.receivedPoints} points within ${result.radiusKm} km are shown on the globe. Upload a PNG or JPEG to create sound.`);
+        setStatus(rasterFile ? `Map ready: ${result.width} × ${result.height} pixels. Choose sound settings below, then generate and play.` : `${result.receivedPoints} points are shown on the globe. Upload a PNG or JPEG to create sound.`);
         setConfirmedKey(selectionKey);
       } catch (cause) {
         if (!controller.signal.aborted) {
@@ -99,23 +100,23 @@ export function MapUpload({ selection, points, onPointsChange, onCropChange }: {
       }
     }, 200);
     return () => { controller.abort(); window.clearTimeout(timer); };
-  }, [active, points, rasterFile, selection, selectionKey, onCropChange]);
+  }, [active, points, rasterFile, selection, shape, selectionKey, onCropChange]);
 
   return <section className="map-upload-section" id="uploaded-map-section" aria-labelledby="maps-title">
     <p className="eyebrow">Your maps</p>
     <h2 id="maps-title">Bring your own map.</h2>
     <p>Choose a full-world equirectangular PNG or JPEG (up to 8192 × 4096 pixels and 10 MB), then use the sound controls below. A detailed source gives a clearer crop. GeoJSON points can also be displayed on the globe, but cannot be turned into sound.</p>
-    <p>Selected area: {selection.name} ({selection.latitude.toFixed(3)}°, {selection.longitude.toFixed(3)}°; {selection.radiusKm ?? 500} km).</p>
+    <p>{shape === "full" ? "Listening to the entire uploaded map." : `Selected ${shape}: ${selection.name} (${selection.latitude.toFixed(3)}°, ${selection.longitude.toFixed(3)}°; ${selection.radiusKm ?? 500} km).`}</p>
     <form onSubmit={(event) => { event.preventDefault(); setActive(true); }}>
       <input id="map-file" type="file" accept=".png,.jpg,.jpeg,.geojson,.json,image/png,image/jpeg,application/geo+json,application/json" onChange={(event) => void chooseFile(event.target.files?.[0])} />
       <label htmlFor="map-file" className="file-picker">Choose a map</label>
       <span className="file-name" aria-live="polite">{fileName || "No file selected"}</span>
       <button type="submit" disabled={!fileName}>Prepare selected area</button>
     </form>
-    {fileName && !rasterFile && <p>{points.features.length} of {sourceCount} points are inside the radius. The map updates as you change the center or radius.</p>}
+    {fileName && !rasterFile && <p>{points.features.length} of {sourceCount} points are inside the selected {shape === "full" ? "map" : shape}. The map updates as you change the selection.</p>}
     {rasterFile && <p>The image is interpreted as a global equirectangular map spanning 180° W to 180° E and 90° S to 90° N.</p>}
     {active && <p role="status">{confirmedKey === selectionKey ? status : "Updating selected area…"}</p>}
-    {preview?.key === selectionKey && <div className="crop-preview"><p>Selected area preview</p><img src={preview.pngUrl} alt={`Cropped map within ${selection.radiusKm ?? 500} km of ${selection.name}`} /><a href={preview.pngUrl} download="selected-area.png">Download cropped PNG</a></div>}
+    {preview?.key === selectionKey && <div className="crop-preview"><p>Selected area preview</p><img src={preview.pngUrl} alt={shape === "full" ? "Entire uploaded map" : `${shape} selection within ${selection.radiusKm ?? 500} km of ${selection.name}`} /><a href={preview.pngUrl} download="selected-area.png">Download selected PNG</a></div>}
     {error && <p className="field-error" role="alert">{error}</p>}
   </section>;
 }

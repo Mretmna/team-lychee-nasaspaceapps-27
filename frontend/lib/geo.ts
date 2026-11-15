@@ -189,6 +189,34 @@ export async function projectCircularPng(crop: { blob: Blob; latitude: number; l
   }
 }
 
+export function drawRectangularGlobalFrame(video: HTMLVideoElement, canvas: HTMLCanvasElement, bounds: { west: number; east: number; south: number; north: number }, full: boolean) {
+  if (video.readyState < 2 || !video.videoWidth || !video.videoHeight) return;
+  const width = full ? 960 : 480;
+  const height = full ? 480 : 480;
+  if (canvas.width !== width || canvas.height !== height) { canvas.width = width; canvas.height = height; }
+  const context = canvas.getContext("2d");
+  if (!context) throw new Error("The NASA frame could not be displayed.");
+  if (full) { context.drawImage(video, 0, 0, width, height); return; }
+  const sourceCanvas = document.createElement("canvas");
+  sourceCanvas.width = video.videoWidth;
+  sourceCanvas.height = video.videoHeight;
+  const sourceContext = sourceCanvas.getContext("2d", { willReadFrequently: true });
+  if (!sourceContext) throw new Error("The NASA frame could not be displayed.");
+  sourceContext.drawImage(video, 0, 0);
+  const source = sourceContext.getImageData(0, 0, video.videoWidth, video.videoHeight).data;
+  const output = context.createImageData(width, height);
+  for (let y = 0; y < height; y++) {
+    const latitude = bounds.north - (y + 0.5) / height * (bounds.north - bounds.south);
+    const sourceY = (90 - latitude) / 180 * video.videoHeight - 0.5;
+    for (let x = 0; x < width; x++) {
+      const longitude = bounds.west + (x + 0.5) / width * (bounds.east - bounds.west);
+      const sourceX = (((longitude + 180) % 360 + 360) % 360) / 360 * video.videoWidth - 0.5;
+      sampleBilinear(source, video.videoWidth, video.videoHeight, sourceX, sourceY, output.data, (y * width + x) * 4, true);
+    }
+  }
+  context.putImageData(output, 0, 0);
+}
+
 export function drawCircularGlobalFrame(video: HTMLVideoElement, canvas: HTMLCanvasElement, selection: Pick<LocationSelection, "latitude" | "longitude" | "radiusKm">) {
   if (video.readyState < 2 || !video.videoWidth || !video.videoHeight) return;
   const sourceCanvas = document.createElement("canvas");

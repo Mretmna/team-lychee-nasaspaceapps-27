@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Globe } from "@/components/globe";
 import type { PointCollection } from "@/lib/geo";
-import type { LocationSelection } from "@/types/track";
+import type { LocationSelection, RegionShape } from "@/types/track";
 
 type LatLng = { lat(): number; lng(): number };
 type MapListener = { remove(): void };
@@ -43,7 +43,7 @@ function loadMaps(key: string): Promise<MapsApi> {
   return mapsPromise;
 }
 
-export function RadiusMap({ selection, onSelect, points }: { selection: LocationSelection; onSelect: (next: LocationSelection) => void; points: PointCollection }) {
+export function RadiusMap({ selection, shape, onSelect, points }: { selection: LocationSelection; shape: RegionShape; onSelect: (next: LocationSelection) => void; points: PointCollection }) {
   const key = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
   const mountRef = useRef<HTMLDivElement>(null);
   const maskRef = useRef<SVGPathElement>(null);
@@ -59,7 +59,7 @@ export function RadiusMap({ selection, onSelect, points }: { selection: Location
   useEffect(() => { pointsRef.current = points; }, [points]);
 
   useEffect(() => {
-    if (!key || !mountRef.current) return;
+    if (!key || shape !== "circle" || !mountRef.current) return;
     let cancelled = false;
     let listeners: MapListener[] = [];
     let mapElement: HTMLDivElement;
@@ -120,7 +120,7 @@ export function RadiusMap({ selection, onSelect, points }: { selection: Location
       mapsRef.current = null;
       if (mapElement) mapElement.replaceChildren();
     };
-  }, [key]);
+  }, [key, shape]);
 
   useEffect(() => {
     const maps = mapsRef.current;
@@ -141,6 +141,6 @@ export function RadiusMap({ selection, onSelect, points }: { selection: Location
     map.data.addGeoJson(points);
   }, [points]);
 
-  if (!key || error) return <div><Globe selection={selection} onSelect={onSelect} /><p className="map-setup-note">{error || "Google Maps requires NEXT_PUBLIC_GOOGLE_MAPS_API_KEY. The globe preview remains available."}</p></div>;
+  if (shape !== "circle" || !key || error) return <div><Globe selection={selection} shape={shape} onSelect={onSelect} />{shape === "circle" && <p className="map-setup-note">{error || "Google Maps requires NEXT_PUBLIC_GOOGLE_MAPS_API_KEY. The globe preview remains available."}</p>}</div>;
   return <div className="radius-map-shell"><div className="radius-map" ref={mountRef} aria-label="Interactive radius map. Pan, zoom, or click to select a center." /><svg className="radius-map-mask" width="100%" height="100%" aria-hidden="true"><path ref={maskRef} fill="#dbe6df" fillRule="evenodd" /></svg></div>;
 }

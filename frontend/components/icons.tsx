@@ -40,3 +40,7 @@ export function ScanPathIcon({ mode, ...props }: IconProps & { mode: "clockwise"
   }[mode];
   return <svg width="42" height="42" viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" {...props} aria-hidden="true">{shape}</svg>;
 }
+
+export function DjIcon(props: IconProps) {
+  return <svg {...base} {...props} aria-hidden="true" strokeLinecap="round" strokeLinejoin="round"><circle cx="10" cy="12" r="7" /><circle cx="10" cy="12" r="2" /><path d="M18 5h3v4m0 0-5 5m1 5h4" /></svg>;
+}

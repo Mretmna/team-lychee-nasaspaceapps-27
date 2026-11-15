@@ -3,10 +3,11 @@
 import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
-import type { LocationSelection } from "@/types/track";
+import type { LocationSelection, RegionShape } from "@/types/track";
 
 interface GlobeProps {
   selection: LocationSelection;
+  shape: RegionShape;
   onSelect: (selection: LocationSelection) => void;
 }
 
@@ -37,13 +38,14 @@ function makeGridLine(points: THREE.Vector3[], material: THREE.LineBasicMaterial
   return new THREE.Line(geometry, material);
 }
 
-export function Globe({ selection, onSelect }: GlobeProps) {
+export function Globe({ selection, shape, onSelect }: GlobeProps) {
   const mountRef = useRef<HTMLDivElement>(null);
   const ringRef = useRef<HTMLDivElement>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const controlsRef = useRef<OrbitControls | null>(null);
   const onSelectRef = useRef(onSelect);
   const initialSelectionRef = useRef(selection);
+  const shapeRef = useRef(shape);
   const [available, setAvailable] = useState(true);
 
   useEffect(() => {
@@ -52,12 +54,14 @@ export function Globe({ selection, onSelect }: GlobeProps) {
 
   useEffect(() => {
     initialSelectionRef.current = selection;
+    shapeRef.current = shape;
+    mountRef.current?.querySelector("canvas")?.setAttribute("aria-label", shape === "full" ? "Interactive globe. Drag or click to choose a center for later region selections. The entire map is selected for sound." : `Interactive globe. Drag or click to choose the center of the ${shape} selection; scroll to zoom.`);
     if (cameraRef.current && controlsRef.current) {
       const distance = cameraRef.current.position.length();
       cameraRef.current.position.copy(toVector(selection.latitude, selection.longitude).normalize().multiplyScalar(distance));
       controlsRef.current.update();
     }
-  }, [selection]);
+  }, [selection, shape]);
 
   useEffect(() => {
     const mount = mountRef.current;
@@ -76,7 +80,7 @@ export function Globe({ selection, onSelect }: GlobeProps) {
     camera.position.set(0, 0.25, 5.4);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setClearColor(0x000000, 0);
-    renderer.domElement.setAttribute("aria-label", "Interactive globe. Drag to rotate Earth beneath the fixed selection circle, scroll to zoom, or click to select coordinates.");
+    renderer.domElement.setAttribute("aria-label", shapeRef.current === "full" ? "Interactive globe. The entire map is selected for sound." : `Interactive globe with a ${shapeRef.current} selection. Drag or click to choose its center; scroll to zoom.`);
     renderer.domElement.setAttribute("role", "img");
     mount.appendChild(renderer.domElement);
 
@@ -133,6 +137,7 @@ export function Globe({ selection, onSelect }: GlobeProps) {
     const updateRing = () => {
       const ring = ringRef.current;
       if (!ring) return;
+      if (shapeRef.current === "full") return;
       const distance = camera.position.length();
       const angularRadius = Math.min((initialSelectionRef.current.radiusKm ?? 500) / 6371.0088, Math.acos(RADIUS / distance));
       const focalLength = mount.clientHeight / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2));
@@ -222,5 +227,5 @@ export function Globe({ selection, onSelect }: GlobeProps) {
     );
   }
 
-  return <div className="globe-canvas" ref={mountRef}><div className="globe-selection-ring" ref={ringRef} aria-hidden="true" /></div>;
+  return <div className="globe-canvas" ref={mountRef}><div className={`globe-selection-ring${shape === "square" ? " is-square" : ""}${shape === "full" ? " is-full" : ""}`} ref={ringRef} aria-hidden="true" /></div>;
 }

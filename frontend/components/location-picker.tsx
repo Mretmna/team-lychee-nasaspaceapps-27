@@ -2,21 +2,23 @@
 
 import { useEffect, useRef, useState } from "react";
 import { PinIcon } from "@/components/icons";
-import type { LocationSelection } from "@/types/track";
+import type { LocationSelection, RegionShape } from "@/types/track";
 
 const PRESETS: LocationSelection[] = [
   { name: "North Atlantic", latitude: 38, longitude: -35 },
   { name: "Mediterranean", latitude: 36, longitude: 18 },
   { name: "Western Pacific", latitude: 12, longitude: 145 },
 ];
-const mapApi = process.env.NEXT_PUBLIC_MAP_API_URL ?? "http://localhost:8000";
+const mapApi = process.env.NEXT_PUBLIC_MAP_API_URL ?? "/map-api";
 
 interface LocationPickerProps {
   selection: LocationSelection;
+  shape: RegionShape;
+  onShapeChange: (shape: RegionShape) => void;
   onSelect: (selection: LocationSelection) => void;
 }
 
-export function LocationPicker({ selection, onSelect }: LocationPickerProps) {
+export function LocationPicker({ selection, shape, onShapeChange, onSelect }: LocationPickerProps) {
   const [latitude, setLatitude] = useState(String(selection.latitude));
   const [longitude, setLongitude] = useState(String(selection.longitude));
   const [error, setError] = useState("");
@@ -145,12 +147,17 @@ export function LocationPicker({ selection, onSelect }: LocationPickerProps) {
         <PinIcon />
         <span><strong>{selection.name}</strong><small>{selection.latitude.toFixed(1)}°, {selection.longitude.toFixed(1)}°</small></span>
       </div>
-      <div className="radius-control">
+      <fieldset className="region-shape-choice">
+        <legend>Listen to</legend>
+        <div>{([ ["circle", "Circle"], ["square", "Square"], ["full", "Entire map"] ] as const).map(([value, label]) => <button key={value} type="button" aria-pressed={shape === value} onClick={() => onShapeChange(value)}>{label}</button>)}</div>
+      </fieldset>
+      {shape !== "full" && <div className="radius-control">
         <label htmlFor="radius-slider">Radius: {Number(radiusKm || 500).toLocaleString()} km</label>
         <input id="radius-slider" type="range" min="0" max="1000" step="1" value={sliderValue} aria-valuetext={`${radiusKm} kilometers`} onChange={(event) => setRadiusKm(String(sliderRadius(event.target.value)))} onPointerUp={(event) => commitRadius(String(sliderRadius(event.currentTarget.value)))} onKeyUp={(event) => commitRadius(String(sliderRadius(event.currentTarget.value)))} onBlur={(event) => commitRadius(String(sliderRadius(event.currentTarget.value)))} />
         <label htmlFor="radius-number">Exact radius (km)</label>
         <input id="radius-number" inputMode="numeric" type="number" min="10" max="10000" value={radiusKm} onChange={(event) => { setRadiusKm(event.target.value); commitRadius(event.target.value); }} />
-      </div>
+      </div>}
+      {shape === "full" && <p className="region-shape-note">The full map is included. The location and radius are saved for when you switch back to a region.</p>}
       <details className="location-advanced">
         <summary><span><strong>Advanced location options</strong><small>City, coordinates and presets</small></span></summary>
         <div className="preset-row" aria-label="Location presets">
@@ -183,7 +190,7 @@ export function LocationPicker({ selection, onSelect }: LocationPickerProps) {
           ))}</ul>}
           <p className="location-note">City coordinates from GeoNames via Open-Meteo.</p>
         </section>
-        <p className="location-note">Your selected center and radius determine which part of the map becomes sound.</p>
+        <p className="location-note">{shape === "full" ? "The full map becomes sound." : `Your selected center and ${shape} determine which part of the map becomes sound.`}</p>
       </details>
     </div>
   );

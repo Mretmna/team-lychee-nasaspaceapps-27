@@ -4,6 +4,7 @@ import json
 import io
 import math
 import os
+import re
 import struct
 import unicodedata
 import wave
@@ -18,17 +19,34 @@ from fastapi import FastAPI, File, Form, HTTPException, Query, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import Response
+from google.cloud import storage
+from google.api_core.exceptions import NotFound
 from pydantic import BaseModel, Field
 from PIL import Image, UnidentifiedImageError
 
+UPLOAD_BUCKET = os.getenv("MAP_UPLOAD_BUCKET", "").strip()
 UPLOADS = Path(__file__).resolve().parent / "uploads"
-UPLOADS.mkdir(exist_ok=True)
+if not UPLOAD_BUCKET:
+    UPLOADS.mkdir(exist_ok=True)
 MAX_BYTES = 10 * 1024 * 1024
 EXTENSIONS = {"image/png": ".png", "image/jpeg": ".jpg", "image/webp": ".webp", "application/geo+json": ".geojson", "application/json": ".geojson"}
 
 app = FastAPI(title="Earth Jukebox map API")
 app.add_middleware(CORSMiddleware, allow_origins=[origin.strip() for origin in os.getenv("MAP_ALLOWED_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000,http://192.168.1.82:3000").split(",")], allow_methods=["GET", "POST"], allow_headers=["*"])
-app.mount("/maps", StaticFiles(directory=UPLOADS), name="maps")
+if not UPLOAD_BUCKET:
+    app.mount("/maps", StaticFiles(directory=UPLOADS), name="maps")
+
+
+@app.get("/maps/{map_name}")
+async def get_uploaded_map(map_name: str):
+    if not UPLOAD_BUCKET or not re.fullmatch(r"[0-9a-f]{32}\.(?:png|jpg|webp|geojson)", map_name):
+        raise HTTPException(404, "Map not found.")
+    try:
+        data = await to_thread(storage.Client().bucket(UPLOAD_BUCKET).blob(map_name).download_as_bytes)
+    except NotFound:
+        raise HTTPException(404, "Map not found.") from None
+    media_type = {".png": "image/png", ".jpg": "image/jpeg", ".webp": "image/webp", ".geojson": "application/geo+json"}[Path(map_name).suffix]
+    return Response(data, media_type=media_type)
 
 
 def normalized(value: str) -> str:
@@ -124,6 +142,8 @@ async def process_raster_selection(
         raise HTTPException(422, "Invalid geographic bounds.")
     if region_shape == "full" and (west, east, south, north) != (-180, 180, -90, 90):
         raise HTTPException(422, "Whole-map mode requires world bounds.")
+    if region_shape == "square" and any(abs(actual - expected) > 0.001 for actual, expected in zip((west, east, south, north), square_bounds(latitude, longitude, radius_km))):
+        raise HTTPException(422, "Square bounds do not match the selected center and radius.")
     data = await file.read(MAX_BYTES + 1)
     if len(data) > MAX_BYTES or not data.startswith(b"\x89PNG\r\n\x1a\n"):
         raise HTTPException(422, "Send a cropped PNG smaller than 10 MB.")
@@ -259,7 +279,12 @@ async def upload_map(
     elif not (data.startswith(b"\x89PNG\r\n\x1a\n") if suffix == ".png" else data.startswith(b"\xff\xd8\xff") if suffix == ".jpg" else data.startswith(b"RIFF") and data[8:12] == b"WEBP"):
         raise HTTPException(422, "The image content does not match its file type.")
     map_id = uuid4().hex
-    (UPLOADS / f"{map_id}{suffix}").write_bytes(data)
     result = {"id": map_id, "name": file.filename, "kind": "geojson" if suffix == ".geojson" else "image", "url": f"/maps/{map_id}{suffix}", "area": {"name": area_name.strip(), "city": city.strip(), "country": country.strip(), "latitude": latitude, "longitude": longitude, "radiusKm": radius_km}}
-    (UPLOADS / f"{map_id}.json").write_text(json.dumps(result), encoding="utf-8")
+    if UPLOAD_BUCKET:
+        bucket = storage.Client().bucket(UPLOAD_BUCKET)
+        await to_thread(bucket.blob(f"{map_id}{suffix}").upload_from_string, data, content_type=file.content_type)
+        await to_thread(bucket.blob(f"{map_id}.json").upload_from_string, json.dumps(result), content_type="application/json")
+    else:
+        (UPLOADS / f"{map_id}{suffix}").write_bytes(data)
+        (UPLOADS / f"{map_id}.json").write_text(json.dumps(result), encoding="utf-8")
     return result
