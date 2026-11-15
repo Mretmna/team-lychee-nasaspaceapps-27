@@ -18,6 +18,6 @@ export default function TutorialPage() {
       <article id="listening-style"><div className="tutorial-step-icon"><HeadphonesIcon /></div><div><span className="tutorial-step-number">04 / CHOOSE A LISTENING STYLE</span><h2>Choose a listening mode</h2><p><strong>Normal</strong> is centered. <strong>3D</strong> follows the scan in stereo. <strong>8D</strong> adds wider movement and a soft echo. Choose 10, 20, or 30 seconds.</p><p className="tutorial-tip">Use headphones for 3D and 8D.</p></div></article>
       <article id="play-sound"><div className="tutorial-step-icon"><PlayIcon /></div><div><span className="tutorial-step-number">05 / PRESS PLAY</span><h2>Play your mix</h2><p>Press <strong>Generate & play my mix</strong>. The map and player come into view. Use the controls beside the map to pause, replay, or try browser instruments.</p><p className="tutorial-tip">If playback does not start automatically, press Play in the audio controls.</p></div></article>
     </section>
-    <footer><span>Lychee Juicebox</span><nav aria-label="Footer navigation"><Link href="/">Home</Link><Link href="/#demo">Demo</Link><Link href="/#sources">Sources</Link></nav><p>Built for NASA Space Apps 2026</p></footer>
+    <footer><span>Lychee Juicebox</span><nav aria-label="Footer navigation"><Link href="/">Home</Link><Link href="/how-it-works">How it works</Link><Link href="/#demo">Demo</Link><Link href="/#sources">Sources</Link></nav><p>Built for NASA Space Apps 2026</p></footer>
   </main>;
 }

@@ -128,7 +128,7 @@ export function JukeboxDashboard() {
     <main id="main-content">
       <header className="site-header">
         <a className="brand" href="#demo" aria-label="Lychee Juicebox home"><span className="brand-logo" aria-hidden="true" /><strong>Lychee<br /><small>Juicebox</small></strong></a>
-        <nav aria-label="Main navigation"><a href="#demo">Demo</a><a href="#maps">Maps</a><a href="#explore">Globe</a><Link href="/tutorial">Tutorial</Link><a href="#team">Our team</a><a href="#sources">Sources</a></nav>
+        <nav aria-label="Main navigation"><a href="#demo">Demo</a><a href="#maps">Maps</a><a href="#explore">Globe</a><Link href="/how-it-works">How it works</Link><Link href="/tutorial">Tutorial</Link><a href="#team">Our team</a><a href="#sources">Sources</a></nav>
         <a className="header-cta" href="#maps">Be the DJ <ArrowIcon /></a>
       </header>
 
@@ -217,10 +217,10 @@ export function JukeboxDashboard() {
       </section>
 
       <section className="tutorial-teaser" id="tutorial" aria-labelledby="tutorial-teaser-title">
-        <div><h2 id="tutorial-teaser-title">Need help?</h2></div>
-        <Link href="/tutorial" className="tutorial-link">Read the tutorial <ArrowIcon /></Link>
+        <div><h2 id="tutorial-teaser-title">Curious how it works?</h2></div>
+        <div className="tutorial-teaser-links"><Link href="/how-it-works" className="tutorial-link">See how it works <ArrowIcon /></Link><Link href="/tutorial">Read the tutorial <ArrowIcon /></Link></div>
       </section>
-      <footer><span>Team Lychee · Lychee Juicebox</span><nav aria-label="Footer navigation"><a href="#demo">Demo</a><Link href="/tutorial">Tutorial</Link><a href="#sources">Sources</a></nav><p>Built for the 2026 NASA Space Apps Challenge · <a href={teamProfileUrl} target="_blank" rel="noreferrer">Our team profile</a></p></footer>
+      <footer><span>Team Lychee · Lychee Juicebox</span><nav aria-label="Footer navigation"><a href="#demo">Demo</a><Link href="/how-it-works">How it works</Link><Link href="/tutorial">Tutorial</Link><a href="https://github.com/Mretmna/lychee-juicebox" target="_blank" rel="noopener noreferrer">Source code</a><a href="#sources">Sources</a></nav><p>Built for the 2026 NASA Space Apps Challenge · <a href={teamProfileUrl} target="_blank" rel="noreferrer">Our team profile</a></p></footer>
     </main>
   );
 }

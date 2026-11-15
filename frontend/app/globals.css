@@ -450,6 +450,9 @@ footer a { text-underline-offset: 3px; }
 .demo-copy .eyebrow { margin-bottom: 12px; }
 .tutorial-teaser { display: flex; align-items: center; justify-content: space-between; gap: 25px; padding: 38px clamp(24px, 6vw, 92px); background: #173f54; color: #f4f3eb; }
 .tutorial-teaser h2 { margin: 0; font-family: var(--serif); font-size: clamp(27px, 3vw, 38px); font-weight: 400; }
+.tutorial-teaser-links { display: flex; flex-wrap: wrap; align-items: center; gap: 20px; }
+.tutorial-teaser-links > a:not(.tutorial-link) { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 750; text-underline-offset: 4px; }
+.tutorial-teaser-links svg { width: 17px; height: 17px; }
 .tutorial-link { flex: 0 0 auto; background: var(--sun); color: var(--ink); }
 .tutorial-link:hover { background: #f7ca74; }
 footer nav { display: flex; flex-wrap: wrap; gap: 20px; }
@@ -533,6 +536,37 @@ footer nav a:hover { text-decoration: underline; text-underline-offset: 4px; }
   .sound-preview .manual-scan-controls { grid-area: manual; }
 }
 @media (max-width: 640px) { .sound-preview { padding-bottom: 12px; } }
+
+.how-hero { padding: clamp(65px, 7vw, 110px) clamp(24px, 6vw, 92px); background: var(--paper-deep); }
+.how-hero > * { max-width: 800px; margin-left: auto; margin-right: auto; }
+.how-hero .eyebrow { margin-bottom: 18px; }
+.how-hero h1 { font-family: var(--serif); font-size: clamp(44px, 6vw, 82px); font-weight: 400; line-height: 1.03; letter-spacing: -.04em; margin-top: 0; margin-bottom: 22px; }
+.how-hero > p:not(.eyebrow) { color: var(--ink-soft); font-size: clamp(17px, 2vw, 22px); line-height: 1.55; }
+.how-hero-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 22px; margin-top: 30px; }
+.how-source-link { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 750; text-underline-offset: 4px; }
+.how-source-link svg { width: 17px; height: 17px; }
+.how-process { padding: 70px clamp(24px, 5vw, 76px) 82px; background: var(--ocean); color: #f4f3eb; }
+.how-section-heading { max-width: 1120px; margin: 0 auto 32px; }
+.how-section-heading .eyebrow, .how-open-source .eyebrow { color: #b8d2cf; }
+.how-section-heading h2, .how-details h2, .how-open-source h2 { margin: 0; font-family: var(--serif); font-size: clamp(34px, 4vw, 54px); font-weight: 400; line-height: 1.06; }
+.how-steps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; max-width: 1120px; margin: 0 auto; }
+.how-step { min-width: 0; padding: 23px; border: 1px solid #71928f; border-radius: 7px; background: #ffffff0b; }
+.how-step-top { display: flex; align-items: center; justify-content: space-between; color: var(--sun); font-size: 12px; font-weight: 800; letter-spacing: .12em; }
+.how-step-top svg { width: 27px; height: 27px; }
+.how-step h3 { margin: 28px 0 10px; font-family: var(--serif); font-size: 27px; font-weight: 400; line-height: 1.1; }
+.how-step p { margin: 0; color: #c7d8d5; font-size: 14px; line-height: 1.6; }
+.how-details { display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); gap: 60px; max-width: 1250px; margin: 0 auto; padding: 82px clamp(24px, 6vw, 92px); }
+.how-details-copy { max-width: 680px; }
+.how-details-copy p { margin: 0 0 19px; color: var(--ink-soft); font-size: 16px; line-height: 1.7; }
+.how-details-copy svg { display: inline-block; width: 20px; height: 20px; margin-right: 7px; vertical-align: middle; color: #376c64; }
+.how-details-copy .how-honest-note { padding: 17px 20px; border-left: 3px solid var(--lychee); background: var(--paper-deep); color: var(--ink); font-size: 14px; }
+.how-open-source { display: flex; align-items: end; justify-content: space-between; gap: 40px; padding: 58px clamp(24px, 6vw, 92px); background: var(--ink); color: #f4f3eb; }
+.how-open-source > div { max-width: 620px; }
+.how-open-source p:last-child { color: #c7d8d5; line-height: 1.6; }
+.how-open-source > a { display: inline-flex; align-items: center; gap: 10px; flex: none; padding: 14px 18px; border-radius: 4px; background: var(--sun); color: var(--ink); font-size: 13px; font-weight: 800; text-decoration: none; }
+.how-open-source > a svg { width: 17px; height: 17px; }
+@media (max-width: 980px) { .how-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); } .how-details { grid-template-columns: 1fr; gap: 26px; } }
+@media (max-width: 640px) { .how-hero { padding: 52px 20px 62px; } .how-process { padding: 52px 20px 60px; } .how-steps { grid-template-columns: 1fr; } .how-step { padding: 20px; } .how-step h3 { margin-top: 16px; } .how-details { padding: 60px 20px; } .how-open-source { display: block; padding: 48px 20px; } .how-open-source > a { width: fit-content; margin-top: 26px; } }
 
 /* Map selection comes first; the globe and playing map start on the same row. */
 .map-selection-stage { padding: clamp(30px, 4vw, 56px) clamp(24px, 5vw, 76px); background: var(--ocean); color: #f4f3eb; border-top: 1px solid var(--line); }
