@@ -9,6 +9,12 @@ type Spotlight = { top: number; left: number; width: number; height: number; vie
 const defaultPreferences: Preferences = { largeText: false, highContrast: false, reduceMotion: false, screenReader: false };
 const preferencesKey = "team-lychee-accessibility-v1";
 const tourKey = "team-lychee-tour-v3";
+const guideDestinations = [
+  { id: "maps", label: "Map" },
+  { id: "location-controls", label: "Location and area" },
+  { id: "sound-settings", label: "Sound settings" },
+  { id: "sound-preview", label: "Player" },
+] as const;
 
 const tourSteps = [
   { title: "Welcome to Lychee Juicebox", description: "Turn an Earth map into sound in a few steps. This quick guide shows where everything is; you can skip it or replay it later.", target: "" },
@@ -42,6 +48,7 @@ export function SiteHelp() {
   const [tourOpen, setTourOpen] = useState(false);
   const [step, setStep] = useState(0);
   const [spotlight, setSpotlight] = useState<Spotlight | null>(null);
+  const [spokenFeedback, setSpokenFeedback] = useState("");
   const tourHeading = useRef<HTMLHeadingElement>(null);
   const tourTrigger = useRef<HTMLButtonElement>(null);
   const settingsTrigger = useRef<HTMLButtonElement>(null);
@@ -58,6 +65,80 @@ export function SiteHelp() {
     document.documentElement.dataset.reducedMotion = String(preferences.reduceMotion);
     document.documentElement.dataset.screenReader = String(preferences.screenReader);
   }, [preferences]);
+
+  useEffect(() => {
+    if (!preferences.screenReader || !isHome) return;
+
+    function speak(message: string) {
+      setSpokenFeedback(message);
+      if (!("speechSynthesis" in window)) return;
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(message);
+      utterance.lang = document.documentElement.lang || navigator.language || "en";
+      utterance.rate = 0.95;
+      window.speechSynthesis.speak(utterance);
+    }
+
+    function navigateTo(index: number) {
+      const destination = guideDestinations[index];
+      const element = document.getElementById(destination.id);
+      if (!element) return;
+      const guideHeight = document.getElementById("screen-reader-guide")?.getBoundingClientRect().height ?? 0;
+      element.setAttribute("tabindex", "-1");
+      element.focus({ preventScroll: true });
+      window.scrollTo({ top: window.scrollY + element.getBoundingClientRect().top - guideHeight - 12, behavior: "auto" });
+      window.history.replaceState(null, "", `#${destination.id}`);
+      speak(`${destination.label} selected`);
+    }
+
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey || event.repeat || !/^[1-4]$/.test(event.key)) return;
+      const target = event.target as HTMLElement | null;
+      if (target?.closest("input, textarea, select, [contenteditable], [role='textbox']")) return;
+      if (document.querySelector(".site-tour, .accessibility-settings")) return;
+      event.preventDefault();
+      navigateTo(Number(event.key) - 1);
+    }
+
+    function onClick(event: MouseEvent) {
+      const target = event.target as HTMLElement | null;
+      const link = target?.closest<HTMLAnchorElement>("#screen-reader-guide a[href^='#']");
+      if (link) {
+        const index = guideDestinations.findIndex((destination) => `#${destination.id}` === link.getAttribute("href"));
+        if (index >= 0) {
+          event.preventDefault();
+          navigateTo(index);
+        }
+        return;
+      }
+      const button = target?.closest<HTMLButtonElement>("button");
+      if (!button || button.disabled) return;
+      const label = button.getAttribute("aria-label") || button.querySelector("strong")?.textContent?.trim() || button.innerText.trim();
+      const pressed = button.getAttribute("aria-pressed");
+      if (label) speak(`${label.replace(/\s+/g, " ")} ${pressed === null ? "selected" : pressed === "true" ? "off" : "on"}`);
+    }
+
+    function onChange(event: Event) {
+      const target = event.target;
+      if (!(target instanceof HTMLInputElement || target instanceof HTMLSelectElement)) return;
+      if (target instanceof HTMLInputElement && !["checkbox", "radio", "range"].includes(target.type)) return;
+      const label = target.labels?.[0]?.textContent?.trim() || target.getAttribute("aria-label") || "Option";
+      const choice = target instanceof HTMLSelectElement ? target.selectedOptions[0]?.textContent?.trim()
+        : target.type === "checkbox" ? target.checked ? "on" : "off"
+        : target.type === "range" ? target.value : "selected";
+      speak(`${label}: ${choice}`);
+    }
+
+    window.addEventListener("keydown", onKeyDown);
+    document.addEventListener("click", onClick);
+    document.addEventListener("change", onChange);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      document.removeEventListener("click", onClick);
+      document.removeEventListener("change", onChange);
+      window.speechSynthesis?.cancel();
+    };
+  }, [preferences.screenReader, isHome]);
 
   useEffect(() => {
     if (!isHome) return;
@@ -148,6 +229,7 @@ export function SiteHelp() {
   }
 
   return <>
+    <span className="sr-only" role="status" aria-live="polite">{spokenFeedback}</span>
     <div className={`site-help-toolbar${isHome && tourOpen && !settingsOpen ? " tour-active" : ""}`} id="site-help-controls" tabIndex={-1} aria-label="Site help">
       {isHome && <button ref={tourTrigger} type="button" onClick={startTour} aria-label="Take the site tour">Take a tour</button>}
       <button ref={settingsTrigger} type="button" aria-expanded={settingsOpen} aria-controls="accessibility-settings" onClick={() => setSettingsOpen((open) => !open)}>Accessibility</button>

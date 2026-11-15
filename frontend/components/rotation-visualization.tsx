@@ -23,7 +23,7 @@ const soundModes: { id: SoundMode; label: string; description: string }[] = [
 ];
 export type ScanMode = "clockwise" | "linear" | "circle_outward" | "circle_inward";
 export type SoundMode = "normal" | "3d" | "8d";
-export type SoundTemplateOption = { id: string; label: string; description: string };
+export type SoundTemplateOption = { id: string; label: string; description: string; sourceUrl?: string };
 export type Dataset = "actual" | "precipitation" | "ocean" | "seaCurrents" | "precipitationClouds" | "surfaceTemperature" | "surfaceHumidity" | "surfaceOzone" | "surfaceWindSpeed" | "carbonMonoxide" | "nitrogenOxides";
 export const datasetLabels: Record<Dataset, string> = {
   actual: "Actual World", precipitation: "Global Precipitation", ocean: "North Pacific Color",
@@ -530,6 +530,7 @@ export function RotationVisualization({ crop, selection, duration, onDurationCha
           {templates.length ? templates.map((option) => <option key={option.id} value={option.id}>{option.label}</option>) : <option value="original">Loading templates…</option>}
         </select>
         {selectedTemplate?.description && <p>{selectedTemplate.description}</p>}
+        {selectedTemplate?.sourceUrl && <p>Inspired by <a href={selectedTemplate.sourceUrl} target="_blank" rel="noopener noreferrer">NASA’s Cassiopeia A sonification</a>. Try the outward circle scan for the center cue.</p>}
         {templateError && <p role="alert">{templateError} <button type="button" onClick={onRetryTemplates}>Retry</button></p>}</div>
       </div>
       <div className="sound-step">

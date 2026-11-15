@@ -159,6 +159,7 @@ export function LocationPicker({ selection, shape, onShapeChange, onSelect }: Lo
         <input id="radius-slider" type="range" min="0" max="1000" step="1" value={sliderValue} aria-valuetext={`${radiusKm} kilometers`} onChange={(event) => setRadiusKm(String(sliderRadius(event.target.value)))} onPointerUp={(event) => commitRadius(String(sliderRadius(event.currentTarget.value)))} onKeyUp={(event) => commitRadius(String(sliderRadius(event.currentTarget.value)))} onBlur={(event) => commitRadius(String(sliderRadius(event.currentTarget.value)))} />
         <label htmlFor="radius-number">Exact radius (km)</label>
         <input id="radius-number" inputMode="numeric" type="number" min="10" max="10000" value={radiusKm} onChange={(event) => { setRadiusKm(event.target.value); commitRadius(event.target.value); }} />
+        {Number(radiusKm) > 0 && Number(radiusKm) < 500 && <p className="radius-quality-warning" role="status"><span aria-hidden="true">⚠</span> Below 500 km, this area may look pixelated, especially on lower-resolution maps. Try a larger radius or a more detailed map.</p>}
       </div>}
       {shape === "full" && <p className="region-shape-note">The full map is included. The location and radius are saved for when you switch back to a region.</p>}
       <details className="location-advanced" ref={advancedRef}>

@@ -102,6 +102,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .radius-control label { color: var(--ink-soft); font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
 .radius-control input[type="range"] { width: 100%; height: 32px; padding: 0; border: 0; background: transparent; accent-color: var(--ink); cursor: pointer; }
 .radius-control input[type="number"] { width: 100%; max-width: 170px; height: 42px; padding: 0 10px; border: 1px solid rgba(16,45,53,.28); border-radius: 4px; background: rgba(255,255,255,.58); color: var(--ink); }
+.radius-quality-warning { display: flex; gap: 9px; align-items: flex-start; margin: 7px 0 0; padding: 11px 12px; border: 1px solid #ad7424; border-radius: 5px; background: #fff2d3; color: #49320f; font-size: 12px; font-weight: 650; line-height: 1.5; }
+.radius-quality-warning span { flex: none; font-size: 15px; line-height: 1.2; }
 .area-form > button { grid-column: 1 / -1; height: 42px; padding: 0 15px; border: 1px solid var(--ink); border-radius: 4px; background: var(--ink); color: white; cursor: pointer; }
 .area-list { margin: 14px 0 0; padding: 0; list-style: none; }
 .area-list li { display: flex; align-items: center; justify-content: space-between; gap: 12px; border-top: 1px solid var(--line); }
@@ -625,11 +627,12 @@ html[data-reduced-motion="true"] *, html[data-reduced-motion="true"] *::before, 
 .skip-link { position: fixed; z-index: 1100; top: 8px; left: 8px; padding: 11px 15px; border: 2px solid #102d35; border-radius: 5px; background: #fff; color: #102d35; font-weight: 800; transform: translateY(-150%); }
 .skip-link:focus { transform: translateY(0); }
 .screen-reader-guide { display: none; padding: 20px clamp(24px, 5vw, 76px); border-bottom: 2px solid var(--ink); background: #fff; color: var(--ink); }
-html[data-screen-reader="true"] .screen-reader-guide { display: block; }
+html[data-screen-reader="true"] .screen-reader-guide { position: sticky; top: 0; z-index: 950; display: block; max-height: 45dvh; overflow-y: auto; box-shadow: 0 5px 18px #102d3526; }
 .screen-reader-guide strong { display: block; font-family: var(--serif); font-size: 25px; font-weight: 400; }
 .screen-reader-guide p { max-width: 850px; margin: 7px 0 12px; line-height: 1.55; }
 .screen-reader-guide > div { display: flex; flex-wrap: wrap; gap: 8px; }
-.screen-reader-guide a, .accessibility-guide-link { display: inline-block; padding: 8px 11px; border: 1px solid var(--ink); border-radius: 5px; background: #fff; color: var(--ink); font-size: 13px; font-weight: 750; text-underline-offset: 3px; }
+.screen-reader-guide a, .accessibility-guide-link { display: inline-block; padding: 10px 12px; border: 1px solid var(--ink); border-radius: 5px; background: #fff; color: var(--ink); font-size: 13px; font-weight: 750; text-underline-offset: 3px; }
+@media (max-width: 640px) { .screen-reader-guide { padding: 10px 12px; } .screen-reader-guide strong { font-size: 18px; } .screen-reader-guide p { margin: 3px 0 7px; font-size: 12px; } .screen-reader-guide > div { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5px; } .screen-reader-guide a { padding: 8px; font-size: 12px; } }
 .accessibility-guide-link { margin-top: 12px; }
 .keyboard-location-link { margin-top: 12px; padding: 6px 0; border: 0; background: transparent; color: var(--ink); font-size: 13px; font-weight: 800; text-align: left; text-decoration: underline; text-underline-offset: 4px; cursor: pointer; }
 .screen-reader-summary { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }

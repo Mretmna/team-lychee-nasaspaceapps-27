@@ -15,7 +15,7 @@ import type { LoadedTrack, LocationSelection, RegionShape } from "@/types/track"
 
 const soundApiBase = process.env.NEXT_PUBLIC_SONIFY_API_URL ?? "/sound-api";
 const teamProfileUrl = "https://www.spaceappschallenge.org/2026/find-a-team/team-lychee/";
-const teamMembers = ["Mert Özcan", "Ahmet Efe Erdoğan", "Utku Aras Aytürk", "Boran Okandan", "Umut ÇAYCI"];
+const teamMembers = ["Mert Özcan", "Ahmet Efe Erdoğan", "Utku Aras Aytürk", "Umut ÇAYCI", "Boran Okandan"];
 
 export function JukeboxDashboard() {
   const [loadedTrack, setLoadedTrack] = useState<LoadedTrack | null>(null);
@@ -134,7 +134,7 @@ export function JukeboxDashboard() {
 
       <nav className="screen-reader-guide" id="screen-reader-guide" aria-label="Keyboard route through the jukebox">
         <strong>Keyboard route</strong>
-        <p>Use Tab to move through controls and Enter or Space to select them. Choose a map, use the coordinate form instead of the globe, set an area, then generate and play sound.</p>
+        <p>Press 1, 2, 3, or 4 to jump to a section, or use the links below. Tab moves through controls; Enter or Space selects them. Shortcuts pause while you type in a field.</p>
         <div><a href="#maps">1. Map</a><a href="#location-controls">2. Location and area</a><a href="#sound-settings">3. Sound settings</a><a href="#sound-preview">4. Player</a></div>
       </nav>
       <section className="demo-section" id="demo" aria-labelledby="demo-title">
@@ -181,7 +181,7 @@ export function JukeboxDashboard() {
         </div>
 
         <div id="listen" className="player-column">
-          <RotationVisualization key={`${mapMode}:${dataset}:${regionShape}:${soundTemplate}:${scanMode}:${soundMode}:${activeCrop?.url ?? "no-crop"}`} crop={activeCrop} selection={selection} duration={duration} onDurationChange={setDuration} onPlaybackStart={showPlayingMaps} dataset={mapMode === "upload" ? "actual" : dataset} sourceMode={mapMode} sourceLabel={mapMode === "upload" ? "Your map" : datasetLabels[dataset]} regionShape={regionShape} templates={templates} soundTemplate={soundTemplate} onSoundTemplateChange={setSoundTemplate} scanMode={scanMode} onScanModeChange={setScanMode} soundMode={soundMode} onSoundModeChange={setSoundMode} templateError={templateError} onRetryTemplates={() => setTemplateReload((value) => value + 1)} track={mapMode === "default" && !loading && !loadError && loadedTrack?.track.videoUrl.includes(trackId) ? loadedTrack : null} />
+          <RotationVisualization key={`${mapMode}:${dataset}:${regionShape}:${soundTemplate}:${scanMode}:${soundMode}:${activeCrop?.url ?? "no-crop"}`} crop={activeCrop} selection={selection} duration={duration} onDurationChange={setDuration} onPlaybackStart={showPlayingMaps} dataset={mapMode === "upload" ? "actual" : dataset} sourceMode={mapMode} sourceLabel={mapMode === "upload" ? "Your map" : datasetLabels[dataset]} regionShape={regionShape} templates={templates} soundTemplate={soundTemplate} onSoundTemplateChange={(template) => { setSoundTemplate(template); if (template === "cosmic_remnant") setScanMode("circle_outward"); }} scanMode={scanMode} onScanModeChange={setScanMode} soundMode={soundMode} onSoundModeChange={setSoundMode} templateError={templateError} onRetryTemplates={() => setTemplateReload((value) => value + 1)} track={mapMode === "default" && !loading && !loadError && loadedTrack?.track.videoUrl.includes(trackId) ? loadedTrack : null} />
           {mapMode === "default" && cropError && !activeCrop && <p className="field-error" role="alert">{cropError}</p>}
           {mapMode === "default" && (dataset === "precipitation" || dataset === "ocean") && loading && <div className="load-state" role="status"><span className="loader" />Loading the visualization timeline…</div>}
           {mapMode === "default" && (dataset === "precipitation" || dataset === "ocean") && !loading && loadError && (
