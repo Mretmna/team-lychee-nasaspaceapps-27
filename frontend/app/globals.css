@@ -348,34 +348,24 @@ footer a { text-underline-offset: 3px; }
 .sound-preview-caption p { margin: 0; color: #c7d8d5; font-size: 12px; }
 .sound-preview-caption small { flex-basis: 100%; color: #c7d8d5; font-size: 12px; line-height: 1.5; }
 .color-graph { padding: 0; }
-.color-graph-heading { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 14px; }
+.color-graph-heading { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 8px; }
 .color-graph-heading strong { color: #fff; font-size: 14px; }
 .color-graph-heading span { color: #c7d8d5; font-size: 11px; font-variant-numeric: tabular-nums; }
-.color-graph-bars { display: grid; gap: 10px; }
-.color-graph-row, .color-graph-brightness { display: grid; grid-template-columns: 62px minmax(0, 1fr) 38px; gap: 10px; align-items: center; }
+.color-graph-bars { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 12px; }
+.color-graph-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 3px 5px; min-width: 0; align-items: center; }
+.color-graph-row .color-graph-track { grid-column: 1 / -1; grid-row: 2; }
+.color-graph-brightness { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 8px; align-items: center; }
 .color-graph-label, .color-graph-brightness > span { color: #e5efea; font-size: 11px; font-weight: 700; }
-.color-graph-track { height: 12px; overflow: hidden; border-radius: 999px; background: rgba(255,255,255,.14); }
+.color-graph-track { height: 7px; overflow: hidden; border-radius: 999px; background: rgba(255,255,255,.14); }
 .color-graph-track > span { display: block; height: 100%; border-radius: inherit; background: var(--sun); transition: width .08s linear; }
 .voice-red .color-graph-track > span { background: #f08073; }
 .voice-green .color-graph-track > span { background: #80c7a2; }
 .voice-blue .color-graph-track > span { background: #83a9f1; }
 .voice-neutral .color-graph-track > span { background: #d6d6d0; }
 .color-graph output { color: #f4f3eb; font-size: 11px; font-variant-numeric: tabular-nums; text-align: right; }
-.color-graph-brightness { margin-top: 10px; }
+.color-graph-brightness { margin-top: 9px; }
 .color-graph > p { margin: 12px 0 0; color: #c7d8d5; font-size: 11px; line-height: 1.5; }
 .color-graph .color-graph-empty { margin-bottom: 3px; }
-.color-graph.is-playing { position: fixed; right: 18px; bottom: 18px; z-index: 900; width: min(380px, calc(100vw - 36px)); max-height: calc(100dvh - 36px); overflow-y: auto; padding: 14px 16px; border: 1px solid #6f9999; border-radius: 10px; background: #102d35; box-shadow: 0 14px 38px rgba(0,0,0,.35); }
-.color-graph.is-playing .color-graph-heading { margin-bottom: 10px; }
-.color-graph.is-playing .color-graph-bars { gap: 7px; }
-.color-graph.is-playing .color-graph-track { height: 9px; }
-.color-graph.is-playing .color-graph-brightness { margin-top: 10px; padding-top: 9px; }
-@media (max-width: 640px) {
-  .color-graph.is-playing { right: 12px; bottom: calc(66px + env(safe-area-inset-bottom)); left: 12px; width: auto; max-height: min(190px, calc(100dvh - 90px)); padding: 10px 12px; }
-  .color-graph.is-playing .color-graph-heading { margin-bottom: 7px; }
-  .color-graph.is-playing .color-graph-bars { gap: 5px; }
-  .color-graph.is-playing .color-graph-brightness { margin-top: 7px; padding-top: 7px; }
-  html[data-large-text="true"] .color-graph.is-playing { bottom: calc(112px + env(safe-area-inset-bottom)); }
-}
 .sound-builder { overflow: hidden; border-radius: 10px; background: #f8f7f1; color: var(--ink); box-shadow: 0 14px 36px rgba(0,0,0,.14); }
 .sound-builder-heading { padding: 24px 28px; background: #e4eee8; border-bottom: 1px solid var(--line); }
 .sound-builder-heading span { color: #376c64; font-size: 10px; font-weight: 800; letter-spacing: .16em; }
@@ -430,9 +420,7 @@ footer a { text-underline-offset: 3px; }
   .sound-preview { padding: 12px; }
   .sound-preview-caption { padding-bottom: 14px; }
   .sound-preview .rotation-audio { gap: 10px; }
-  .color-graph-heading { flex-wrap: wrap; gap: 4px 10px; margin-bottom: 12px; }
-  .color-graph-bars { gap: 8px; }
-  .color-graph-row, .color-graph-brightness { grid-template-columns: 58px minmax(0, 1fr) 32px; gap: 7px; }
+  .color-graph-heading { gap: 4px 8px; }
   .sound-builder-heading, .sound-step, .sound-generate { padding-left: 17px; padding-right: 17px; }
   .sound-step-heading { gap: 10px; }
   .sound-builder .sound-template-choice, .scan-path-options, .scan-choice-description, .sound-mode-toggle, .sound-mode-description, .sound-builder .duration-options { margin-left: 0; }

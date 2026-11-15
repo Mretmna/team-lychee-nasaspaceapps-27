@@ -496,12 +496,8 @@ export function RotationVisualization({ crop, selection, duration, onDurationCha
       <strong className="rotation-audio-title">{soundUrl ? "Now playing" : "Listen here"}</strong>
       {soundUrl && !instrumentPlaying && <button type="button" className="rotation-start" onClick={() => void audioRef.current?.play().catch(() => setError("Playback was blocked. Use the audio controls to start it."))}><PlayIcon /> Replay sound</button>}
       <audio ref={audioRef} controls={Boolean(soundUrl) && !instrumentPlaying} style={{ display: soundUrl && !instrumentPlaying ? "block" : "none" }} aria-label="Generated region sound" onPlay={onAudioPlay} onPause={onAudioStop} onSeeked={syncToAudio} onEnded={() => { setAngle(360); onAudioStop(); }} onError={() => setError("The generated audio could not be played by this browser.")} />
-      {soundBlob && <InstrumentPlayback key={soundUrl} audioBlob={soundBlob}
-        onStart={() => { onPlaybackStart(); instrumentPlayingRef.current = true; audioRef.current?.pause(); setInstrumentPlaying(true); setRunning(true); busyRef.current = true; setAngle(0); announcedQuarterRef.current = 0; setAnnouncement(`${sourceLabel} instrument playback started.`); }}
-        onProgress={syncToInstrument}
-        onFinish={(completed) => { instrumentPlayingRef.current = false; setInstrumentPlaying(false); setRunning(false); busyRef.current = false; if (completed) setAngle(360); }} />}
-      <section className={`color-graph${running ? " is-playing" : ""}`} aria-label="Live image color layers">
-        <div className="color-graph-heading"><strong>Colors in this scan</strong><span>{Math.round(progress * 100)}% through map</span></div>
+      <section className="color-graph" aria-label="Live image color layers">
+        <div className="color-graph-heading"><strong>Colors</strong><span>{Math.round(progress * 100)}% through map</span></div>
           <div className="color-graph-bars">{voiceKeys.map((voice) => {
             const percent = colorTotal > 0 ? Math.round(currentVoices.levels[voice] / colorTotal * 100) : 0;
             return <div className={`color-graph-row voice-${voice}`} key={voice}>
@@ -514,6 +510,10 @@ export function RotationVisualization({ crop, selection, duration, onDurationCha
           <p className="sr-only">Bars show brightness-weighted color layers at the gold scan marker. They follow playback and DJ mode.</p>
           {!voiceAnalysis && <p className="color-graph-empty">{analysisError || (crop ? "Reading the map’s color layers…" : "Choose a map to see its color layers.")}</p>}
       </section>
+      {soundBlob && <InstrumentPlayback key={soundUrl} audioBlob={soundBlob}
+        onStart={() => { onPlaybackStart(); instrumentPlayingRef.current = true; audioRef.current?.pause(); setInstrumentPlaying(true); setRunning(true); busyRef.current = true; setAngle(0); announcedQuarterRef.current = 0; setAnnouncement(`${sourceLabel} instrument playback started.`); }}
+        onProgress={syncToInstrument}
+        onFinish={(completed) => { instrumentPlayingRef.current = false; setInstrumentPlaying(false); setRunning(false); busyRef.current = false; if (completed) setAngle(360); }} />}
     </div>
       <div className="manual-scan-controls">
         <label className="manual-scan-toggle"><input type="checkbox" checked={manualScan} disabled={instrumentPlaying} onChange={(event) => setManualScan(event.target.checked)} /><DjIcon /><span>DJ mode</span></label>
