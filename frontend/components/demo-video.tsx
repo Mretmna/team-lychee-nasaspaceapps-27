@@ -17,7 +17,7 @@ function youtubeId(value: string): string | null {
 }
 
 export function DemoVideo() {
-  const id = youtubeId(process.env.NEXT_PUBLIC_DEMO_YOUTUBE_URL ?? "");
+  const id = youtubeId(process.env.NEXT_PUBLIC_DEMO_YOUTUBE_URL || "npIuNV1xQ_I");
   return <div className="demo-video">
     {id ? <iframe
       src={`https://www.youtube-nocookie.com/embed/${id}`}
