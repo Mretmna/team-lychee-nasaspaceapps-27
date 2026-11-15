@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -9,6 +9,12 @@ type Spotlight = { top: number; left: number; width: number; height: number; vie
 const defaultPreferences: Preferences = { largeText: false, highContrast: false, reduceMotion: false, screenReader: false };
 const preferencesKey = "team-lychee-accessibility-v1";
 const tourKey = "team-lychee-tour-v3";
+const preferenceLabels: Record<keyof Preferences, string> = {
+  largeText: "Larger text",
+  highContrast: "Higher contrast",
+  reduceMotion: "Reduce motion",
+  screenReader: "Screen reader guidance",
+};
 const guideDestinations = [
   { id: "maps", label: "Map" },
   { id: "location-controls", label: "Location and area" },
@@ -55,6 +61,16 @@ export function SiteHelp() {
   const settingsTrigger = useRef<HTMLButtonElement>(null);
   const wasOpenedManually = useRef(false);
 
+  const speak = useCallback((message: string) => {
+    setSpokenFeedback(message);
+    if (!("speechSynthesis" in window)) return;
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(message);
+    utterance.lang = document.documentElement.lang || navigator.language || "en";
+    utterance.rate = 0.95;
+    window.speechSynthesis.speak(utterance);
+  }, []);
+
   useEffect(() => {
     const timer = window.setTimeout(() => setPreferences(readPreferences()), 0);
     return () => window.clearTimeout(timer);
@@ -69,16 +85,6 @@ export function SiteHelp() {
 
   useEffect(() => {
     if (!preferences.screenReader || !isHome) return;
-
-    function speak(message: string) {
-      setSpokenFeedback(message);
-      if (!("speechSynthesis" in window)) return;
-      window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(message);
-      utterance.lang = document.documentElement.lang || navigator.language || "en";
-      utterance.rate = 0.95;
-      window.speechSynthesis.speak(utterance);
-    }
 
     function navigateTo(index: number) {
       const destination = guideDestinations[index];
@@ -114,6 +120,7 @@ export function SiteHelp() {
       }
       const button = target?.closest<HTMLButtonElement>("button");
       if (!button || button.disabled) return;
+      if (button.classList.contains("accessibility-option")) return;
       const label = button.getAttribute("aria-label") || button.querySelector("strong")?.textContent?.trim() || button.innerText.trim();
       const pressed = button.getAttribute("aria-pressed");
       if (label) speak(`${label.replace(/\s+/g, " ")} ${pressed === null ? "selected" : pressed === "true" ? "off" : "on"}`);
@@ -137,9 +144,8 @@ export function SiteHelp() {
       window.removeEventListener("keydown", onKeyDown);
       document.removeEventListener("click", onClick);
       document.removeEventListener("change", onChange);
-      window.speechSynthesis?.cancel();
     };
-  }, [preferences.screenReader, isHome]);
+  }, [preferences.screenReader, isHome, speak]);
 
   useEffect(() => {
     if (!isHome) return;
@@ -233,11 +239,13 @@ export function SiteHelp() {
   }
 
   function updatePreference(name: keyof Preferences) {
-    setPreferences((current) => {
-      const next = { ...current, [name]: !current[name] };
-      try { window.localStorage.setItem(preferencesKey, JSON.stringify(next)); } catch { /* Keep the session setting. */ }
-      return next;
-    });
+    const nextValue = !preferences[name];
+    const next = { ...preferences, [name]: nextValue };
+    try { window.localStorage.setItem(preferencesKey, JSON.stringify(next)); } catch { /* Keep the session setting. */ }
+    if (preferences.screenReader || name === "screenReader" && nextValue) {
+      speak(`${preferenceLabels[name]} ${nextValue ? "on" : "off"}`);
+    }
+    setPreferences(next);
   }
 
   function startTour() {
