@@ -544,7 +544,7 @@ export function RotationVisualization({ crop, selection, duration, onDurationCha
       </div>
       <div className="sound-step sound-step-last">
         <div className="sound-step-heading"><span className="sound-step-number">04</span><div><span id="duration-label" className="sound-step-label">Length</span></div></div>
-        <div className="duration-options" role="group" aria-labelledby="duration-label">{durations.map((seconds) => <button key={seconds} type="button" aria-pressed={duration === seconds} className={duration === seconds ? "active" : ""} disabled={running || starting} onClick={() => onDurationChange(seconds)}><strong>{seconds}</strong><span>seconds</span></button>)}</div>
+        <div className="duration-options" role="group" aria-labelledby="duration-label">{durations.map((seconds) => <button key={seconds} type="button" aria-label={`${seconds} seconds`} aria-pressed={duration === seconds} className={duration === seconds ? "active" : ""} disabled={running || starting} onClick={() => onDurationChange(seconds)}><strong>{seconds}</strong><span>seconds</span></button>)}</div>
       </div>
       <div className="sound-generate">{!crop && <p>Pick a map to start your mix.</p>}<button type="button" className="rotation-start" disabled={!canGenerate} onClick={() => void start()}>{starting ? "Making your mix…" : running ? "Playing your mix…" : <><PlayIcon /> Generate & play my mix</>}</button></div>
     </div>

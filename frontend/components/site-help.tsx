@@ -122,8 +122,7 @@ export function SiteHelp() {
       if (!button || button.disabled) return;
       if (button.classList.contains("accessibility-option")) return;
       const label = button.getAttribute("aria-label") || button.querySelector("strong")?.textContent?.trim() || button.innerText.trim();
-      const pressed = button.getAttribute("aria-pressed");
-      if (label) speak(`${label.replace(/\s+/g, " ")} ${pressed === null ? "selected" : pressed === "true" ? "off" : "on"}`);
+      if (label) speak(`${label.replace(/\s+/g, " ")} selected`);
     }
 
     function onChange(event: Event) {
