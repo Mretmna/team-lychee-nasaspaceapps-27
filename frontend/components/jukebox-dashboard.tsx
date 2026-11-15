@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowIcon, DjIcon } from "@/components/icons";
+import { ArrowIcon, DjIcon, MapIcon, PinIcon, UploadIcon } from "@/components/icons";
 import { DemoVideo } from "@/components/demo-video";
 import { LocationPicker } from "@/components/location-picker";
 import { MapChooser } from "@/components/map-chooser";
@@ -149,7 +149,7 @@ export function JukeboxDashboard() {
 
       <section className="map-selection-stage" id="maps" aria-label="Choose a map">
           <div className="map-mode-picker">
-            <p className="eyebrow">01 · Pick your map</p>
+            <p className="eyebrow section-kicker"><MapIcon /> 01 · Pick your map</p>
             <div className="map-mode-tabs" role="tablist" aria-label="Map source" onKeyDown={(event) => {
               if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
               event.preventDefault();
@@ -157,8 +157,8 @@ export function JukeboxDashboard() {
               setMapMode(next);
               event.currentTarget.querySelector<HTMLButtonElement>(`#${next}-map-tab`)?.focus();
             }}>
-              <button id="default-map-tab" type="button" role="tab" tabIndex={mapMode === "default" ? 0 : -1} aria-selected={mapMode === "default"} aria-controls="default-map-panel" onClick={() => setMapMode("default")}>Pick a map</button>
-              <button id="upload-map-tab" type="button" role="tab" tabIndex={mapMode === "upload" ? 0 : -1} aria-selected={mapMode === "upload"} aria-controls="upload-map-panel" onClick={() => setMapMode("upload")}>Bring your own map</button>
+              <button id="default-map-tab" type="button" role="tab" tabIndex={mapMode === "default" ? 0 : -1} aria-selected={mapMode === "default"} aria-controls="default-map-panel" onClick={() => setMapMode("default")}><MapIcon /> Pick a map</button>
+              <button id="upload-map-tab" type="button" role="tab" tabIndex={mapMode === "upload" ? 0 : -1} aria-selected={mapMode === "upload"} aria-controls="upload-map-panel" onClick={() => setMapMode("upload")}><UploadIcon /> Bring your own map</button>
             </div>
           </div>
           <section id="default-map-panel" className="map-source-panel" role="tabpanel" aria-labelledby="default-map-tab" hidden={mapMode !== "default"}>
@@ -172,7 +172,7 @@ export function JukeboxDashboard() {
 
       <section className="experience" id="explore" aria-labelledby="explore-title">
         <div className="globe-column">
-          <div className="section-heading"><p className="eyebrow">02 · Find your spot</p><h2 id="explore-title">Find your spot</h2></div>
+          <div className="section-heading"><p className="eyebrow section-kicker"><PinIcon /> 02 · Find your spot</p><h2 id="explore-title">Find your spot</h2></div>
           <div className="globe-view" id="globe-view">
             <RadiusMap selection={selection} shape={regionShape} onSelect={setSelection} points={visiblePoints} />
           </div>

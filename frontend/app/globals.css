@@ -35,6 +35,9 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .header-cta:hover svg, .text-link:hover svg, .source-section a:hover svg { transform: translateX(4px); }
 
 .eyebrow { margin: 0 0 20px; color: #526b67; font-size: 11px; font-weight: 750; letter-spacing: .16em; text-transform: uppercase; }
+.section-kicker { display: flex; align-items: center; gap: 8px; }
+.section-kicker svg { flex: none; width: 17px; height: 17px; color: var(--lychee); }
+.map-mode-picker .section-kicker svg, .sound-intro .section-kicker svg { color: var(--sun); }
 .text-link { display: flex; align-items: center; gap: 8px; width: max-content; margin-left: auto; font-size: 13px; font-weight: 750; text-decoration: none; border-bottom: 1px solid; padding-bottom: 4px; }
 
 .experience { display: grid; grid-template-columns: minmax(0, .92fr) minmax(440px, 1.08fr); min-height: 780px; background: #dbe6df; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
@@ -110,7 +113,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .map-mode-picker { margin-bottom: 18px; }
 .map-mode-picker .eyebrow { color: #b8d2cf; }
 .map-mode-tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-.map-mode-tabs button { min-height: 48px; padding: 10px 14px; border: 1px solid #b8d2cf; border-radius: 4px; background: transparent; color: #f4f3eb; font-weight: 700; cursor: pointer; }
+.map-mode-tabs button { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 7px; min-height: 48px; padding: 10px 14px; border: 1px solid #b8d2cf; border-radius: 4px; background: transparent; color: #f4f3eb; font-weight: 700; cursor: pointer; }
+.map-mode-tabs button svg { flex: none; width: 18px; height: 18px; }
 .map-mode-tabs button[aria-selected="true"] { border-color: var(--sun); background: var(--sun); color: var(--ink); }
 .map-source-panel { margin-bottom: 30px; padding: 26px; background: var(--paper); color: var(--ink); }
 .map-source-panel h2 { margin: 0; font-family: var(--serif); font-size: clamp(30px, 3vw, 42px); font-weight: 400; }

@@ -19,6 +19,12 @@ export function MutedIcon(props: IconProps) {
 export function PinIcon(props: IconProps) {
   return <svg {...base} {...props} aria-hidden="true"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z" /><circle cx="12" cy="10" r="2.5" /></svg>;
 }
+export function MapIcon(props: IconProps) {
+  return <svg {...base} {...props} aria-hidden="true" strokeLinecap="round" strokeLinejoin="round"><path d="m3 5 6-2 6 2 6-2v16l-6 2-6-2-6 2V5Z" /><path d="M9 3v16M15 5v16" /></svg>;
+}
+export function UploadIcon(props: IconProps) {
+  return <svg {...base} {...props} aria-hidden="true" strokeLinecap="round" strokeLinejoin="round"><path d="M12 15V3m-4 4 4-4 4 4" /><path d="M4 14v5a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5" /></svg>;
+}
 export function ArrowIcon(props: IconProps) {
   return <svg {...base} {...props} aria-hidden="true"><path d="M5 12h14m-5-5 5 5-5 5" /></svg>;
 }

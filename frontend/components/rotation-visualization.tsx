@@ -472,7 +472,7 @@ export function RotationVisualization({ crop, selection, duration, onDurationCha
 
   return <section className="rotation-visualization" aria-labelledby="rotation-title">
     <div className="sound-intro">
-      <p className="eyebrow">03 · Sound</p>
+      <p className="eyebrow section-kicker"><SoundWaveIcon /> 03 · Sound</p>
       <h2 id="rotation-title">Map preview</h2>
     </div>
     <section className="screen-reader-summary" aria-label="Current sound setup">
