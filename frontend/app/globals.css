@@ -341,7 +341,7 @@ footer a { text-underline-offset: 3px; }
 .sound-preview-caption strong { color: #fff; font-family: var(--serif); font-size: 22px; font-weight: 400; }
 .sound-preview-caption p { margin: 0; color: #c7d8d5; font-size: 12px; }
 .sound-preview-caption small { flex-basis: 100%; color: #c7d8d5; font-size: 12px; line-height: 1.5; }
-.color-graph { padding: 17px 2px 20px; border-top: 1px solid rgba(207,228,220,.25); }
+.color-graph { padding: 0; }
 .color-graph-heading { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 14px; }
 .color-graph-heading strong { color: #fff; font-size: 14px; }
 .color-graph-heading span { color: #c7d8d5; font-size: 11px; font-variant-numeric: tabular-nums; }
@@ -355,7 +355,7 @@ footer a { text-underline-offset: 3px; }
 .voice-blue .color-graph-track > span { background: #83a9f1; }
 .voice-neutral .color-graph-track > span { background: #d6d6d0; }
 .color-graph output { color: #f4f3eb; font-size: 11px; font-variant-numeric: tabular-nums; text-align: right; }
-.color-graph-brightness { margin-top: 15px; padding-top: 12px; border-top: 1px solid rgba(207,228,220,.16); }
+.color-graph-brightness { margin-top: 10px; }
 .color-graph > p { margin: 12px 0 0; color: #c7d8d5; font-size: 11px; line-height: 1.5; }
 .color-graph .color-graph-empty { margin-bottom: 3px; }
 .sound-builder { overflow: hidden; border-radius: 10px; background: #f8f7f1; color: var(--ink); box-shadow: 0 14px 36px rgba(0,0,0,.14); }
@@ -406,13 +406,12 @@ footer a { text-underline-offset: 3px; }
 .rotation-audio .instrument-playback { width: 100%; max-width: 520px; border-color: rgba(207,228,220,.35); }
 .rotation-audio .instrument-playback label { color: #f4f3eb; }
 .rotation-audio .instrument-playback p { color: #c7d8d5; }
-.rotation-audio .color-graph { width: 100%; min-width: 0; margin-top: 2px; padding: 16px 0 0; }
+.rotation-audio .color-graph { width: 100%; min-width: 0; }
 .rotation-visualization > .sound-status { margin: 15px 2px 0; color: #dbe6df; font-size: 12px; }
 @media (max-width: 640px) {
   .sound-preview { padding: 12px; }
   .sound-preview-caption { padding-bottom: 14px; }
   .sound-preview .rotation-audio { gap: 10px; }
-  .rotation-audio .color-graph { padding-top: 14px; }
   .color-graph-heading { flex-wrap: wrap; gap: 4px 10px; margin-bottom: 12px; }
   .color-graph-bars { gap: 8px; }
   .color-graph-row, .color-graph-brightness { grid-template-columns: 58px minmax(0, 1fr) 32px; gap: 7px; }
