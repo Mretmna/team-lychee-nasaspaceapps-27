@@ -105,8 +105,7 @@ export function MapUpload({ selection, shape, points, onPointsChange, onCropChan
   return <section className="map-upload-section" id="uploaded-map-section" aria-labelledby="maps-title">
     <p className="eyebrow">Your maps</p>
     <h2 id="maps-title">Bring your own map.</h2>
-    <p>Choose a full-world equirectangular PNG or JPEG (up to 8192 × 4096 pixels and 10 MB), then use the sound controls below. A detailed source gives a clearer crop. GeoJSON points can also be displayed on the globe, but cannot be turned into sound.</p>
-    <p>{shape === "full" ? "Listening to the entire uploaded map." : `Selected ${shape}: ${selection.name} (${selection.latitude.toFixed(3)}°, ${selection.longitude.toFixed(3)}°; ${selection.radiusKm ?? 500} km).`}</p>
+    <p>Upload a full-world PNG or JPEG (up to 10 MB). GeoJSON points can be shown on the globe, but cannot be turned into sound.</p>
     <form onSubmit={(event) => { event.preventDefault(); setActive(true); }}>
       <input id="map-file" type="file" accept=".png,.jpg,.jpeg,.geojson,.json,image/png,image/jpeg,application/geo+json,application/json" onChange={(event) => void chooseFile(event.target.files?.[0])} />
       <label htmlFor="map-file" className="file-picker">Choose a map</label>

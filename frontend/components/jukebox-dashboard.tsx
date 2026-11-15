@@ -141,7 +141,6 @@ export function JukeboxDashboard() {
         <div className="demo-copy">
           <p className="eyebrow">Team Lychee · NASA Space Apps 2026</p>
           <h1 id="demo-title">The Earth is your mixtape.</h1>
-          <p>Pick a map, choose a place, and turn it into your own mix with Lychee Juicebox.</p>
           <a className="hero-primary demo-start" href="#maps"><DjIcon /> Be the DJ <ArrowIcon /></a>
           <div className="demo-flow" aria-hidden="true"><span>Pick a map</span><ArrowIcon /><span>Find a spot</span><ArrowIcon /><span>Play your mix</span></div>
         </div>
@@ -164,7 +163,6 @@ export function JukeboxDashboard() {
           </div>
           <section id="default-map-panel" className="map-source-panel" role="tabpanel" aria-labelledby="default-map-tab" hidden={mapMode !== "default"}>
             <h2>Pick your canvas</h2>
-            <p>Start with an Earth image or NASA visualization. Your chosen place and radius work with every map.</p>
             <MapChooser dataset={dataset} onSelect={setDataset} />
           </section>
           <div id="upload-map-panel" role="tabpanel" aria-labelledby="upload-map-tab" hidden={mapMode !== "upload"}>
@@ -174,7 +172,7 @@ export function JukeboxDashboard() {
 
       <section className="experience" id="explore" aria-labelledby="explore-title">
         <div className="globe-column">
-          <div className="section-heading"><p className="eyebrow">02 · Find your spot</p><h2 id="explore-title">Find your spot</h2><p>Click the globe to choose a place. Use the radius slider below to hear more or less of the map.</p></div>
+          <div className="section-heading"><p className="eyebrow">02 · Find your spot</p><h2 id="explore-title">Find your spot</h2></div>
           <div className="globe-view" id="globe-view">
             <RadiusMap selection={selection} shape={regionShape} onSelect={setSelection} points={visiblePoints} />
           </div>
@@ -218,7 +216,7 @@ export function JukeboxDashboard() {
       </section>
 
       <section className="tutorial-teaser" id="tutorial" aria-labelledby="tutorial-teaser-title">
-        <div><h2 id="tutorial-teaser-title">Need help?</h2><p>The tutorial walks through each step.</p></div>
+        <div><h2 id="tutorial-teaser-title">Need help?</h2></div>
         <Link href="/tutorial" className="tutorial-link">Read the tutorial <ArrowIcon /></Link>
       </section>
       <footer><span>Team Lychee · Lychee Juicebox</span><nav aria-label="Footer navigation"><a href="#demo">Demo</a><Link href="/tutorial">Tutorial</Link><a href="#sources">Sources</a></nav><p>Built for the 2026 NASA Space Apps Challenge · <a href={teamProfileUrl} target="_blank" rel="noreferrer">Our team profile</a></p></footer>

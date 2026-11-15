@@ -176,7 +176,6 @@ export function LocationPicker({ selection, shape, onShapeChange, onSelect }: Lo
         {error && <p className="field-error" role="alert">{error}</p>}
         <section className="areas-section" aria-labelledby="areas-title">
           <h3 id="areas-title">Saved areas</h3>
-          <p>Name and save the selected area. Add a city and country to place the center at that city.</p>
           <div className="area-form">
             <label>Area name<input value={areaName} maxLength={40} onChange={(event) => setAreaName(event.target.value)} placeholder="e.g. North Atlantic" /></label>
             <label>City<input value={city} maxLength={80} onChange={(event) => setCity(event.target.value)} placeholder="e.g. Istanbul" /></label>
@@ -193,7 +192,6 @@ export function LocationPicker({ selection, shape, onShapeChange, onSelect }: Lo
           ))}</ul>}
           <p className="location-note">City coordinates from GeoNames via Open-Meteo.</p>
         </section>
-        <p className="location-note">{shape === "full" ? "The full map becomes sound." : `Your selected center and ${shape} determine which part of the map becomes sound.`}</p>
       </details>
     </div>
   );

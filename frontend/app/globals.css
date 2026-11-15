@@ -41,7 +41,6 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .globe-column { padding: clamp(56px, 6vw, 90px) clamp(24px, 5vw, 76px); overflow: hidden; }
 .section-heading { max-width: 500px; }
 .section-heading h2, .source-section h2 { margin: 0; font-family: var(--serif); font-size: clamp(38px, 4.8vw, 66px); font-weight: 400; line-height: .98; letter-spacing: -.035em; }
-.section-heading > p:last-child { max-width: 460px; margin: 22px 0 0; color: var(--ink-soft); font-size: 14px; line-height: 1.65; }
 .globe-canvas, .globe-loading, .globe-fallback { width: 100%; height: clamp(340px, 43vw, 560px); margin-top: 16px; }
 .globe-canvas { position: relative; }
 .globe-canvas canvas { display: block; width: 100%; height: 100%; cursor: grab; }
@@ -322,7 +321,6 @@ footer a { text-underline-offset: 3px; }
 .sound-intro { margin: 0 0 26px; }
 .sound-intro .eyebrow { margin-bottom: 12px; color: #b8d2cf; }
 .sound-intro h2 { margin-bottom: 12px; color: #f4f3eb; }
-.sound-intro > p:last-child { max-width: 570px; margin: 0; color: #c7d8d5; font-size: 14px; line-height: 1.65; }
 .sound-preview { padding: 18px 18px 0; border: 1px solid rgba(207,228,220,.35); border-radius: 10px; background: rgba(255,255,255,.05); }
 .sound-preview .rotation-image { width: min(100%, 410px); margin-bottom: 18px; box-shadow: 0 16px 38px rgba(0,0,0,.18); }
 .sound-preview-caption { display: flex; flex-wrap: wrap; align-items: baseline; gap: 5px 12px; padding: 0 2px 18px; }
@@ -351,7 +349,6 @@ footer a { text-underline-offset: 3px; }
 .sound-builder-heading { padding: 24px 28px; background: #e4eee8; border-bottom: 1px solid var(--line); }
 .sound-builder-heading span { color: #376c64; font-size: 10px; font-weight: 800; letter-spacing: .16em; }
 .sound-builder-heading h3 { margin: 8px 0; font-family: var(--serif); font-size: clamp(24px, 3vw, 32px); font-weight: 400; line-height: 1.15; }
-.sound-builder-heading p { max-width: 540px; margin: 0; color: var(--ink-soft); font-size: 13px; line-height: 1.55; }
 .sound-step { padding: 20px 28px; border-bottom: 1px solid var(--line); }
 .sound-step-heading { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 13px; }
 .sound-step-number { display: grid; flex: 0 0 32px; place-items: center; width: 32px; height: 32px; border: 1px solid #87b1a5; border-radius: 50%; color: #376c64; font-size: 11px; font-weight: 800; }
@@ -419,7 +416,6 @@ footer a { text-underline-offset: 3px; }
 .demo-section > * { min-width: 0; }
 .demo-copy { max-width: 450px; justify-self: end; }
 .demo-copy h1, .tutorial-teaser h2 { margin: 0; font-family: var(--serif); font-size: clamp(38px, 4.6vw, 62px); font-weight: 400; line-height: 1.02; letter-spacing: -.035em; }
-.demo-copy > p:not(.eyebrow) { margin: 21px 0 0; color: var(--ink-soft); font-size: 15px; line-height: 1.7; }
 .demo-video { width: 100%; max-width: 790px; aspect-ratio: 16 / 9; overflow: hidden; border: 6px solid var(--ink); border-radius: 9px; background: var(--ink); box-shadow: 0 18px 42px rgba(16,45,53,.16); }
 .demo-video iframe { display: block; width: 100%; height: 100%; border: 0; }
 .demo-video-placeholder { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; height: 100%; padding: 24px; background: #173f54; color: #fff; text-align: center; }
@@ -436,7 +432,6 @@ footer a { text-underline-offset: 3px; }
 .demo-copy .eyebrow { margin-bottom: 12px; }
 .tutorial-teaser { display: flex; align-items: center; justify-content: space-between; gap: 25px; padding: 38px clamp(24px, 6vw, 92px); background: #173f54; color: #f4f3eb; }
 .tutorial-teaser h2 { margin: 0; font-family: var(--serif); font-size: clamp(27px, 3vw, 38px); font-weight: 400; }
-.tutorial-teaser p { margin: 7px 0 0; color: #c7d8d5; font-size: 13px; }
 .tutorial-link { flex: 0 0 auto; background: var(--sun); color: var(--ink); }
 .tutorial-link:hover { background: #f7ca74; }
 footer nav { display: flex; flex-wrap: wrap; gap: 20px; }
@@ -444,7 +439,7 @@ footer nav a { color: #dbe6df; font-size: 12px; text-decoration: none; }
 footer nav a:hover { text-decoration: underline; text-underline-offset: 4px; }
 .tutorial-hero { max-width: 1280px; margin: 0 auto; padding: clamp(48px, 6vw, 82px) clamp(24px, 6vw, 92px); }
 .tutorial-hero h1 { margin: 0; font-family: var(--serif); font-size: clamp(42px, 6vw, 72px); font-weight: 400; line-height: .96; letter-spacing: -.05em; }
-.tutorial-hero > p:not(.eyebrow) { max-width: 680px; margin: 29px 0; color: var(--ink-soft); font-size: clamp(16px, 1.5vw, 19px); line-height: 1.7; }
+.tutorial-hero .hero-primary { margin-top: 28px; }
 .tutorial-steps { padding: 14px clamp(24px, 6vw, 92px) 70px; background: #dbe6df; }
 .tutorial-steps article { display: grid; grid-template-columns: 86px minmax(0, 760px); gap: 34px; max-width: 1030px; margin: 0 auto; padding: 42px 0; border-bottom: 1px solid var(--line); }
 .tutorial-step-icon { display: grid; place-items: center; width: 72px; height: 72px; border: 1px solid #87b1a5; border-radius: 50%; color: #245269; }
@@ -529,9 +524,8 @@ footer nav a:hover { text-decoration: underline; text-underline-offset: 4px; }
 .experience { position: relative; border-top: 0; }
 @media (min-width: 981px) {
   .experience .globe-column, .experience .player-column { padding-top: clamp(36px, 4vw, 62px); }
-  .experience .section-heading, .experience .sound-intro { min-height: 242px; }
+  .experience .section-heading, .experience .sound-intro { min-height: 150px; }
   .experience .section-heading h2 { font-size: clamp(36px, 3.5vw, 48px); }
-  .experience .section-heading > p:last-child { margin-top: 12px; }
   .experience .globe-view { margin-top: 10px; }
 }
 @media (max-width: 980px) {
