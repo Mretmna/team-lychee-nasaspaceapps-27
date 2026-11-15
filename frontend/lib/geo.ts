@@ -1,4 +1,4 @@
-import type { LocationSelection } from "@/types/track";
+import type { LocationSelection, RegionShape } from "@/types/track";
 
 export interface PointFeature {
   type: "Feature";
@@ -42,29 +42,76 @@ export function parsePointCollection(value: unknown): PointCollection {
   return { type: "FeatureCollection", features };
 }
 
-export function filterPoints(collection: PointCollection, selection: LocationSelection): PointCollection {
+export function regionBounds(selection: LocationSelection, shape: RegionShape) {
+  if (shape === "full") return { west: -180, east: 180, south: -90, north: 90 };
+  const angularRadius = (selection.radiusKm ?? 500) / 6371.0088;
+  const latitudeSpan = angularRadius * 180 / Math.PI;
+  const north = Math.min(90, selection.latitude + latitudeSpan);
+  const south = Math.max(-90, selection.latitude - latitudeSpan);
+  const reachesPole = north === 90 || south === -90;
+  const longitudeSpan = reachesPole ? 180 : Math.asin(Math.min(1, Math.sin(angularRadius) / Math.cos(selection.latitude * Math.PI / 180))) * 180 / Math.PI;
+  return { west: selection.longitude - longitudeSpan, east: selection.longitude + longitudeSpan, south, north };
+}
+
+export function filterPoints(collection: PointCollection, selection: LocationSelection, shape: RegionShape = "circle"): PointCollection {
+  if (shape === "full") return collection;
   const radius = selection.radiusKm ?? 500;
+  const bounds = regionBounds(selection, shape);
   return {
     type: "FeatureCollection",
-    features: collection.features.filter(({ geometry }) => distanceKm(selection.latitude, selection.longitude, geometry.coordinates[1], geometry.coordinates[0]) <= radius),
+    features: collection.features.filter(({ geometry }) => {
+      const [longitude, latitude] = geometry.coordinates;
+      if (shape === "circle") return distanceKm(selection.latitude, selection.longitude, latitude, longitude) <= radius;
+      const unwrappedLongitude = selection.longitude + ((((longitude - selection.longitude + 540) % 360) + 360) % 360 - 180);
+      return latitude >= bounds.south && latitude <= bounds.north && unwrappedLongitude >= bounds.west && unwrappedLongitude <= bounds.east;
+    }),
   };
 }
 
-export async function cropGlobalPng(file: File, selection: LocationSelection) {
+function sampleBilinear(source: Uint8ClampedArray, width: number, height: number, x: number, y: number, output: Uint8ClampedArray, to: number, wrapX = false) {
+  const left = Math.floor(x);
+  const top = Math.floor(y);
+  const xWeight = x - left;
+  const yWeight = y - top;
+  let alpha = 0;
+  const color = [0, 0, 0];
+  for (let dy = 0; dy <= 1; dy++) {
+    const sourceY = Math.max(0, Math.min(height - 1, top + dy));
+    for (let dx = 0; dx <= 1; dx++) {
+      const sourceX = wrapX ? ((left + dx) % width + width) % width : Math.max(0, Math.min(width - 1, left + dx));
+      const from = (sourceY * width + sourceX) * 4;
+      const weight = (dx ? xWeight : 1 - xWeight) * (dy ? yWeight : 1 - yWeight) * source[from + 3] / 255;
+      alpha += weight;
+      for (let channel = 0; channel < 3; channel++) color[channel] += source[from + channel] * weight;
+    }
+  }
+  if (alpha > 0) {
+    for (let channel = 0; channel < 3; channel++) output[to + channel] = color[channel] / alpha;
+    output[to + 3] = alpha * 255;
+  }
+}
+
+export async function cropGlobalPng(file: File, selection: LocationSelection, shape: RegionShape = "circle") {
   const source = await createImageBitmap(file);
   try {
-    if (source.width > 4096 || source.height > 2048) throw new Error("Use a PNG up to 4096 × 2048 pixels.");
+    if (source.width > 8192 || source.height > 4096) throw new Error("Use a PNG or JPEG up to 8192 × 4096 pixels.");
     const radiusKm = selection.radiusKm ?? 500;
-    const angularRadius = radiusKm / 6371.0088;
-    const latitudeSpan = angularRadius * 180 / Math.PI;
-    const north = Math.min(90, selection.latitude + latitudeSpan);
-    const south = Math.max(-90, selection.latitude - latitudeSpan);
-    const reachesPole = north === 90 || south === -90;
-    const longitudeSpan = reachesPole ? 180 : Math.asin(Math.min(1, Math.sin(angularRadius) / Math.cos(selection.latitude * Math.PI / 180))) * 180 / Math.PI;
-    const west = selection.longitude - longitudeSpan;
-    const east = selection.longitude + longitudeSpan;
-    const width = Math.max(1, Math.min(1024, Math.ceil(source.width * (east - west) / 360)));
-    const height = Math.max(1, Math.min(1024, Math.ceil(source.height * (north - south) / 180)));
+    const { west, east, south, north } = regionBounds(selection, shape);
+    const fullScale = Math.min(1, 1024 / source.width, 1024 / source.height);
+    const squareSize = Math.max(1, Math.min(1024, Math.ceil(Math.max(source.width * (east - west) / 360, source.height * (north - south) / 180) * 2)));
+    const width = shape === "full" ? Math.max(1, Math.round(source.width * fullScale)) : shape === "square" ? squareSize : Math.max(1, Math.min(1024, Math.ceil(source.width * (east - west) / 360 * 2)));
+    const height = shape === "full" ? Math.max(1, Math.round(source.height * fullScale)) : shape === "square" ? squareSize : Math.max(1, Math.min(1024, Math.ceil(source.height * (north - south) / 180 * 2)));
+    const outputCanvas = document.createElement("canvas");
+    outputCanvas.width = width;
+    outputCanvas.height = height;
+    const outputContext = outputCanvas.getContext("2d");
+    if (!outputContext) throw new Error("The selected map could not be created.");
+    if (shape === "full") {
+      outputContext.imageSmoothingQuality = "high";
+      outputContext.drawImage(source, 0, 0, width, height);
+      const blob = await new Promise<Blob>((resolve, reject) => outputCanvas.toBlob((value) => value ? resolve(value) : reject(new Error("The selected map could not be encoded.")), "image/png"));
+      return { blob, bounds: { west, east, south, north }, width, height };
+    }
     const sourceCanvas = document.createElement("canvas");
     sourceCanvas.width = source.width;
     sourceCanvas.height = source.height;
@@ -72,23 +119,16 @@ export async function cropGlobalPng(file: File, selection: LocationSelection) {
     if (!sourceContext) throw new Error("The map image could not be read.");
     sourceContext.drawImage(source, 0, 0);
     const sourcePixels = sourceContext.getImageData(0, 0, source.width, source.height).data;
-    const outputCanvas = document.createElement("canvas");
-    outputCanvas.width = width;
-    outputCanvas.height = height;
-    const outputContext = outputCanvas.getContext("2d");
-    if (!outputContext) throw new Error("The selected map could not be created.");
     const output = outputContext.createImageData(width, height);
     for (let y = 0; y < height; y++) {
       const latitude = north - ((y + 0.5) / height) * (north - south);
-      const sourceY = Math.min(source.height - 1, Math.max(0, Math.floor((90 - latitude) / 180 * source.height)));
+      const sourceY = (90 - latitude) / 180 * source.height - 0.5;
       for (let x = 0; x < width; x++) {
         const longitude = west + ((x + 0.5) / width) * (east - west);
-        if (distanceKm(selection.latitude, selection.longitude, latitude, longitude) > radiusKm) continue;
+        if (shape === "circle" && distanceKm(selection.latitude, selection.longitude, latitude, longitude) > radiusKm) continue;
         const wrappedLongitude = ((longitude + 180) % 360 + 360) % 360;
-        const sourceX = Math.min(source.width - 1, Math.floor(wrappedLongitude / 360 * source.width));
-        const from = (sourceY * source.width + sourceX) * 4;
-        const to = (y * width + x) * 4;
-        output.data.set(sourcePixels.subarray(from, from + 4), to);
+        const sourceX = wrappedLongitude / 360 * source.width - 0.5;
+        sampleBilinear(sourcePixels, source.width, source.height, sourceX, sourceY, output.data, (y * width + x) * 4, true);
       }
     }
     outputContext.putImageData(output, 0, 0);
@@ -111,7 +151,7 @@ export async function projectCircularPng(crop: { blob: Blob; latitude: number; l
     if (!sourceContext) throw new Error("The selected map could not be displayed.");
     sourceContext.drawImage(bitmap, 0, 0);
     const source = sourceContext.getImageData(0, 0, bitmap.width, bitmap.height).data;
-    const size = 480;
+    const size = 960;
     const canvas = document.createElement("canvas");
     canvas.width = size;
     canvas.height = size;
@@ -137,24 +177,9 @@ export async function projectCircularPng(crop: { blob: Blob; latitude: number; l
         let longitudeDegrees = longitude * 180 / Math.PI;
         while (longitudeDegrees < crop.bounds.west) longitudeDegrees += 360;
         while (longitudeDegrees > crop.bounds.east) longitudeDegrees -= 360;
-        const sourceX = Math.min(bitmap.width - 1, Math.max(0, Math.floor((longitudeDegrees - crop.bounds.west) / (crop.bounds.east - crop.bounds.west) * bitmap.width)));
-        const sourceY = Math.min(bitmap.height - 1, Math.max(0, Math.floor((crop.bounds.north - latitudeDegrees) / (crop.bounds.north - crop.bounds.south) * bitmap.height)));
-        let from = (sourceY * bitmap.width + sourceX) * 4;
-        if (source[from + 3] === 0) {
-          outer: for (let offset = 1; offset <= 4; offset++) {
-            for (let deltaY = -offset; deltaY <= offset; deltaY++) {
-              for (let deltaX = -offset; deltaX <= offset; deltaX++) {
-                const candidateX = sourceX + deltaX;
-                const candidateY = sourceY + deltaY;
-                if (candidateX < 0 || candidateX >= bitmap.width || candidateY < 0 || candidateY >= bitmap.height) continue;
-                const candidate = (candidateY * bitmap.width + candidateX) * 4;
-                if (source[candidate + 3] > 0) { from = candidate; break outer; }
-              }
-            }
-          }
-        }
-        const to = (y * size + x) * 4;
-        output.data.set(source.subarray(from, from + 4), to);
+        const sourceX = (longitudeDegrees - crop.bounds.west) / (crop.bounds.east - crop.bounds.west) * bitmap.width - 0.5;
+        const sourceY = (crop.bounds.north - latitudeDegrees) / (crop.bounds.north - crop.bounds.south) * bitmap.height - 0.5;
+        sampleBilinear(source, bitmap.width, bitmap.height, sourceX, sourceY, output.data, (y * size + x) * 4);
       }
     }
     context.putImageData(output, 0, 0);

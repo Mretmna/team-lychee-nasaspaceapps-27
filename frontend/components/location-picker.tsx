@@ -79,6 +79,15 @@ export function LocationPicker({ selection, onSelect }: LocationPickerProps) {
     localStorage.setItem("earth-jukebox-areas", JSON.stringify(next));
   };
 
+  const commitRadius = (value: string) => {
+    const radius = Number(value);
+    if (Number.isFinite(radius) && radius >= 10 && radius <= 10000 && radius !== (selection.radiusKm ?? 500)) {
+      onSelect({ ...selection, radiusKm: radius });
+    }
+  };
+  const sliderValue = Math.round(1000 * Math.log(Math.max(10, Math.min(10000, Number(radiusKm) || 500)) / 10) / Math.log(1000));
+  const sliderRadius = (value: string) => Math.max(10, Math.min(10000, Math.round(10 * 1000 ** (Number(value) / 1000) / 10) * 10));
+
   const addArea = async () => {
     const radius = Number(radiusKm);
     const name = areaName.trim();
@@ -136,38 +145,46 @@ export function LocationPicker({ selection, onSelect }: LocationPickerProps) {
         <PinIcon />
         <span><strong>{selection.name}</strong><small>{selection.latitude.toFixed(1)}°, {selection.longitude.toFixed(1)}°</small></span>
       </div>
-      <div className="preset-row" aria-label="Location presets">
-        {PRESETS.map((preset) => (
-          <button key={preset.name} type="button" onClick={() => { setCity(""); setCountry(""); onSelect({ ...preset, radiusKm: selection.radiusKm ?? 500 }); }}>{preset.name}</button>
-        ))}
+      <div className="radius-control">
+        <label htmlFor="radius-slider">Radius: {Number(radiusKm || 500).toLocaleString()} km</label>
+        <input id="radius-slider" type="range" min="0" max="1000" step="1" value={sliderValue} aria-valuetext={`${radiusKm} kilometers`} onChange={(event) => setRadiusKm(String(sliderRadius(event.target.value)))} onPointerUp={(event) => commitRadius(String(sliderRadius(event.currentTarget.value)))} onKeyUp={(event) => commitRadius(String(sliderRadius(event.currentTarget.value)))} onBlur={(event) => commitRadius(String(sliderRadius(event.currentTarget.value)))} />
+        <label htmlFor="radius-number">Exact radius (km)</label>
+        <input id="radius-number" inputMode="numeric" type="number" min="10" max="10000" value={radiusKm} onChange={(event) => { setRadiusKm(event.target.value); commitRadius(event.target.value); }} />
       </div>
-      <div className="coordinate-form">
-        <label>Latitude<input inputMode="decimal" value={latitude} onChange={(event) => setLatitude(event.target.value)} /></label>
-        <label>Longitude<input inputMode="decimal" value={longitude} onChange={(event) => setLongitude(event.target.value)} /></label>
-        <button type="button" onClick={applyCoordinates}>Set point</button>
-      </div>
-      {error && <p className="field-error" role="alert">{error}</p>}
-      <section className="areas-section" aria-labelledby="areas-title">
-        <h3 id="areas-title">Areas</h3>
-        <p>Enter an area name and a radius from 10 to 10,000 km. Add a city and country to place the marker at the city’s coordinates.</p>
-        <div className="area-form">
-          <label>Area name<input value={areaName} maxLength={40} onChange={(event) => setAreaName(event.target.value)} placeholder="e.g. North Atlantic" /></label>
-          <label>City<input value={city} maxLength={80} onChange={(event) => setCity(event.target.value)} placeholder="e.g. Istanbul" /></label>
-          <label>Country<input value={country} maxLength={80} onChange={(event) => setCountry(event.target.value)} placeholder="e.g. Türkiye" /></label>
-          <label>Radius (km)<input inputMode="numeric" type="number" min="10" max="10000" value={radiusKm} onChange={(event) => { const value = event.target.value; setRadiusKm(value); const radius = Number(value); if (value && Number.isFinite(radius) && radius >= 10 && radius <= 10000) onSelect({ ...selection, radiusKm: radius }); }} /></label>
-          <button type="button" onClick={() => void addArea()} disabled={locating}>{locating ? "Finding city…" : "Add area"}</button>
+      <details className="location-advanced">
+        <summary><span><strong>Advanced location options</strong><small>City, coordinates and presets</small></span></summary>
+        <div className="preset-row" aria-label="Location presets">
+          {PRESETS.map((preset) => (
+            <button key={preset.name} type="button" onClick={() => { setCity(""); setCountry(""); onSelect({ ...preset, radiusKm: selection.radiusKm ?? 500 }); }}>{preset.name}</button>
+          ))}
         </div>
-        {areas.length > 0 && <ul className="area-list">{areas.map((area, index) => (
-          <li key={`${area.name}-${index}`}>
-            <button type="button" onClick={() => onSelect(area)} aria-label={`Select ${area.name}`}>
-              <strong>{area.name}</strong><small>{[area.city, area.country].filter(Boolean).join(", ")}{area.city || area.country ? " · " : ""}{area.latitude.toFixed(1)}°, {area.longitude.toFixed(1)}° · {area.radiusKm} km</small>
-            </button>
-            <button type="button" className="remove-area" onClick={() => saveAreas(areas.filter((_, areaIndex) => areaIndex !== index))} aria-label={`Remove ${area.name}`}>Remove</button>
-          </li>
-        ))}</ul>}
-        <p className="location-note">City coordinates from GeoNames via Open-Meteo.</p>
-      </section>
-      <p className="location-note">Place selection is exploratory. It does not change the global visualization data or the sound mapping.</p>
+        <div className="coordinate-form">
+          <label>Latitude<input inputMode="decimal" value={latitude} onChange={(event) => setLatitude(event.target.value)} /></label>
+          <label>Longitude<input inputMode="decimal" value={longitude} onChange={(event) => setLongitude(event.target.value)} /></label>
+          <button type="button" onClick={applyCoordinates}>Set point</button>
+        </div>
+        {error && <p className="field-error" role="alert">{error}</p>}
+        <section className="areas-section" aria-labelledby="areas-title">
+          <h3 id="areas-title">Saved areas</h3>
+          <p>Name and save the selected area. Add a city and country to place the center at that city.</p>
+          <div className="area-form">
+            <label>Area name<input value={areaName} maxLength={40} onChange={(event) => setAreaName(event.target.value)} placeholder="e.g. North Atlantic" /></label>
+            <label>City<input value={city} maxLength={80} onChange={(event) => setCity(event.target.value)} placeholder="e.g. Istanbul" /></label>
+            <label>Country<input value={country} maxLength={80} onChange={(event) => setCountry(event.target.value)} placeholder="e.g. Türkiye" /></label>
+            <button type="button" onClick={() => void addArea()} disabled={locating}>{locating ? "Finding city…" : "Save area"}</button>
+          </div>
+          {areas.length > 0 && <ul className="area-list">{areas.map((area, index) => (
+            <li key={`${area.name}-${index}`}>
+              <button type="button" onClick={() => onSelect(area)} aria-label={`Select ${area.name}`}>
+                <strong>{area.name}</strong><small>{[area.city, area.country].filter(Boolean).join(", ")}{area.city || area.country ? " · " : ""}{area.latitude.toFixed(1)}°, {area.longitude.toFixed(1)}° · {area.radiusKm} km</small>
+              </button>
+              <button type="button" className="remove-area" onClick={() => saveAreas(areas.filter((_, areaIndex) => areaIndex !== index))} aria-label={`Remove ${area.name}`}>Remove</button>
+            </li>
+          ))}</ul>}
+          <p className="location-note">City coordinates from GeoNames via Open-Meteo.</p>
+        </section>
+        <p className="location-note">Your selected center and radius determine which part of the map becomes sound.</p>
+      </details>
     </div>
   );
 }

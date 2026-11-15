@@ -22,3 +22,21 @@ export function PinIcon(props: IconProps) {
 export function ArrowIcon(props: IconProps) {
   return <svg {...base} {...props} aria-hidden="true"><path d="M5 12h14m-5-5 5 5-5 5" /></svg>;
 }
+
+export function SoundWaveIcon(props: IconProps) {
+  return <svg {...base} {...props} aria-hidden="true"><path d="M3 12h2m2-4v8m3-12v16m4-13v10m3-7v4m3-2h1" /></svg>;
+}
+
+export function HeadphonesIcon(props: IconProps) {
+  return <svg {...base} {...props} aria-hidden="true"><path d="M4 13v-1a8 8 0 0 1 16 0v1M4 13h3v6H5a2 2 0 0 1-2-2v-2a2 2 0 0 1 1-2Zm16 0h-3v6h2a2 2 0 0 0 2-2v-2a2 2 0 0 0-1-2Z" /></svg>;
+}
+
+export function ScanPathIcon({ mode, ...props }: IconProps & { mode: "clockwise" | "linear" | "circle_outward" | "circle_inward" }) {
+  const shape = {
+    clockwise: <><circle cx="24" cy="24" r="15" opacity=".35" /><path d="M24 9a15 15 0 0 1 15 15" /><path d="m34 20 5 4 3-5" /><path d="M24 24h15" /><circle cx="24" cy="24" r="2" fill="currentColor" stroke="none" /></>,
+    linear: <><path d="M8 24h31m-7-7 7 7-7 7" /><circle cx="9" cy="24" r="3" fill="currentColor" stroke="none" /></>,
+    circle_outward: <><circle cx="24" cy="24" r="5" /><circle cx="24" cy="24" r="13" opacity=".5" /><path d="M24 18V7m-5 5 5-5 5 5" /></>,
+    circle_inward: <><circle cx="24" cy="24" r="15" /><circle cx="24" cy="24" r="7" opacity=".5" /><path d="M24 7v16m-5-5 5 5 5-5" /></>,
+  }[mode];
+  return <svg width="42" height="42" viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" {...props} aria-hidden="true">{shape}</svg>;
+}

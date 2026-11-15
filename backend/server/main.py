@@ -7,6 +7,7 @@ import os
 import struct
 import unicodedata
 import wave
+from typing import Literal
 from pathlib import Path
 from urllib.parse import urlencode
 from urllib.request import urlopen
@@ -53,6 +54,7 @@ class AreaSelection(BaseModel):
     latitude: float = Field(ge=-90, le=90, allow_inf_nan=False)
     longitude: float = Field(ge=-180, le=180, allow_inf_nan=False)
     radiusKm: float = Field(ge=10, le=10000, allow_inf_nan=False)
+    regionShape: Literal["circle", "square", "full"] = "circle"
     data: PointCollection
 
 
@@ -62,6 +64,15 @@ def distance_km(latitude: float, longitude: float, other_latitude: float, other_
     delta_longitude = math.radians(other_longitude - longitude)
     arc = math.sin(delta_latitude / 2) ** 2 + math.cos(latitude1) * math.cos(latitude2) * math.sin(delta_longitude / 2) ** 2
     return 6371.0088 * 2 * math.atan2(math.sqrt(arc), math.sqrt(1 - arc))
+
+
+def square_bounds(latitude: float, longitude: float, radius_km: float):
+    angular_radius = radius_km / 6371.0088
+    latitude_span = math.degrees(angular_radius)
+    north = min(90, latitude + latitude_span)
+    south = max(-90, latitude - latitude_span)
+    longitude_span = 180 if north == 90 or south == -90 else math.degrees(math.asin(min(1, math.sin(angular_radius) / math.cos(math.radians(latitude)))))
+    return longitude - longitude_span, longitude + longitude_span, south, north
 
 
 @app.post("/api/selection")
@@ -74,9 +85,14 @@ async def process_selection(selection: AreaSelection):
         longitude, latitude = feature.geometry.coordinates
         if not math.isfinite(latitude) or not math.isfinite(longitude) or not -90 <= latitude <= 90 or not -180 <= longitude <= 180:
             raise HTTPException(422, "A point has invalid coordinates.")
-        if distance_km(selection.latitude, selection.longitude, latitude, longitude) > selection.radiusKm + 0.001:
-            raise HTTPException(422, "A point lies outside the selected radius.")
-    return {"latitude": selection.latitude, "longitude": selection.longitude, "radiusKm": selection.radiusKm, "receivedPoints": len(selection.data.features)}
+        if selection.regionShape == "circle" and distance_km(selection.latitude, selection.longitude, latitude, longitude) > selection.radiusKm + 0.001:
+            raise HTTPException(422, "A point lies outside the selected circle.")
+        if selection.regionShape == "square":
+            west, east, south, north = square_bounds(selection.latitude, selection.longitude, selection.radiusKm)
+            unwrapped_longitude = selection.longitude + (longitude - selection.longitude + 180) % 360 - 180
+            if not south <= latitude <= north or not west <= unwrapped_longitude <= east:
+                raise HTTPException(422, "A point lies outside the selected square.")
+    return {"latitude": selection.latitude, "longitude": selection.longitude, "radiusKm": selection.radiusKm, "regionShape": selection.regionShape, "receivedPoints": len(selection.data.features)}
 
 
 @app.post("/api/raster-selection")
@@ -91,16 +107,23 @@ async def process_raster_selection(
     north: float = Form(...),
     duration_seconds: int | None = Form(None),
     visualization_id: str | None = Form(None),
+    region_shape: Literal["circle", "square", "full"] = Form("circle"),
 ):
     if duration_seconds is not None and duration_seconds not in (10, 20, 30):
         raise HTTPException(422, "Duration must be 10, 20, or 30 seconds.")
-    if visualization_id is not None and visualization_id not in {"actual", "precipitation", "ocean", "map1", "map2", "map3"}:
+    if visualization_id is not None and visualization_id not in {
+        "actual", "precipitation", "ocean", "map1", "map2", "map3",
+        "seaCurrents", "precipitationClouds", "surfaceTemperature", "surfaceHumidity",
+        "surfaceOzone", "surfaceWindSpeed", "carbonMonoxide", "nitrogenOxides",
+    }:
         raise HTTPException(422, "Unknown visualization.")
     values = (latitude, longitude, radius_km, west, east, south, north)
     if not all(math.isfinite(value) for value in values) or not -90 <= latitude <= 90 or not -180 <= longitude <= 180 or not 10 <= radius_km <= 10000:
         raise HTTPException(422, "Invalid selected center or radius.")
     if not -90 <= south < north <= 90 or not 0 < east - west <= 360 or not west <= longitude <= east or not south <= latitude <= north:
         raise HTTPException(422, "Invalid geographic bounds.")
+    if region_shape == "full" and (west, east, south, north) != (-180, 180, -90, 90):
+        raise HTTPException(422, "Whole-map mode requires world bounds.")
     data = await file.read(MAX_BYTES + 1)
     if len(data) > MAX_BYTES or not data.startswith(b"\x89PNG\r\n\x1a\n"):
         raise HTTPException(422, "Send a cropped PNG smaller than 10 MB.")
@@ -119,10 +142,10 @@ async def process_raster_selection(
         x, y = index % width, index // width
         pixel_latitude = north - ((y + 0.5) / height) * (north - south)
         pixel_longitude = west + ((x + 0.5) / width) * (east - west)
-        if distance_km(latitude, longitude, pixel_latitude, pixel_longitude) > radius_km + 1:
+        if region_shape == "circle" and distance_km(latitude, longitude, pixel_latitude, pixel_longitude) > radius_km + 1:
             raise HTTPException(422, "The PNG contains pixels outside the selected radius.")
         covered += 1
-    return {"latitude": latitude, "longitude": longitude, "radiusKm": radius_km, "width": width, "height": height, "coveredPixels": covered, "durationSeconds": duration_seconds, "visualizationId": visualization_id}
+    return {"latitude": latitude, "longitude": longitude, "radiusKm": radius_km, "regionShape": region_shape, "width": width, "height": height, "coveredPixels": covered, "durationSeconds": duration_seconds, "visualizationId": visualization_id}
 
 
 @app.post("/sonify")
@@ -135,9 +158,10 @@ async def sonify_raster(
     east: float = Form(...),
     south: float = Form(...),
     north: float = Form(...),
+    region_shape: Literal["circle", "square", "full"] = Form("circle"),
 ):
     """Turn the submitted visual crop into a bounded, deterministic WAV preview."""
-    await process_raster_selection(file, latitude, longitude, radius_km, west, east, south, north, None, None)
+    await process_raster_selection(file, latitude, longitude, radius_km, west, east, south, north, None, None, region_shape)
     await file.seek(0)
     data = await file.read(MAX_BYTES + 1)
     with Image.open(io.BytesIO(data)) as source:

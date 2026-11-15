@@ -32,3 +32,5 @@ export interface LocationSelection {
   city?: string;
   country?: string;
 }
+
+export type RegionShape = "circle" | "square" | "full";
