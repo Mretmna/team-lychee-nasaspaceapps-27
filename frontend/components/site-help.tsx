@@ -50,6 +50,7 @@ export function SiteHelp() {
   const [spotlight, setSpotlight] = useState<Spotlight | null>(null);
   const [spokenFeedback, setSpokenFeedback] = useState("");
   const tourHeading = useRef<HTMLHeadingElement>(null);
+  const settingsHeading = useRef<HTMLHeadingElement>(null);
   const tourTrigger = useRef<HTMLButtonElement>(null);
   const settingsTrigger = useRef<HTMLButtonElement>(null);
   const wasOpenedManually = useRef(false);
@@ -156,6 +157,22 @@ export function SiteHelp() {
   }, [isHome]);
 
   useEffect(() => {
+    function openSettingsFromSkipLink(event: MouseEvent) {
+      const target = event.target;
+      if (!(target instanceof Element) || !target.closest(".accessibility-skip")) return;
+      event.preventDefault();
+      setTourOpen(false);
+      setSettingsOpen(true);
+    }
+    document.addEventListener("click", openSettingsFromSkipLink);
+    return () => document.removeEventListener("click", openSettingsFromSkipLink);
+  }, []);
+
+  useEffect(() => {
+    if (settingsOpen) settingsHeading.current?.focus({ preventScroll: true });
+  }, [settingsOpen]);
+
+  useEffect(() => {
     if (!tourOpen || settingsOpen || !isHome) return;
     const target = step === 3 && preferences.screenReader ? ".keyboard-location-link" : tourSteps[step].target;
     if (!target) window.scrollTo({ top: 0, behavior: "auto" });
@@ -237,7 +254,7 @@ export function SiteHelp() {
       <button ref={settingsTrigger} type="button" aria-expanded={settingsOpen} aria-controls="accessibility-settings" onClick={() => setSettingsOpen((open) => !open)}>Accessibility</button>
     </div>
     {settingsOpen && <section className="accessibility-settings" id="accessibility-settings" aria-labelledby="accessibility-title">
-      <div className="site-help-panel-heading"><div><span className="site-help-kicker">Make it comfortable</span><h2 id="accessibility-title">Accessibility</h2></div><button type="button" className="site-help-close" aria-label="Close accessibility settings" onClick={() => { setSettingsOpen(false); settingsTrigger.current?.focus(); }}>×</button></div>
+      <div className="site-help-panel-heading"><div><span className="site-help-kicker">Make it comfortable</span><h2 id="accessibility-title" tabIndex={-1} ref={settingsHeading}>Accessibility</h2></div><button type="button" className="site-help-close" aria-label="Close accessibility settings" onClick={() => { setSettingsOpen(false); settingsTrigger.current?.focus(); }}>×</button></div>
       <p>Adjust how the site looks and moves. Your choices are saved in this browser.</p>
       <button type="button" className="accessibility-option" aria-pressed={preferences.largeText} onClick={() => updatePreference("largeText")}><span><strong>Larger text</strong><small>Make labels and instructions easier to read.</small></span><span className="accessibility-switch" aria-hidden="true" /></button>
       <button type="button" className="accessibility-option" aria-pressed={preferences.highContrast} onClick={() => updatePreference("highContrast")}><span><strong>Higher contrast</strong><small>Strengthen text, backgrounds, and focus outlines.</small></span><span className="accessibility-switch" aria-hidden="true" /></button>
