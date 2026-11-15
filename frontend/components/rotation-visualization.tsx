@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { VisualizationCrop } from "@/components/map-upload";
 import { InstrumentPlayback } from "@/components/instrument-playback";
-import { DjIcon, HeadphonesIcon, PlayIcon, ScanPathIcon, SoundWaveIcon } from "@/components/icons";
+import { DjIcon, PlayIcon, ScanPathIcon, SoundWaveIcon } from "@/components/icons";
 import { cropGlobalPng, drawCircularGlobalFrame, drawRectangularGlobalFrame, projectCircularPng } from "@/lib/geo";
 import { analyzeImageColors, parseVoiceAnalysis, sampleVoiceAnalysis, voiceKeys, type VoiceAnalysis } from "@/lib/voice-analysis";
 import type { LoadedTrack, LocationSelection, RegionShape } from "@/types/track";
@@ -473,7 +473,7 @@ export function RotationVisualization({ crop, selection, duration, onDurationCha
   return <section className="rotation-visualization" aria-labelledby="rotation-title">
     <div className="sound-intro">
       <p className="eyebrow section-kicker"><SoundWaveIcon /> 03 · Sound</p>
-      <h2 id="rotation-title">Map preview</h2>
+      <h2 id="rotation-title">Preview</h2>
     </div>
     <section className="screen-reader-summary" aria-label="Current sound setup">
       <strong>Current sound setup</strong>
@@ -494,14 +494,13 @@ export function RotationVisualization({ crop, selection, duration, onDurationCha
     <div className="sound-preview-caption"><span>SELECTED MAP</span><strong>{sourceLabel}</strong><p>{regionShape === "full" ? "Entire map" : `${selection.name} · ${selection.radiusKm ?? 500} km ${regionShape}`}</p></div>
     <div className="rotation-audio">
       <strong className="rotation-audio-title">{soundUrl ? "Now playing" : "Listen here"}</strong>
-      {!soundUrl && <p>Generate a sound to see playback controls.</p>}
       {soundUrl && !instrumentPlaying && <button type="button" className="rotation-start" onClick={() => void audioRef.current?.play().catch(() => setError("Playback was blocked. Use the audio controls to start it."))}><PlayIcon /> Replay sound</button>}
       <audio ref={audioRef} controls={Boolean(soundUrl) && !instrumentPlaying} style={{ display: soundUrl && !instrumentPlaying ? "block" : "none" }} aria-label="Generated region sound" onPlay={onAudioPlay} onPause={onAudioStop} onSeeked={syncToAudio} onEnded={() => { setAngle(360); onAudioStop(); }} onError={() => setError("The generated audio could not be played by this browser.")} />
       {soundBlob && <InstrumentPlayback key={soundUrl} audioBlob={soundBlob}
         onStart={() => { onPlaybackStart(); instrumentPlayingRef.current = true; audioRef.current?.pause(); setInstrumentPlaying(true); setRunning(true); busyRef.current = true; setAngle(0); announcedQuarterRef.current = 0; setAnnouncement(`${sourceLabel} instrument playback started.`); }}
         onProgress={syncToInstrument}
         onFinish={(completed) => { instrumentPlayingRef.current = false; setInstrumentPlaying(false); setRunning(false); busyRef.current = false; if (completed) setAngle(360); }} />}
-      <section className="color-graph" aria-label="Live image color layers">
+      <section className={`color-graph${running ? " is-playing" : ""}`} aria-label="Live image color layers">
         <div className="color-graph-heading"><strong>Colors in this scan</strong><span>{Math.round(progress * 100)}% through map</span></div>
           <div className="color-graph-bars">{voiceKeys.map((voice) => {
             const percent = colorTotal > 0 ? Math.round(currentVoices.levels[voice] / colorTotal * 100) : 0;
@@ -517,7 +516,7 @@ export function RotationVisualization({ crop, selection, duration, onDurationCha
       </section>
     </div>
       <div className="manual-scan-controls">
-        <label className="manual-scan-toggle"><input type="checkbox" checked={manualScan} disabled={instrumentPlaying} onChange={(event) => setManualScan(event.target.checked)} /><DjIcon /><span>DJ mode</span><small>Optional</small></label>
+        <label className="manual-scan-toggle"><input type="checkbox" checked={manualScan} disabled={instrumentPlaying} onChange={(event) => setManualScan(event.target.checked)} /><DjIcon /><span>DJ mode</span></label>
         {manualScan && <div className="manual-scan-slider"><label htmlFor="scan-position">Scan position <output>{Math.round(progress * 100)}%</output></label><input id="scan-position" type="range" min="0" max="100" value={Math.round(progress * 100)} disabled={instrumentPlaying} onChange={(event) => seekScan(Number(event.target.value) / 100)} aria-valuetext={`${Math.round(progress * 100)} percent through the scan`} /><p>{soundUrl ? "Hold and drag the gold line to hear and scrub the sound. Release to stop, or use the slider for precise seeking." : "Generate a sound first, then hold and drag the gold line to hear it as you move. You can preview the scan position now."}</p></div>}
       </div>
     </div>
@@ -526,22 +525,22 @@ export function RotationVisualization({ crop, selection, duration, onDurationCha
       <div className="sound-builder-heading"><span className="sound-builder-kicker"><SoundWaveIcon /> YOUR MIX</span><h3>Mix your sound</h3></div>
       <div className="sound-step">
         <div className="sound-step-heading"><span className="sound-step-number">01</span><div><label htmlFor="sound-template">Sound template</label></div></div>
-        <div className="sound-template-choice"><select id="sound-template" value={soundTemplate} disabled={!templates.length || starting || running} onChange={(event) => onSoundTemplateChange(event.target.value)}>
+        <div className="sound-template-choice"><select id="sound-template" value={soundTemplate} disabled={!templates.length || starting || running} aria-describedby={selectedTemplate?.description ? "sound-template-description" : undefined} onChange={(event) => onSoundTemplateChange(event.target.value)}>
           {templates.length ? templates.map((option) => <option key={option.id} value={option.id}>{option.label}</option>) : <option value="original">Loading templates…</option>}
         </select>
-        {selectedTemplate?.description && <p>{selectedTemplate.description}</p>}
-        {selectedTemplate?.sourceUrl && <p>Inspired by <a href={selectedTemplate.sourceUrl} target="_blank" rel="noopener noreferrer">NASA’s Cassiopeia A sonification</a>. Try the outward circle scan for the center cue.</p>}
+        {selectedTemplate?.description && <p id="sound-template-description" className="sr-only">{selectedTemplate.description}</p>}
+        {selectedTemplate?.sourceUrl && <p>Inspired by <a href={selectedTemplate.sourceUrl} target="_blank" rel="noopener noreferrer">NASA’s Cassiopeia A sonification</a>.</p>}
         {templateError && <p role="alert">{templateError} <button type="button" onClick={onRetryTemplates}>Retry</button></p>}</div>
       </div>
       <div className="sound-step">
         <div className="sound-step-heading"><span className="sound-step-number">02</span><div><span id="scan-mode-label" className="sound-step-label">Scan path</span></div></div>
-        <div className="scan-path-options" role="group" aria-labelledby="scan-mode-label">{scanOptions.map((option) => <button key={option.id} type="button" aria-pressed={scanMode === option.id} disabled={starting || running} onClick={() => onScanModeChange(option.id)}><ScanPathIcon mode={option.id} /><span>{option.label}</span></button>)}</div>
-        <p className="scan-choice-description">The sound follows {regionShape === "circle" || !scanMode.startsWith("circle_") ? scanDescriptions[scanMode] : scanMode === "circle_outward" ? `a ${regionShape === "square" ? "square" : "rectangle"} expanding from the center to the edges` : `a ${regionShape === "square" ? "square" : "rectangle"} contracting from the edges to the center`}.</p>
+        <div className="scan-path-options" role="group" aria-labelledby="scan-mode-label" aria-describedby="scan-choice-description">{scanOptions.map((option) => <button key={option.id} type="button" aria-pressed={scanMode === option.id} disabled={starting || running} onClick={() => onScanModeChange(option.id)}><ScanPathIcon mode={option.id} /><span>{option.label}</span></button>)}</div>
+        <p id="scan-choice-description" className="sr-only">The sound follows {regionShape === "circle" || !scanMode.startsWith("circle_") ? scanDescriptions[scanMode] : scanMode === "circle_outward" ? `a ${regionShape === "square" ? "square" : "rectangle"} expanding from the center to the edges` : `a ${regionShape === "square" ? "square" : "rectangle"} contracting from the edges to the center`}.</p>
       </div>
       <div className="sound-step">
-        <div className="sound-step-heading"><span className="sound-step-number">03</span><div><span id="sound-mode-label" className="sound-step-label">Listening mode</span><p className="headphone-hint"><HeadphonesIcon /> Try 3D or 8D with headphones to hear the scan move.</p></div></div>
-        <div className="sound-mode-toggle" role="group" aria-labelledby="sound-mode-label">{soundModes.map((option) => <button key={option.id} type="button" aria-pressed={soundMode === option.id} disabled={starting || running} onClick={() => onSoundModeChange(option.id)}>{option.label}</button>)}</div>
-        <p className="sound-mode-description"><strong>{selectedSoundMode.label}:</strong> {selectedSoundMode.description}</p>
+        <div className="sound-step-heading"><span className="sound-step-number">03</span><div><span id="sound-mode-label" className="sound-step-label">Listening mode</span></div></div>
+        <div className="sound-mode-toggle" role="group" aria-labelledby="sound-mode-label" aria-describedby="sound-mode-description">{soundModes.map((option) => <button key={option.id} type="button" aria-pressed={soundMode === option.id} disabled={starting || running} onClick={() => onSoundModeChange(option.id)} title={option.description}>{option.label}</button>)}</div>
+        <p id="sound-mode-description" className="sr-only">{selectedSoundMode.label}: {selectedSoundMode.description}</p>
       </div>
       <div className="sound-step sound-step-last">
         <div className="sound-step-heading"><span className="sound-step-number">04</span><div><span id="duration-label" className="sound-step-label">Length</span></div></div>

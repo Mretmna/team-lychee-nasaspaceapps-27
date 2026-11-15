@@ -20,10 +20,10 @@ const tourSteps = [
   { title: "Welcome to Lychee Juicebox", description: "Turn an Earth map into sound in a few steps. This quick guide shows where everything is; you can skip it or replay it later.", target: "" },
   { title: "Pick your map", description: "Choose a supplied Earth map, or switch to Bring your own map to upload a PNG or JPEG. Both paths use the same sound controls.", target: ".map-mode-tabs" },
   { title: "Pick the image", description: "Select a map card. If you chose your own map, upload an image and prepare the selected area here.", target: "[data-tour-map-choice]" },
-  { title: "Find your spot", description: "Click or drag the globe to set the center of the area you want to hear.", target: "#globe-view" },
+  { title: "Choose a location", description: "Click or drag the globe to set the center of the area you want to hear.", target: "#globe-view" },
   { title: "Set the area", description: "Choose Circle, Square, or Entire map. For a smaller area, move the radius slider. City and coordinate search are under Advanced location options.", target: ".location-picker" },
   { title: "Shape the sound", description: "Choose a sound template, a scan path, a listening mode, and a length below this heading. Headphones help with the spatial modes.", target: ".sound-builder-heading" },
-  { title: "Play your mix", description: "Press Generate & play my mix. The map preview shows the scan; the player lets you pause or replay. DJ mode lets you scrub through it.", target: ".sound-generate" },
+  { title: "Play your mix", description: "Press Generate & play my mix. The preview shows the scan; the player lets you pause or replay. DJ mode lets you scrub through it.", target: ".sound-generate" },
 ] as const;
 
 function readPreferences(): Preferences {

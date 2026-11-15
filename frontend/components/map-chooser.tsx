@@ -6,9 +6,9 @@ import { datasetLabels, sharedMapIds, stillMapPaths, type Dataset } from "@/comp
 
 type MapGroup = "earth" | "detailed";
 
-const groups: { id: MapGroup; label: string; maps: Dataset[] }[] = [
-  { id: "earth", label: "Earth & motion", maps: ["actual", "precipitation", "ocean"] },
-  { id: "detailed", label: "Detailed maps", maps: sharedMapIds },
+const groups: { id: MapGroup; label: string; description: string; maps: Dataset[] }[] = [
+  { id: "earth", label: "Earth & motion", description: "Global views and moving data", maps: ["actual", "precipitation", "ocean"] },
+  { id: "detailed", label: "Detailed maps", description: "Sharper detail for smaller areas", maps: sharedMapIds },
 ];
 
 const resolutions: Partial<Record<Dataset, string>> = {
@@ -37,21 +37,20 @@ export function MapChooser({ dataset, onSelect }: { dataset: Dataset; onSelect: 
 
   return (
     <div className="map-chooser">
-      <div className="map-chooser-topline"><span>Browse maps</span><strong aria-live="polite">Selected: {datasetLabels[dataset]}</strong></div>
-      <div className="map-chooser-filters" role="group" aria-label="Filter maps">
-        {groups.map((item) => <button key={item.id} type="button" aria-pressed={group === item.id} onClick={() => setGroup(item.id)}>{item.label}{item.id === "detailed" && <em className="map-recommended">Recommended</em>}<span>{item.maps.length}</span></button>)}
+      <div className="map-chooser-topline"><span>Choose a collection</span><strong aria-live="polite">Selected: {datasetLabels[dataset]}</strong></div>
+      <div className="map-chooser-filters" role="group" aria-label="Map collections">
+        {groups.map((item) => <button key={item.id} type="button" aria-pressed={group === item.id} onClick={() => setGroup(item.id)}><span className="map-group-copy"><span className="map-group-title"><strong>{item.label}</strong>{item.id === "detailed" && <em className="map-recommended">Recommended</em>}</span><small>{item.description}</small></span><span className="map-group-count" aria-label={`${item.maps.length} maps`}>{item.maps.length}</span></button>)}
       </div>
       <div className="map-chooser-grid" role="group" aria-label={`${groups.find((item) => item.id === group)?.label} choices`}>
         {visibleMaps.map((id) => {
           const animated = id === "precipitation" || id === "ocean";
           const imagePath = id === "actual" ? "/earth-atmos-2048.jpg" : stillMapPaths[id];
           const selected = dataset === id;
-          const detail = animated ? "Animated timeline" : "Still image";
           return <button key={id} type="button" className="map-choice-card" data-map-id={id} aria-pressed={selected} onClick={() => onSelect(id)}>
             <span className={`map-choice-art${animated ? " is-animated" : ""}`} aria-hidden="true">
               {imagePath ? <Image src={imagePath} alt="" width={120} height={80} sizes="120px" /> : <span>▶</span>}
             </span>
-            <span className="map-choice-copy"><strong>{datasetLabels[id]}</strong><small>{detail}</small><small>{resolutions[id] ? `${resolutions[id]} pixels` : "Moving visualization"}</small></span>
+            <span className="map-choice-copy"><strong>{datasetLabels[id]}</strong><small>{animated ? "Moving visualization" : resolutions[id] ? `${resolutions[id]} pixels` : "Still image"}</small></span>
             <span className="map-choice-indicator" aria-hidden="true">{selected ? "✓" : ""}</span>
           </button>;
         })}
@@ -62,7 +61,6 @@ export function MapChooser({ dataset, onSelect }: { dataset: Dataset; onSelect: 
             <span>Selected map legend</span>
             <h3 id="map-legend-title">{datasetLabels[dataset]}</h3>
           </div>
-          <small>Provided with the map</small>
         </div>
         <Image
           src={selectedLegend.src}

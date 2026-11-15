@@ -139,7 +139,6 @@ export function InstrumentPlayback({ audioBlob, onStart, onProgress, onFinish }:
     <button type="button" disabled={!ready || preparing} onClick={() => playing ? stop(false) : void play()}>
       {preparing ? "Converting sound…" : playing ? "Stop instruments" : ready ? "Play as instruments" : "Loading instruments…"}
     </button>
-    <p>Replays the file’s pitch and loudness pattern with Tone.js. This is a new interpretation of the mixed audio.</p>
     {error && <p className="field-error" role="alert">{error}</p>}
   </div>;
 }

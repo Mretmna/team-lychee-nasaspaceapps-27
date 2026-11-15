@@ -170,9 +170,9 @@ export function JukeboxDashboard() {
           </div>
       </section>
 
-      <section className="experience" id="explore" aria-labelledby="explore-title">
+      <section className="experience" id="explore" aria-label="Choose a location and make sound">
         <div className="globe-column">
-          <div className="section-heading"><p className="eyebrow section-kicker"><PinIcon /> 02 · Find your spot</p><h2 id="explore-title">Find your spot</h2></div>
+          <p className="eyebrow section-kicker"><PinIcon /> 02 · Location</p>
           <div className="globe-view" id="globe-view">
             <RadiusMap selection={selection} shape={regionShape} onSelect={setSelection} points={visiblePoints} />
             {Math.abs(selection.latitude) >= 80 && <p className="polar-warning" role="status"><WarningIcon /> Near the poles, the globe and map image can look stretched. Try a lower latitude for a clearer view.</p>}
