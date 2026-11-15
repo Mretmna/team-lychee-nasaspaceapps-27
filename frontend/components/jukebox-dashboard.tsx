@@ -83,7 +83,7 @@ export function JukeboxDashboard() {
         if (!response.ok) throw new Error("The selected map could not be loaded.");
         const sourceBlob = await response.blob();
         const source = new File([sourceBlob], sourcePath.split("/").pop() ?? "map", { type: sourceBlob.type });
-        const result = await cropGlobalPng(source, selected, regionShape);
+        const result = await cropGlobalPng(source, selected, regionShape, controller.signal);
         if (controller.signal.aborted) return;
         setEarthCrop({ ...selected, shape: regionShape, blob: result.blob, bounds: result.bounds, url: URL.createObjectURL(result.blob) });
         setCropSource(dataset);

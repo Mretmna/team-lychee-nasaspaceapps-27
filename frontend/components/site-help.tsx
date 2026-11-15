@@ -142,6 +142,8 @@ export function SiteHelp() {
 
   useEffect(() => {
     if (!isHome) return;
+    // Keep the guide available from its button, but let phone visitors use the page first.
+    if (window.matchMedia("(max-width: 640px)").matches) return;
     const timer = window.setTimeout(() => {
       try {
         if (window.localStorage.getItem(tourKey)) return;

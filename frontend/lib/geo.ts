@@ -91,9 +91,35 @@ function sampleBilinear(source: Uint8ClampedArray, width: number, height: number
   }
 }
 
-export async function cropGlobalPng(file: File, selection: LocationSelection, shape: RegionShape = "circle") {
-  const source = await createImageBitmap(file);
+function assertNotAborted(signal?: AbortSignal) {
+  if (signal?.aborted) throw new DOMException("Map preparation cancelled.", "AbortError");
+}
+
+async function openRaster(blob: Blob): Promise<{ image: ImageBitmap | HTMLImageElement; close: () => void }> {
+  if (typeof createImageBitmap === "function") {
+    try {
+      const image = await createImageBitmap(blob);
+      return { image, close: () => image.close() };
+    } catch { /* Some Safari versions cannot decode Blob images as ImageBitmaps. */ }
+  }
+  const url = URL.createObjectURL(blob);
+  const image = new Image();
+  image.src = url;
   try {
+    await image.decode();
+    return { image, close: () => URL.revokeObjectURL(url) };
+  } catch (error) {
+    URL.revokeObjectURL(url);
+    throw error;
+  }
+}
+
+export async function cropGlobalPng(file: File, selection: LocationSelection, shape: RegionShape = "circle", signal?: AbortSignal) {
+  assertNotAborted(signal);
+  const raster = await openRaster(file);
+  const source = raster.image;
+  try {
+    assertNotAborted(signal);
     if (source.width > 8192 || source.height > 4096) throw new Error("Use a PNG or JPEG up to 8192 × 4096 pixels.");
     const radiusKm = selection.radiusKm ?? 500;
     const { west, east, south, north } = regionBounds(selection, shape);
@@ -106,43 +132,67 @@ export async function cropGlobalPng(file: File, selection: LocationSelection, sh
     outputCanvas.height = height;
     const outputContext = outputCanvas.getContext("2d");
     if (!outputContext) throw new Error("The selected map could not be created.");
+    outputContext.imageSmoothingEnabled = true;
+    outputContext.imageSmoothingQuality = "high";
     if (shape === "full") {
-      outputContext.imageSmoothingQuality = "high";
       outputContext.drawImage(source, 0, 0, width, height);
-      const blob = await new Promise<Blob>((resolve, reject) => outputCanvas.toBlob((value) => value ? resolve(value) : reject(new Error("The selected map could not be encoded.")), "image/png"));
-      return { blob, bounds: { west, east, south, north }, width, height };
-    }
-    const sourceCanvas = document.createElement("canvas");
-    sourceCanvas.width = source.width;
-    sourceCanvas.height = source.height;
-    const sourceContext = sourceCanvas.getContext("2d", { willReadFrequently: true });
-    if (!sourceContext) throw new Error("The map image could not be read.");
-    sourceContext.drawImage(source, 0, 0);
-    const sourcePixels = sourceContext.getImageData(0, 0, source.width, source.height).data;
-    const output = outputContext.createImageData(width, height);
-    for (let y = 0; y < height; y++) {
-      const latitude = north - ((y + 0.5) / height) * (north - south);
-      const sourceY = (90 - latitude) / 180 * source.height - 0.5;
-      for (let x = 0; x < width; x++) {
-        const longitude = west + ((x + 0.5) / width) * (east - west);
-        if (shape === "circle" && distanceKm(selection.latitude, selection.longitude, latitude, longitude) > radiusKm) continue;
-        const wrappedLongitude = ((longitude + 180) % 360 + 360) % 360;
-        const sourceX = wrappedLongitude / 360 * source.width - 0.5;
-        sampleBilinear(sourcePixels, source.width, source.height, sourceX, sourceY, output.data, (y * width + x) * 4, true);
+    } else {
+      // Draw only the requested region. Reading every pixel of an 8192px map
+      // creates several large copies and can exhaust mobile Safari's memory.
+      const sourceY = (90 - north) / 180 * source.height;
+      const sourceHeight = (north - south) / 180 * source.height;
+      let longitude = west;
+      while (longitude < east - 0.000001) {
+        const world = Math.floor((longitude + 180) / 360);
+        const end = Math.min(east, 180 + world * 360);
+        const span = end - longitude;
+        outputContext.drawImage(
+          source,
+          (longitude + 180 - world * 360) / 360 * source.width, sourceY,
+          span / 360 * source.width, sourceHeight,
+          (longitude - west) / (east - west) * width, 0,
+          span / (east - west) * width, height,
+        );
+        longitude = end;
+      }
+      if (shape === "circle") {
+        const output = outputContext.getImageData(0, 0, width, height);
+        const toRadians = Math.PI / 180;
+        const latitude0 = selection.latitude * toRadians;
+        const cosLatitude0 = Math.cos(latitude0);
+        const limit = Math.sin(radiusKm / (2 * 6371.0088)) ** 2;
+        const longitudeTerms = new Float64Array(width);
+        for (let x = 0; x < width; x++) {
+          const longitudeAtX = west + (x + 0.5) / width * (east - west);
+          longitudeTerms[x] = Math.sin((longitudeAtX - selection.longitude) * toRadians / 2) ** 2;
+        }
+        for (let y = 0; y < height; y++) {
+          assertNotAborted(signal);
+          const latitude = (north - (y + 0.5) / height * (north - south)) * toRadians;
+          const latitudeTerm = Math.sin((latitude - latitude0) / 2) ** 2;
+          const longitudeFactor = cosLatitude0 * Math.cos(latitude);
+          for (let x = 0; x < width; x++) {
+            if (latitudeTerm + longitudeFactor * longitudeTerms[x] > limit) output.data[(y * width + x) * 4 + 3] = 0;
+          }
+          if (y % 128 === 127) await new Promise<void>((resolve) => setTimeout(resolve, 0));
+        }
+        outputContext.putImageData(output, 0, 0);
       }
     }
-    outputContext.putImageData(output, 0, 0);
+    assertNotAborted(signal);
     const blob = await new Promise<Blob>((resolve, reject) => outputCanvas.toBlob((value) => value ? resolve(value) : reject(new Error("The selected map could not be encoded.")), "image/png"));
+    assertNotAborted(signal);
     return { blob, bounds: { west, east, south, north }, width, height };
   } finally {
-    source.close();
+    raster.close();
   }
 }
 
 // Reproject the validated geographic crop for the circular visualization only.
 // The original equirectangular PNG remains the file sent to FastAPI.
 export async function projectCircularPng(crop: { blob: Blob; latitude: number; longitude: number; radiusKm: number; bounds: { west: number; east: number; south: number; north: number } }) {
-  const bitmap = await createImageBitmap(crop.blob);
+  const raster = await openRaster(crop.blob);
+  const bitmap = raster.image;
   try {
     const sourceCanvas = document.createElement("canvas");
     sourceCanvas.width = bitmap.width;
@@ -151,7 +201,7 @@ export async function projectCircularPng(crop: { blob: Blob; latitude: number; l
     if (!sourceContext) throw new Error("The selected map could not be displayed.");
     sourceContext.drawImage(bitmap, 0, 0);
     const source = sourceContext.getImageData(0, 0, bitmap.width, bitmap.height).data;
-    const size = 960;
+    const size = window.matchMedia("(max-width: 640px)").matches ? 480 : 960;
     const canvas = document.createElement("canvas");
     canvas.width = size;
     canvas.height = size;
@@ -185,33 +235,34 @@ export async function projectCircularPng(crop: { blob: Blob; latitude: number; l
     context.putImageData(output, 0, 0);
     return await new Promise<Blob>((resolve, reject) => canvas.toBlob((value) => value ? resolve(value) : reject(new Error("The circular map could not be encoded.")), "image/png"));
   } finally {
-    bitmap.close();
+    raster.close();
   }
 }
 
 export function drawRectangularGlobalFrame(video: HTMLVideoElement, canvas: HTMLCanvasElement, bounds: { west: number; east: number; south: number; north: number }, full: boolean) {
   if (video.readyState < 2 || !video.videoWidth || !video.videoHeight) return;
-  const width = full ? 960 : 480;
-  const height = full ? 480 : 480;
+  const compact = window.matchMedia("(max-width: 640px)").matches;
+  const width = full ? compact ? 640 : 960 : compact ? 320 : 480;
+  const height = compact ? 320 : 480;
   if (canvas.width !== width || canvas.height !== height) { canvas.width = width; canvas.height = height; }
   const context = canvas.getContext("2d");
   if (!context) throw new Error("The NASA frame could not be displayed.");
   if (full) { context.drawImage(video, 0, 0, width, height); return; }
   const sourceCanvas = document.createElement("canvas");
-  sourceCanvas.width = video.videoWidth;
-  sourceCanvas.height = video.videoHeight;
+  sourceCanvas.width = Math.min(video.videoWidth, compact ? 1024 : 2048);
+  sourceCanvas.height = Math.round(video.videoHeight * sourceCanvas.width / video.videoWidth);
   const sourceContext = sourceCanvas.getContext("2d", { willReadFrequently: true });
   if (!sourceContext) throw new Error("The NASA frame could not be displayed.");
-  sourceContext.drawImage(video, 0, 0);
-  const source = sourceContext.getImageData(0, 0, video.videoWidth, video.videoHeight).data;
+  sourceContext.drawImage(video, 0, 0, sourceCanvas.width, sourceCanvas.height);
+  const source = sourceContext.getImageData(0, 0, sourceCanvas.width, sourceCanvas.height).data;
   const output = context.createImageData(width, height);
   for (let y = 0; y < height; y++) {
     const latitude = bounds.north - (y + 0.5) / height * (bounds.north - bounds.south);
-    const sourceY = (90 - latitude) / 180 * video.videoHeight - 0.5;
+    const sourceY = (90 - latitude) / 180 * sourceCanvas.height - 0.5;
     for (let x = 0; x < width; x++) {
       const longitude = bounds.west + (x + 0.5) / width * (bounds.east - bounds.west);
-      const sourceX = (((longitude + 180) % 360 + 360) % 360) / 360 * video.videoWidth - 0.5;
-      sampleBilinear(source, video.videoWidth, video.videoHeight, sourceX, sourceY, output.data, (y * width + x) * 4, true);
+      const sourceX = (((longitude + 180) % 360 + 360) % 360) / 360 * sourceCanvas.width - 0.5;
+      sampleBilinear(source, sourceCanvas.width, sourceCanvas.height, sourceX, sourceY, output.data, (y * width + x) * 4, true);
     }
   }
   context.putImageData(output, 0, 0);
@@ -219,15 +270,16 @@ export function drawRectangularGlobalFrame(video: HTMLVideoElement, canvas: HTML
 
 export function drawCircularGlobalFrame(video: HTMLVideoElement, canvas: HTMLCanvasElement, selection: Pick<LocationSelection, "latitude" | "longitude" | "radiusKm">) {
   if (video.readyState < 2 || !video.videoWidth || !video.videoHeight) return;
+  const compact = window.matchMedia("(max-width: 640px)").matches;
   const sourceCanvas = document.createElement("canvas");
-  sourceCanvas.width = video.videoWidth;
-  sourceCanvas.height = video.videoHeight;
+  sourceCanvas.width = Math.min(video.videoWidth, compact ? 1024 : 2048);
+  sourceCanvas.height = Math.round(video.videoHeight * sourceCanvas.width / video.videoWidth);
   const sourceContext = sourceCanvas.getContext("2d", { willReadFrequently: true });
   const context = canvas.getContext("2d");
   if (!sourceContext || !context) throw new Error("The NASA frame could not be displayed.");
-  sourceContext.drawImage(video, 0, 0);
-  const source = sourceContext.getImageData(0, 0, video.videoWidth, video.videoHeight).data;
-  const size = 480;
+  sourceContext.drawImage(video, 0, 0, sourceCanvas.width, sourceCanvas.height);
+  const source = sourceContext.getImageData(0, 0, sourceCanvas.width, sourceCanvas.height).data;
+  const size = compact ? 320 : 480;
   if (canvas.width !== size || canvas.height !== size) { canvas.width = size; canvas.height = size; }
   const output = context.createImageData(size, size);
   const latitude0 = selection.latitude * Math.PI / 180;
@@ -246,9 +298,9 @@ export function drawCircularGlobalFrame(video: HTMLVideoElement, canvas: HTMLCan
       const latitude = Math.asin(sinLatitude0 * Math.cos(arc) + cosLatitude0 * Math.sin(arc) * Math.cos(bearing));
       const longitude = longitude0 + Math.atan2(Math.sin(bearing) * Math.sin(arc) * cosLatitude0, Math.cos(arc) - sinLatitude0 * Math.sin(latitude));
       const longitudeDegrees = ((longitude * 180 / Math.PI + 180) % 360 + 360) % 360;
-      const sourceX = Math.min(video.videoWidth - 1, Math.floor(longitudeDegrees / 360 * video.videoWidth));
-      const sourceY = Math.min(video.videoHeight - 1, Math.max(0, Math.floor((90 - latitude * 180 / Math.PI) / 180 * video.videoHeight)));
-      const from = (sourceY * video.videoWidth + sourceX) * 4;
+      const sourceX = Math.min(sourceCanvas.width - 1, Math.floor(longitudeDegrees / 360 * sourceCanvas.width));
+      const sourceY = Math.min(sourceCanvas.height - 1, Math.max(0, Math.floor((90 - latitude * 180 / Math.PI) / 180 * sourceCanvas.height)));
+      const from = (sourceY * sourceCanvas.width + sourceX) * 4;
       const to = (y * size + x) * 4;
       output.data.set(source.subarray(from, from + 4), to);
     }

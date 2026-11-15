@@ -66,10 +66,11 @@ export function Globe({ selection, shape, onSelect }: GlobeProps) {
   useEffect(() => {
     const mount = mountRef.current;
     if (!mount) return;
+    const isCompact = window.matchMedia("(max-width: 640px)").matches;
 
     let renderer: THREE.WebGLRenderer;
     try {
-      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
+      renderer = new THREE.WebGLRenderer({ antialias: !isCompact, alpha: true, powerPreference: isCompact ? "default" : "high-performance" });
     } catch {
       window.requestAnimationFrame(() => setAvailable(false));
       return;
@@ -78,7 +79,7 @@ export function Globe({ selection, shape, onSelect }: GlobeProps) {
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 100);
     camera.position.set(0, 0.25, 5.4);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setPixelRatio(isCompact ? 1 : Math.min(window.devicePixelRatio, 2));
     renderer.setClearColor(0x000000, 0);
     renderer.domElement.setAttribute("aria-label", shapeRef.current === "full" ? "Interactive globe. The entire map is selected for sound." : `Interactive globe with a ${shapeRef.current} selection. Drag or click to choose its center; scroll to zoom.`);
     renderer.domElement.setAttribute("role", "img");
@@ -92,11 +93,11 @@ export function Globe({ selection, shape, onSelect }: GlobeProps) {
       transparent: true,
       opacity: 0.98,
     });
-    const sphere = new THREE.Mesh(new THREE.SphereGeometry(RADIUS, 64, 48), globeMaterial);
+    const sphere = new THREE.Mesh(new THREE.SphereGeometry(RADIUS, isCompact ? 32 : 64, isCompact ? 24 : 48), globeMaterial);
     scene.add(sphere);
 
     let disposed = false;
-    new THREE.TextureLoader().load("/earth-atmos-2048.jpg", (texture) => {
+    new THREE.TextureLoader().load(isCompact ? "/earth-atmos-1024.jpg" : "/earth-atmos-2048.jpg", (texture) => {
       if (disposed) {
         texture.dispose();
         return;
@@ -104,17 +105,17 @@ export function Globe({ selection, shape, onSelect }: GlobeProps) {
       texture.colorSpace = THREE.SRGBColorSpace;
       globeMaterial.map = texture;
       globeMaterial.needsUpdate = true;
-    });
+    }, undefined, () => { if (!disposed) setAvailable(false); });
 
     const gridMaterial = new THREE.LineBasicMaterial({ color: 0xc9e7db, transparent: true, opacity: 0.22 });
-    for (let latitude = -60; latitude <= 60; latitude += 30) {
+    for (let latitude = -60; latitude <= 60; latitude += isCompact ? 60 : 30) {
       const points: THREE.Vector3[] = [];
-      for (let longitude = -180; longitude <= 180; longitude += 4) points.push(toVector(latitude, longitude, RADIUS + 0.006));
+      for (let longitude = -180; longitude <= 180; longitude += isCompact ? 8 : 4) points.push(toVector(latitude, longitude, RADIUS + 0.006));
       scene.add(makeGridLine(points, gridMaterial));
     }
-    for (let longitude = -150; longitude < 180; longitude += 30) {
+    for (let longitude = -150; longitude < 180; longitude += isCompact ? 60 : 30) {
       const points: THREE.Vector3[] = [];
-      for (let latitude = -90; latitude <= 90; latitude += 3) points.push(toVector(latitude, longitude, RADIUS + 0.006));
+      for (let latitude = -90; latitude <= 90; latitude += isCompact ? 6 : 3) points.push(toVector(latitude, longitude, RADIUS + 0.006));
       scene.add(makeGridLine(points, gridMaterial));
     }
 
@@ -176,6 +177,12 @@ export function Globe({ selection, shape, onSelect }: GlobeProps) {
     renderer.domElement.addEventListener("pointerup", handlePointerUp);
 
     let frame = 0;
+    let visible = false;
+    const handleContextLost = (event: Event) => {
+      event.preventDefault();
+      setAvailable(false);
+    };
+    renderer.domElement.addEventListener("webglcontextlost", handleContextLost);
     const resize = () => {
       const width = mount.clientWidth;
       const height = mount.clientHeight;
@@ -188,17 +195,29 @@ export function Globe({ selection, shape, onSelect }: GlobeProps) {
     observer.observe(mount);
     resize();
     const animate = () => {
+      if (!visible || document.hidden) { frame = 0; return; }
       controls.update();
       updateRing();
       renderer.render(scene, camera);
       frame = requestAnimationFrame(animate);
     };
-    animate();
+    const updateVisibility = (next: boolean) => {
+      visible = next;
+      if (visible && !document.hidden && !frame) animate();
+      if ((!visible || document.hidden) && frame) { cancelAnimationFrame(frame); frame = 0; }
+    };
+    const visibilityObserver = new IntersectionObserver(([entry]) => updateVisibility(entry.isIntersecting), { rootMargin: "120px" });
+    visibilityObserver.observe(mount);
+    const handleDocumentVisibility = () => updateVisibility(visible);
+    document.addEventListener("visibilitychange", handleDocumentVisibility);
 
     return () => {
       disposed = true;
       cancelAnimationFrame(frame);
       observer.disconnect();
+      visibilityObserver.disconnect();
+      document.removeEventListener("visibilitychange", handleDocumentVisibility);
+      renderer.domElement.removeEventListener("webglcontextlost", handleContextLost);
       renderer.domElement.removeEventListener("pointerdown", handlePointerDown);
       renderer.domElement.removeEventListener("pointerup", handlePointerUp);
       controls.removeEventListener("end", updateSelectionFromView);
@@ -221,8 +240,14 @@ export function Globe({ selection, shape, onSelect }: GlobeProps) {
   if (!available) {
     return (
       <div className="globe-fallback" role="status">
-        <span>3D globe unavailable</span>
-        <p>Choose a preset or enter coordinates below. The listening experience still works.</p>
+        <span>Tap the map to pick a spot</span>
+        <button type="button" className="globe-fallback-map" aria-label="World map. Tap to choose a location." onClick={(event) => {
+          const rect = event.currentTarget.getBoundingClientRect();
+          const longitude = Math.max(-180, Math.min(180, (event.clientX - rect.left) / rect.width * 360 - 180));
+          const latitude = Math.max(-90, Math.min(90, 90 - (event.clientY - rect.top) / rect.height * 180));
+          onSelect({ name: "Selected area", latitude: Math.round(latitude * 10) / 10, longitude: Math.round(longitude * 10) / 10, radiusKm: selection.radiusKm ?? 500 });
+        }}><span className="globe-fallback-pin" style={{ left: `${(selection.longitude + 180) / 360 * 100}%`, top: `${(90 - selection.latitude) / 180 * 100}%` }} aria-hidden="true" /></button>
+        <p>3D isn’t available on this device. You can still choose a place and make sound.</p>
       </div>
     );
   }

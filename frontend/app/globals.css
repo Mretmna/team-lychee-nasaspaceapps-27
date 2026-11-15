@@ -61,6 +61,10 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .globe-loading, .globe-fallback { display: grid; place-content: center; text-align: center; color: var(--ink-soft); }
 .globe-fallback span { color: var(--ink); font-family: var(--serif); font-size: 28px; }
 .globe-fallback p { max-width: 350px; line-height: 1.6; }
+.globe-fallback { gap: 12px; align-content: center; padding: 14px 0; }
+.globe-fallback .globe-fallback-map { position: relative; display: block; width: min(100%, 560px); aspect-ratio: 2 / 1; margin: 0 auto; padding: 0; border: 2px solid var(--ink); border-radius: 6px; background: #102d35 url('/earth-atmos-1024.jpg') center / 100% 100% no-repeat; cursor: crosshair; overflow: hidden; }
+.globe-fallback .globe-fallback-pin { position: absolute; width: 15px; height: 15px; transform: translate(-50%, -50%); border: 3px solid #fff; border-radius: 50%; background: #e0a02f; box-shadow: 0 0 0 2px #102d35; pointer-events: none; }
+.globe-fallback p { margin: 0 auto; }
 .location-picker { max-width: 620px; margin: -16px auto 0; position: relative; z-index: 1; }
 .location-picker > .radius-control { margin-top: 22px; padding: 16px; border: 1px solid var(--line); border-radius: 6px; background: rgba(255,255,255,.35); }
 .region-shape-choice { margin: 18px 0 0; padding: 0; border: 0; }
@@ -600,7 +604,7 @@ html[data-reduced-motion="true"] { scroll-behavior: auto; }
 html[data-reduced-motion="true"] *, html[data-reduced-motion="true"] *::before, html[data-reduced-motion="true"] *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
 
 @media (max-width: 640px) {
-  .site-help-toolbar { right: 12px; bottom: 10px; left: 12px; justify-content: center; }
+  .site-help-toolbar { right: 12px; bottom: calc(10px + env(safe-area-inset-bottom)); left: auto; flex-direction: column; align-items: flex-end; }
   .site-help-toolbar button { min-height: 40px; padding: 8px 12px; }
   .site-tour { right: 12px; bottom: 65px; max-height: calc(100dvh - 80px); overflow-y: auto; }
   .accessibility-settings { right: 12px; bottom: 65px; left: 12px; width: auto; max-height: calc(100dvh - 80px); }

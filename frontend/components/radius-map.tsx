@@ -1,9 +1,14 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Globe } from "@/components/globe";
+import dynamic from "next/dynamic";
 import type { PointCollection } from "@/lib/geo";
 import type { LocationSelection, RegionShape } from "@/types/track";
+
+const Globe = dynamic(() => import("@/components/globe").then((module) => module.Globe), {
+  ssr: false,
+  loading: () => <div className="globe-loading" role="status">Loading the globe…</div>,
+});
 
 type LatLng = { lat(): number; lng(): number };
 type MapListener = { remove(): void };
@@ -53,7 +58,19 @@ export function RadiusMap({ selection, shape, onSelect, points }: { selection: L
   const selectionRef = useRef(selection);
   const pointsRef = useRef(points);
   const onSelectRef = useRef(onSelect);
+  const globeHostRef = useRef<HTMLDivElement>(null);
+  const [globeReady, setGlobeReady] = useState(false);
   const [error, setError] = useState("");
+  const showGlobe = shape !== "circle" || !key || Boolean(error);
+
+  useEffect(() => {
+    if (!showGlobe || !globeHostRef.current || globeReady) return;
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) { setGlobeReady(true); observer.disconnect(); }
+    }, { rootMargin: "350px" });
+    observer.observe(globeHostRef.current);
+    return () => observer.disconnect();
+  }, [showGlobe, globeReady]);
 
   useEffect(() => { selectionRef.current = selection; onSelectRef.current = onSelect; }, [selection, onSelect]);
   useEffect(() => { pointsRef.current = points; }, [points]);
@@ -141,6 +158,6 @@ export function RadiusMap({ selection, shape, onSelect, points }: { selection: L
     map.data.addGeoJson(points);
   }, [points]);
 
-  if (shape !== "circle" || !key || error) return <div><Globe selection={selection} shape={shape} onSelect={onSelect} />{shape === "circle" && <p className="map-setup-note">{error || "Google Maps requires NEXT_PUBLIC_GOOGLE_MAPS_API_KEY. The globe preview remains available."}</p>}</div>;
+  if (showGlobe) return <div ref={globeHostRef}>{globeReady ? <Globe selection={selection} shape={shape} onSelect={onSelect} /> : <div className="globe-loading" role="status">Loading the globe…</div>}{shape === "circle" && <p className="map-setup-note">{error || "Google Maps requires NEXT_PUBLIC_GOOGLE_MAPS_API_KEY. The globe preview remains available."}</p>}</div>;
   return <div className="radius-map-shell"><div className="radius-map" ref={mountRef} aria-label="Interactive radius map. Pan, zoom, or click to select a center." /><svg className="radius-map-mask" width="100%" height="100%" aria-hidden="true"><path ref={maskRef} fill="#dbe6df" fillRule="evenodd" /></svg></div>;
 }

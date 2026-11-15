@@ -168,7 +168,7 @@ export function RotationVisualization({ crop, selection, duration, onDurationCha
     setAngle(fraction * 360);
     announceProgress(fraction);
     const video = videoRef.current;
-    if (video && track && (Math.abs(audio.currentTime - lastVideoUpdateRef.current) >= 0.08 || fraction === 1)) {
+    if (video && track && (Math.abs(audio.currentTime - lastVideoUpdateRef.current) >= (window.matchMedia("(max-width: 640px)").matches ? 0.25 : 0.08) || fraction === 1)) {
       const videoLength = Number.isFinite(video.duration) ? video.duration : track.track.durationSeconds;
       video.currentTime = Math.min(videoLength, fraction * videoLength);
       lastVideoUpdateRef.current = audio.currentTime;
@@ -180,7 +180,7 @@ export function RotationVisualization({ crop, selection, duration, onDurationCha
     announceProgress(fraction);
     const video = videoRef.current;
     const elapsed = fraction * duration;
-    if (video && track && (Math.abs(elapsed - lastVideoUpdateRef.current) >= 0.08 || fraction === 1)) {
+    if (video && track && (Math.abs(elapsed - lastVideoUpdateRef.current) >= (window.matchMedia("(max-width: 640px)").matches ? 0.25 : 0.08) || fraction === 1)) {
       const videoLength = Number.isFinite(video.duration) ? video.duration : track.track.durationSeconds;
       video.currentTime = Math.min(videoLength, fraction * videoLength);
       lastVideoUpdateRef.current = elapsed;
@@ -292,7 +292,7 @@ export function RotationVisualization({ crop, selection, duration, onDurationCha
         if (!context || !frame.width || !frame.height) throw new Error("The NASA video frame could not be read.");
         context.drawImage(video, 0, 0);
         const frameBlob = await new Promise<Blob>((resolve, reject) => frame.toBlob((value) => value ? resolve(value) : reject(new Error("The NASA video frame could not be encoded.")), "image/png"));
-        const selectedFrame = await cropGlobalPng(new File([frameBlob], "nasa-frame.png", { type: "image/png" }), { name: "Selected region", latitude: crop.latitude, longitude: crop.longitude, radiusKm: crop.radiusKm }, regionShape);
+        const selectedFrame = await cropGlobalPng(new File([frameBlob], "nasa-frame.png", { type: "image/png" }), { name: "Selected region", latitude: crop.latitude, longitude: crop.longitude, radiusKm: crop.radiusKm }, regionShape, controller.signal);
         soundImage = selectedFrame.blob;
       }
       if (controller.signal.aborted) return;

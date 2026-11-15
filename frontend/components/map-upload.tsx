@@ -63,7 +63,7 @@ export function MapUpload({ selection, shape, points, onPointsChange, onCropChan
         let croppedBlob: Blob | null = null;
         let croppedBounds: VisualizationCrop["bounds"] | null = null;
         if (rasterFile) {
-          const cropped = await cropGlobalPng(rasterFile, selection, shape);
+          const cropped = await cropGlobalPng(rasterFile, selection, shape, controller.signal);
           if (controller.signal.aborted) return;
           croppedBlob = cropped.blob;
           croppedBounds = cropped.bounds;
