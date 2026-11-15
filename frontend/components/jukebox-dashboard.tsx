@@ -175,7 +175,7 @@ export function JukeboxDashboard() {
           <div className="section-heading"><p className="eyebrow section-kicker"><PinIcon /> 02 · Find your spot</p><h2 id="explore-title">Find your spot</h2></div>
           <div className="globe-view" id="globe-view">
             <RadiusMap selection={selection} shape={regionShape} onSelect={setSelection} points={visiblePoints} />
-            {regionShape !== "full" && Math.abs(selection.latitude) >= 80 && <p className="polar-warning" role="status"><WarningIcon /> Near 90° latitude, the map image can stretch around the pole. Pick a place farther from the pole for a clearer crop.</p>}
+            {Math.abs(selection.latitude) >= 80 && <p className="polar-warning" role="status"><WarningIcon /> Near the poles, the globe and map image can look stretched. Try a lower latitude for a clearer view.</p>}
           </div>
           <LocationPicker selection={selection} shape={regionShape} onShapeChange={setRegionShape} onSelect={setSelection} />
         </div>
