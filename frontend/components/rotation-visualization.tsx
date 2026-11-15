@@ -491,6 +491,7 @@ export function RotationVisualization({ crop, selection, duration, onDurationCha
           {scanMode !== "linear" && <circle className="scan-center-grip" cx={halfWidth} cy={halfHeight} r={16} />}
         </g>}
       </svg></div>
+    <div className="sound-preview-caption"><span>SELECTED MAP</span><strong>{sourceLabel}</strong><p>{regionShape === "full" ? "Entire map" : `${selection.name} · ${selection.radiusKm ?? 500} km ${regionShape}`}</p></div>
     <div className="rotation-audio">
       <strong className="rotation-audio-title">{soundUrl ? "Now playing" : "Listen here"}</strong>
       {!soundUrl && <p>Generate a sound to see playback controls.</p>}
@@ -500,12 +501,6 @@ export function RotationVisualization({ crop, selection, duration, onDurationCha
         onStart={() => { onPlaybackStart(); instrumentPlayingRef.current = true; audioRef.current?.pause(); setInstrumentPlaying(true); setRunning(true); busyRef.current = true; setAngle(0); announcedQuarterRef.current = 0; setAnnouncement(`${sourceLabel} instrument playback started.`); }}
         onProgress={syncToInstrument}
         onFinish={(completed) => { instrumentPlayingRef.current = false; setInstrumentPlaying(false); setRunning(false); busyRef.current = false; if (completed) setAngle(360); }} />}
-    </div>
-      <div className="manual-scan-controls">
-        <label className="manual-scan-toggle"><input type="checkbox" checked={manualScan} disabled={instrumentPlaying} onChange={(event) => setManualScan(event.target.checked)} /><DjIcon /><span>DJ mode</span><small>Optional</small></label>
-        {manualScan && <div className="manual-scan-slider"><label htmlFor="scan-position">Scan position <output>{Math.round(progress * 100)}%</output></label><input id="scan-position" type="range" min="0" max="100" value={Math.round(progress * 100)} disabled={instrumentPlaying} onChange={(event) => seekScan(Number(event.target.value) / 100)} aria-valuetext={`${Math.round(progress * 100)} percent through the scan`} /><p>{soundUrl ? "Hold and drag the gold line to hear and scrub the sound. Release to stop, or use the slider for precise seeking." : "Generate a sound first, then hold and drag the gold line to hear it as you move. You can preview the scan position now."}</p></div>}
-      </div>
-      <div className="sound-preview-caption"><span>SELECTED MAP</span><strong>{sourceLabel}</strong><p>{regionShape === "full" ? "Entire map" : `${selection.name} · ${selection.radiusKm ?? 500} km ${regionShape}`}</p></div>
       <section className="color-graph" aria-label="Live image color layers">
         <div className="color-graph-heading"><strong>Colors in this scan</strong><span>{Math.round(progress * 100)}% through map</span></div>
           <div className="color-graph-bars">{voiceKeys.map((voice) => {
@@ -520,6 +515,11 @@ export function RotationVisualization({ crop, selection, duration, onDurationCha
           <p className="sr-only">Bars show brightness-weighted color layers at the gold scan marker. They follow playback and DJ mode.</p>
           {!voiceAnalysis && <p className="color-graph-empty">{analysisError || (crop ? "Reading the map’s color layers…" : "Choose a map to see its color layers.")}</p>}
       </section>
+    </div>
+      <div className="manual-scan-controls">
+        <label className="manual-scan-toggle"><input type="checkbox" checked={manualScan} disabled={instrumentPlaying} onChange={(event) => setManualScan(event.target.checked)} /><DjIcon /><span>DJ mode</span><small>Optional</small></label>
+        {manualScan && <div className="manual-scan-slider"><label htmlFor="scan-position">Scan position <output>{Math.round(progress * 100)}%</output></label><input id="scan-position" type="range" min="0" max="100" value={Math.round(progress * 100)} disabled={instrumentPlaying} onChange={(event) => seekScan(Number(event.target.value) / 100)} aria-valuetext={`${Math.round(progress * 100)} percent through the scan`} /><p>{soundUrl ? "Hold and drag the gold line to hear and scrub the sound. Release to stop, or use the slider for precise seeking." : "Generate a sound first, then hold and drag the gold line to hear it as you move. You can preview the scan position now."}</p></div>}
+      </div>
     </div>
     <p className="sr-only" role="status" aria-live="polite" aria-atomic="true">{announcement}</p>
     <div className="sound-builder" id="sound-settings" tabIndex={-1}>

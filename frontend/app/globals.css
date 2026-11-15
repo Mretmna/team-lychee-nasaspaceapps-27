@@ -406,10 +406,16 @@ footer a { text-underline-offset: 3px; }
 .rotation-audio .instrument-playback { width: 100%; max-width: 520px; border-color: rgba(207,228,220,.35); }
 .rotation-audio .instrument-playback label { color: #f4f3eb; }
 .rotation-audio .instrument-playback p { color: #c7d8d5; }
+.rotation-audio .color-graph { width: 100%; min-width: 0; margin-top: 2px; padding: 16px 0 0; }
 .rotation-visualization > .sound-status { margin: 15px 2px 0; color: #dbe6df; font-size: 12px; }
 @media (max-width: 640px) {
-  .sound-preview { padding: 12px 12px 0; }
+  .sound-preview { padding: 12px; }
   .sound-preview-caption { padding-bottom: 14px; }
+  .sound-preview .rotation-audio { gap: 10px; padding: 14px; }
+  .rotation-audio .color-graph { padding-top: 14px; }
+  .color-graph-heading { flex-wrap: wrap; gap: 4px 10px; margin-bottom: 12px; }
+  .color-graph-bars { gap: 8px; }
+  .color-graph-row, .color-graph-brightness { grid-template-columns: 58px minmax(0, 1fr) 32px; gap: 7px; }
   .sound-builder-heading, .sound-step, .sound-generate { padding-left: 17px; padding-right: 17px; }
   .sound-step-heading { gap: 10px; }
   .sound-builder .sound-template-choice, .scan-path-options, .scan-choice-description, .sound-mode-toggle, .sound-mode-description, .sound-builder .duration-options { margin-left: 0; }
@@ -513,7 +519,7 @@ footer nav a:hover { text-decoration: underline; text-underline-offset: 4px; }
 .sound-preview { scroll-margin-top: 24px; }
 
 /* The map, audio player, and globe share the listening view. */
-.sound-preview { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+.sound-preview { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; padding-bottom: 18px; }
 .sound-preview .rotation-image { margin-bottom: 0; }
 .sound-preview .rotation-audio { width: 100%; min-width: 0; margin: 0; align-content: start; }
 .sound-preview .rotation-audio audio { width: 100%; }
@@ -521,13 +527,13 @@ footer nav a:hover { text-decoration: underline; text-underline-offset: 4px; }
 .sound-preview .manual-scan-controls { margin: 0; }
 .sound-preview .sound-preview-caption { padding-bottom: 4px; }
 @media (min-width: 1180px) {
-  .sound-preview { grid-template-columns: minmax(0, 1fr) minmax(220px, .82fr); grid-template-areas: "image audio" "caption audio" "manual manual" "graph graph"; align-items: start; }
+  .sound-preview { grid-template-columns: minmax(0, 1fr) minmax(220px, .82fr); grid-template-areas: "image audio" "caption audio" "manual audio"; align-items: start; }
   .sound-preview .rotation-image { grid-area: image; width: 100%; }
   .sound-preview .rotation-audio { grid-area: audio; }
   .sound-preview .sound-preview-caption { grid-area: caption; }
   .sound-preview .manual-scan-controls { grid-area: manual; }
-  .sound-preview .color-graph { grid-area: graph; }
 }
+@media (max-width: 640px) { .sound-preview { padding-bottom: 12px; } }
 
 /* Map selection comes first; the globe and playing map start on the same row. */
 .map-selection-stage { padding: clamp(30px, 4vw, 56px) clamp(24px, 5vw, 76px); background: var(--ocean); color: #f4f3eb; border-top: 1px solid var(--line); }
