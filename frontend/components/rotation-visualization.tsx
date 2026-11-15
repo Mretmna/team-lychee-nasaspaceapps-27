@@ -496,7 +496,7 @@ export function RotationVisualization({ crop, selection, duration, onDurationCha
       <strong className="rotation-audio-title">{soundUrl ? "Now playing" : "Listen here"}</strong>
       {soundUrl && !instrumentPlaying && <button type="button" className="rotation-start" onClick={() => void audioRef.current?.play().catch(() => setError("Playback was blocked. Use the audio controls to start it."))}><PlayIcon /> Replay sound</button>}
       <audio ref={audioRef} controls={Boolean(soundUrl) && !instrumentPlaying} style={{ display: soundUrl && !instrumentPlaying ? "block" : "none" }} aria-label="Generated region sound" onPlay={onAudioPlay} onPause={onAudioStop} onSeeked={syncToAudio} onEnded={() => { setAngle(360); onAudioStop(); }} onError={() => setError("The generated audio could not be played by this browser.")} />
-      <section className="color-graph" aria-label="Live image color layers">
+      <section className={`color-graph${running ? " is-playing" : ""}`} aria-label="Live image color layers">
         <div className="color-graph-heading"><strong>Colors</strong><span>{Math.round(progress * 100)}% through map</span></div>
           <div className="color-graph-bars">{voiceKeys.map((voice) => {
             const percent = colorTotal > 0 ? Math.round(currentVoices.levels[voice] / colorTotal * 100) : 0;

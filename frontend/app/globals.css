@@ -366,6 +366,22 @@ footer a { text-underline-offset: 3px; }
 .color-graph-brightness { margin-top: 9px; }
 .color-graph > p { margin: 12px 0 0; color: #c7d8d5; font-size: 11px; line-height: 1.5; }
 .color-graph .color-graph-empty { margin-bottom: 3px; }
+@media (max-width: 640px) {
+  .rotation-audio .color-graph.is-playing {
+    position: fixed;
+    z-index: 900;
+    right: 12px;
+    bottom: calc(120px + env(safe-area-inset-bottom));
+    width: min(340px, calc(100vw - 24px));
+    max-height: min(160px, calc(100dvh - 140px));
+    overflow-y: auto;
+    padding: 10px 12px;
+    border: 1px solid #6f9999;
+    border-radius: 8px;
+    background: #102d35;
+    box-shadow: 0 8px 24px rgba(0,0,0,.25);
+  }
+}
 .sound-builder { overflow: hidden; border-radius: 10px; background: #f8f7f1; color: var(--ink); box-shadow: 0 14px 36px rgba(0,0,0,.14); }
 .sound-builder-heading { padding: 24px 28px; background: #e4eee8; border-bottom: 1px solid var(--line); }
 .sound-builder-heading span { color: #376c64; font-size: 10px; font-weight: 800; letter-spacing: .16em; }
