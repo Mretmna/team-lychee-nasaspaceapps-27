@@ -226,6 +226,7 @@ input[type="range"] { accent-color: var(--sun); cursor: pointer; }
 .source-grid a { display: inline-flex; align-items: center; gap: 7px; margin-top: 20px; font-size: 12px; font-weight: 750; text-decoration: none; border-bottom: 1px solid; padding-bottom: 4px; }
 .source-grid .globe-credit { margin-top: 18px; font-size: 11px; }
 .source-grid .globe-credit a { display: inline; margin: 0; font-size: inherit; font-weight: inherit; }
+.source-repo-resource { margin-top: 24px; padding-top: 22px; border-top: 1px solid var(--line); }
 .map-upload-section { max-width: 710px; width: 100%; margin: 0 auto 42px; padding: 26px; background: var(--paper); color: var(--ink); }
 #upload-map-panel .map-upload-section { margin-bottom: 30px; }
 .map-upload-section h2 { margin: 0; font-family: var(--serif); font-size: clamp(38px, 4.8vw, 66px); font-weight: 400; }
