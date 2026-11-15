@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowIcon, DjIcon, MapIcon, PinIcon, UploadIcon } from "@/components/icons";
+import { ArrowIcon, DjIcon, MapIcon, PinIcon, UploadIcon, WarningIcon } from "@/components/icons";
 import { DemoVideo } from "@/components/demo-video";
 import { LocationPicker } from "@/components/location-picker";
 import { MapChooser } from "@/components/map-chooser";
@@ -175,6 +175,7 @@ export function JukeboxDashboard() {
           <div className="section-heading"><p className="eyebrow section-kicker"><PinIcon /> 02 · Find your spot</p><h2 id="explore-title">Find your spot</h2></div>
           <div className="globe-view" id="globe-view">
             <RadiusMap selection={selection} shape={regionShape} onSelect={setSelection} points={visiblePoints} />
+            {regionShape !== "full" && Math.abs(selection.latitude) >= 80 && <p className="polar-warning" role="status"><WarningIcon /> Near 90° latitude, the map image can stretch around the pole. Pick a place farther from the pole for a clearer crop.</p>}
           </div>
           <LocationPicker selection={selection} shape={regionShape} onShapeChange={setRegionShape} onSelect={setSelection} />
         </div>

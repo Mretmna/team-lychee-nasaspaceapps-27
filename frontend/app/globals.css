@@ -45,6 +45,9 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .section-heading { max-width: 500px; }
 .section-heading h2, .source-section h2 { margin: 0; font-family: var(--serif); font-size: clamp(38px, 4.8vw, 66px); font-weight: 400; line-height: .98; letter-spacing: -.035em; }
 .globe-canvas, .globe-loading, .globe-fallback { width: 100%; height: clamp(340px, 43vw, 560px); margin-top: 16px; }
+.globe-view { position: relative; }
+.polar-warning { position: absolute; z-index: 3; right: 14px; bottom: 14px; left: 14px; display: flex; align-items: flex-start; gap: 9px; width: fit-content; max-width: min(460px, calc(100% - 28px)); margin: 0; padding: 12px 14px; border: 1px solid #ad7424; border-radius: 6px; background: #fff2d3; color: #49320f; box-shadow: 0 6px 20px rgba(16,45,53,.18); font-size: 12px; font-weight: 650; line-height: 1.45; }
+.polar-warning svg { flex: none; width: 18px; height: 18px; }
 .globe-canvas { position: relative; }
 .globe-canvas canvas { display: block; width: 100%; height: 100%; cursor: grab; }
 .globe-canvas canvas:active { cursor: grabbing; }

@@ -25,6 +25,9 @@ export function MapIcon(props: IconProps) {
 export function UploadIcon(props: IconProps) {
   return <svg {...base} {...props} aria-hidden="true" strokeLinecap="round" strokeLinejoin="round"><path d="M12 15V3m-4 4 4-4 4 4" /><path d="M4 14v5a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5" /></svg>;
 }
+export function WarningIcon(props: IconProps) {
+  return <svg {...base} {...props} aria-hidden="true" strokeLinecap="round" strokeLinejoin="round"><path d="M10.3 3.9a2 2 0 0 1 3.4 0l8 13.5A2 2 0 0 1 20 20H4a2 2 0 0 1-1.7-2.6l8-13.5Z" /><path d="M12 9v5m0 3h.01" /></svg>;
+}
 export function ArrowIcon(props: IconProps) {
   return <svg {...base} {...props} aria-hidden="true"><path d="M5 12h14m-5-5 5 5-5 5" /></svg>;
 }
